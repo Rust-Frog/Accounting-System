@@ -79,7 +79,7 @@ $requires_approval = !empty($data['requires_approval']) &&
                       $data['requires_approval'] === 1 ||
                       $data['requires_approval'] === '1');
 
-// Debug log to verify
+
 error_log("Transaction create - requires_approval input: " . json_encode($data['requires_approval']) .
           ", evaluated as: " . ($requires_approval ? 'TRUE' : 'FALSE'));
 

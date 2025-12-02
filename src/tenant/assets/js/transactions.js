@@ -735,7 +735,7 @@ function validateAccountingIntegrity(lines) {
     const adminApprovalNeeded = [];
 
     // Account type rules: 1=Asset, 2=Liability, 3=Equity, 4=Revenue, 5=Expense
-    const cannotBeNegative = [1, 2, 4, 5]; // These MUST be blocked
+    const cannotBeNegative = [1, 2, 4, 5]; // Asset, Liability, Revenue, Expense - MUST NOT go negative
     const accountTypeNames = {
         1: 'Asset',
         2: 'Liability',
@@ -760,7 +760,6 @@ function validateAccountingIntegrity(lines) {
     });
 
     // ❌ CRITICAL VIOLATION: Revenue ↔ Expense pairing
-    // Revenue and Expenses are LABELS, they never offset each other directly!
     if (hasRevenue && hasExpense) {
         violations.push({
             account: 'Transaction Structure',
@@ -774,7 +773,6 @@ function validateAccountingIntegrity(lines) {
     }
 
     // ⚠️ ADMIN APPROVAL: Revenue/Expense ↔ Equity (Closing Entry)
-    // This is only done at period-end to transfer net income to equity
     if ((hasRevenue || hasExpense) && hasEquity) {
         const revenueExpenseAccounts = lines
             .filter(line => {
