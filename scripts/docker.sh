@@ -67,7 +67,7 @@ if [ "$ENV" != "dev" ] && [ "$ENV" != "prod" ]; then
     exit 1
 fi
 
-COMPOSE_FILE="docker-compose.${ENV}.yml"
+COMPOSE_FILE="docker/docker-compose.${ENV}.yml"
 
 # Check if docker-compose file exists
 if [ ! -f "$COMPOSE_FILE" ]; then
