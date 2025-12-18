@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Application\Handler\Admin;
 
+use Application\Command\Admin\SetupAdminCommand;
 use Domain\Identity\Entity\User;
 use Domain\Identity\Repository\UserRepositoryInterface;
 use Domain\Identity\ValueObject\Role;
@@ -19,7 +20,7 @@ final class SetupAdminHandler
     ) {
     }
 
-    public function handle(string $username, string $email, string $password, string $secret, string $code): array
+    public function handle(SetupAdminCommand $command): array
     {
         // 1. Double check initialization state (Race condition protection)
         if ($this->userRepository->hasAnyAdmin()) {
@@ -27,21 +28,21 @@ final class SetupAdminHandler
         }
 
         // 2. Verify OTP Code
-        if (!$this->totpService->verify($secret, $code)) {
+        if (!$this->totpService->verify($command->otpSecret, $command->otpCode)) {
             throw new InvalidArgumentException('Invalid OTP code');
         }
 
         // 3. Create Admin User
         $user = User::register(
-            username: $username,
-            email: Email::fromString($email),
-            password: $password,
+            username: $command->username,
+            email: Email::fromString($command->email),
+            password: $command->password,
             role: Role::ADMIN,
             companyId: null
         );
 
         // 4. Enable OTP
-        $user->enableOtp($secret);
+        $user->enableOtp($command->otpSecret);
         
         // 5. Genesis Approval
         $user->approveGenesis();

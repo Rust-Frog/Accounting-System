@@ -117,4 +117,38 @@ class MysqlBalanceChangeRepository extends AbstractMysqlRepository implements Ba
             new \DateTimeImmutable($row['occurred_at'])
         );
     }
+
+    /**
+     * Aggregate balance changes by account for a company within a period.
+     * Uses efficient SQL aggregation with JOIN to filter by company.
+     *
+     * @return array<string, int> Account ID => Net change in cents
+     */
+    public function sumChangesByCompanyAndPeriod(
+        \Domain\Company\ValueObject\CompanyId $companyId,
+        \DateTimeImmutable $from,
+        \DateTimeImmutable $to
+    ): array {
+        $sql = "SELECT bc.account_id, SUM(bc.change_cents) as net_change
+                FROM balance_changes bc
+                JOIN accounts a ON bc.account_id = a.id
+                WHERE a.company_id = :company_id
+                  AND bc.occurred_at >= :from_date
+                  AND bc.occurred_at <= :to_date
+                GROUP BY bc.account_id";
+
+        $stmt = $this->connection->prepare($sql);
+        $stmt->execute([
+            'company_id' => $companyId->toString(),
+            'from_date' => $from->format('Y-m-d H:i:s'),
+            'to_date' => $to->format('Y-m-d H:i:s'),
+        ]);
+
+        $results = [];
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $results[$row['account_id']] = (int)$row['net_change'];
+        }
+
+        return $results;
+    }
 }

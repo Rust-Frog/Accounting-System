@@ -51,13 +51,14 @@ final class SetupController
         }
 
         try {
-            $result = $this->setupHandler->handle(
+            $command = new \Application\Command\Admin\SetupAdminCommand(
                 $body['username'],
                 $body['email'],
                 $body['password'],
                 $body['otp_secret'],
                 $body['otp_code']
             );
+            $result = $this->setupHandler->handle($command);
             return JsonResponse::created($result);
         } catch (\InvalidArgumentException $e) {
             return JsonResponse::error($e->getMessage(), 400);

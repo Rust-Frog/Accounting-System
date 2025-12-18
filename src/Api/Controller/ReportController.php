@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Api\Controller;
 
 use Api\Response\JsonResponse;
+use Application\Command\Reporting\GenerateReportCommand;
+use Application\Handler\Reporting\GenerateReportHandler;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Reporting\Entity\Report;
 use Domain\Reporting\Repository\ReportRepositoryInterface;
@@ -17,7 +19,8 @@ use Psr\Http\Message\ServerRequestInterface;
 final class ReportController
 {
     public function __construct(
-        private readonly ReportRepositoryInterface $reportRepository
+        private readonly ReportRepositoryInterface $reportRepository,
+        private readonly ?GenerateReportHandler $generateHandler = null
     ) {
     }
 
@@ -70,6 +73,75 @@ final class ReportController
     }
 
     /**
+     * POST /api/v1/companies/{companyId}/reports/generate
+     * 
+     * Request body:
+     * {
+     *   "report_type": "balance_sheet" | "income_statement",
+     *   "period_start": "2024-01-01",
+     *   "period_end": "2024-12-31"
+     * }
+     */
+    public function generate(ServerRequestInterface $request): ResponseInterface
+    {
+        $validationError = $this->validateGenerateRequest($request);
+        if ($validationError !== null) {
+            return $validationError;
+        }
+
+        $companyId = $request->getAttribute('companyId');
+        $userId = $request->getAttribute('user_id');
+        $body = $request->getParsedBody();
+
+        try {
+            $command = new GenerateReportCommand(
+                companyId: $companyId,
+                reportType: $body['report_type'],
+                periodStart: $body['period_start'],
+                periodEnd: $body['period_end'],
+                generatedBy: $userId,
+            );
+
+            $result = $this->generateHandler->handle($command);
+
+            return JsonResponse::success($result, 201);
+        } catch (\InvalidArgumentException $e) {
+            return JsonResponse::error($e->getMessage(), 422);
+        } catch (\Throwable $e) {
+            return JsonResponse::error($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Validate generate request and return error response if invalid.
+     */
+    private function validateGenerateRequest(ServerRequestInterface $request): ?ResponseInterface
+    {
+        $companyId = $request->getAttribute('companyId');
+        $userId = $request->getAttribute('user_id');
+        
+        if ($companyId === null || $userId === null) {
+            return JsonResponse::error('Company ID and authentication required', 400);
+        }
+
+        if ($this->generateHandler === null) {
+            return JsonResponse::error('Report generation not configured', 500);
+        }
+
+        $body = $request->getParsedBody();
+
+        if (empty($body['report_type'])) {
+            return JsonResponse::error('report_type is required (balance_sheet or income_statement)', 422);
+        }
+        
+        if (empty($body['period_start']) || empty($body['period_end'])) {
+            return JsonResponse::error('period_start and period_end are required (YYYY-MM-DD format)', 422);
+        }
+
+        return null;
+    }
+
+    /**
      * Format report for API response.
      * 
      * @param bool $includeData Whether to include full report data
@@ -95,3 +167,4 @@ final class ReportController
         return $formatted;
     }
 }
+

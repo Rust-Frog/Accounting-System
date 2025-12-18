@@ -44,6 +44,10 @@ if (file_exists($envFile)) {
 // Build container
 $container = ContainerBuilder::build();
 
+// Redis Client
+// Redis Client
+$redis = $container->get(\Predis\ClientInterface::class);
+
 // Create controllers
 $authController = new AuthController(
     $container->get(AuthenticationServiceInterface::class),
@@ -70,7 +74,8 @@ $approvalController = new ApprovalController(
 );
 
 $reportController = new ReportController(
-    $container->get(ReportRepositoryInterface::class)
+    $container->get(ReportRepositoryInterface::class),
+    $container->get(\Application\Handler\Reporting\GenerateReportHandler::class)
 );
 
 $setupController = new SetupController(
@@ -97,6 +102,7 @@ $router->addMiddleware(new AuthenticationMiddleware(
         '/api/v1/setup/',           // Setup routes (handled by SetupMiddleware)
     ]
 ));
+$router->addMiddleware(new \Api\Middleware\RateLimitMiddleware($redis));
 $router->addMiddleware(new \Api\Middleware\RoleEnforcementMiddleware());
 $router->addMiddleware(new \Api\Middleware\CompanyScopingMiddleware(
     $container->get(UserRepositoryInterface::class)
@@ -158,6 +164,7 @@ $router->post('/api/v1/companies/{companyId}/approvals/{id}/reject', [$approvalC
 // Report routes
 $router->get('/api/v1/companies/{companyId}/reports', [$reportController, 'list']);
 $router->get('/api/v1/companies/{companyId}/reports/{id}', [$reportController, 'get']);
+$router->post('/api/v1/companies/{companyId}/reports/generate', [$reportController, 'generate']);
 
 // Dispatch request
 $request = ServerRequest::fromGlobals();

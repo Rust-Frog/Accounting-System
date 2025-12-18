@@ -53,9 +53,9 @@ final class AuthController
                 ? CompanyId::fromString($body['company_id']) 
                 : null;
 
-            $role = isset($body['role']) && $body['role'] === 'admin' 
-                ? Role::ADMIN 
-                : Role::TENANT;
+            // CRITICAL: Prevent privilege escalation. Public registration is always TENANT.
+            // Admins must be created via Setup or Admin Console.
+            $role = Role::TENANT;
 
             $user = User::register(
                 $body['username'],
@@ -87,8 +87,6 @@ final class AuthController
     public function login(ServerRequestInterface $request): ResponseInterface
     {
         $body = $request->getParsedBody();
-
-        // Accept either username or email
         $identifier = $body['username'] ?? $body['email'] ?? null;
         $password = $body['password'] ?? null;
         
@@ -96,32 +94,20 @@ final class AuthController
             return JsonResponse::error('Username/email and password are required', 422);
         }
 
-        // Find user by email or username
-        $user = null;
-        if (str_contains($identifier, '@')) {
-            $user = $this->userRepository->findByEmail(Email::fromString($identifier));
-        } else {
-            $user = $this->userRepository->findByUsername($identifier);
-        }
+        $user = $this->findUserByIdentifier($identifier);
         
-        if ($user === null) {
-            return JsonResponse::error('User not found', 401);
-        }
-        
-        if (!$user->verifyPassword($password)) {
-            return JsonResponse::error('Invalid password', 401);
+        if ($user === null || !$user->verifyPassword($password)) {
+            // Use generic error message for security (prevent enumeration)
+            return JsonResponse::error('Invalid credentials', 401);
         }
 
-        // Check if user has OTP enabled (2FA required)
         if ($user->isOtpEnabled()) {
             if (empty($body['otp_code'])) {
                 return JsonResponse::error('OTP code is required', 422);
             }
 
-            // Verify OTP code
-            $totpService = new \Infrastructure\Service\TotpService();
-            if (!$totpService->verify($user->otpSecret(), $body['otp_code'])) {
-                return JsonResponse::error('Invalid OTP code - check your authenticator app', 401);
+            if (!$this->verifyOtp($user, $body['otp_code'])) {
+                return JsonResponse::error('Invalid OTP code', 401);
             }
         }
 
@@ -142,6 +128,20 @@ final class AuthController
         } catch (\Throwable $e) {
             return JsonResponse::error('Authentication failed', 401);
         }
+    }
+
+    private function findUserByIdentifier(string $identifier): ?User
+    {
+        if (str_contains($identifier, '@')) {
+            return $this->userRepository->findByEmail(Email::fromString($identifier));
+        }
+        return $this->userRepository->findByUsername($identifier);
+    }
+
+    private function verifyOtp(User $user, string $code): bool
+    {
+        $totpService = new \Infrastructure\Service\TotpService();
+        return $totpService->verify($user->otpSecret(), $code);
     }
 
     /**

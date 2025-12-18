@@ -44,13 +44,28 @@ final class TransactionController
         }
 
         try {
+            $queryParams = $request->getQueryParams();
+            $page = max(1, (int) ($queryParams['page'] ?? 1));
+            $limit = max(1, min(100, (int) ($queryParams['limit'] ?? 20)));
+            $offset = ($page - 1) * $limit;
+
             $transactions = $this->transactionRepository->findByCompany(
-                CompanyId::fromString($companyId)
+                CompanyId::fromString($companyId),
+                null,
+                $limit,
+                $offset
             );
 
+            // TODO: Return metadata (total, pages) in future
             $data = array_map(fn($t) => $this->formatTransactionSummary($t), $transactions);
 
-            return JsonResponse::success($data);
+            return JsonResponse::success([
+                'data' => $data,
+                'meta' => [
+                    'page' => $page,
+                    'limit' => $limit,
+                ]
+            ]);
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 500);
         }

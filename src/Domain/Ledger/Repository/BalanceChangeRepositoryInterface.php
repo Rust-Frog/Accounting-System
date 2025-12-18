@@ -31,4 +31,16 @@ interface BalanceChangeRepositoryInterface
      * Check if a transaction has already been reversed.
      */
     public function isTransactionReversed(TransactionId $transactionId): bool;
+
+    /**
+     * Aggregate balance changes by account for a company within a period.
+     * Used for report generation (Balance Sheet, Income Statement).
+     *
+     * @return array<string, int> Account ID => Net change in cents
+     */
+    public function sumChangesByCompanyAndPeriod(
+        \Domain\Company\ValueObject\CompanyId $companyId,
+        DateTimeImmutable $from,
+        DateTimeImmutable $to
+    ): array;
 }

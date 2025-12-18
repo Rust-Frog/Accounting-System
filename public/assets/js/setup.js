@@ -9,6 +9,13 @@ class SetupManager {
         this.otpSecret = null;
         this.apiBase = '/api/v1/setup';
 
+        // SECURITY: Sanitize secret to ensure only valid base32 characters
+        this.sanitizeSecret = (secret) => {
+            if (typeof secret !== 'string') return '';
+            // Base32 alphabet only (A-Z, 2-7)
+            return secret.replace(/[^A-Z2-7]/gi, '').toUpperCase();
+        };
+
         this.views = {
             welcome: document.getElementById('view-welcome'),
             totp: document.getElementById('view-totp'),
@@ -117,7 +124,8 @@ class SetupManager {
                 throw new Error(data.error || 'Initialization failed');
             }
 
-            this.otpSecret = data.data.secret;
+            // SECURITY: Sanitize the secret from API response
+            this.otpSecret = this.sanitizeSecret(data.data.secret);
             const provisioningUri = data.data.provisioning_uri;
 
             // Generate QR Code

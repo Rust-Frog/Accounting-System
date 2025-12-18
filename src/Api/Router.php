@@ -86,28 +86,33 @@ final class Router
      */
     public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
-        $method = $request->getMethod();
-        $path = $request->getUri()->getPath();
+        // Define the core application logic (Routing) as the final handler
+        $coreHandler = function (ServerRequestInterface $request): ResponseInterface {
+            $method = $request->getMethod();
+            $path = $request->getUri()->getPath();
 
-        // Find matching route
-        foreach ($this->routes as $route) {
-            $params = $this->matchRoute($route['path'], $path);
-            if ($route['method'] === $method && $params !== null) {
-                // Add route params to request
-                foreach ($params as $key => $value) {
-                    $request = $request->withAttribute($key, $value);
+            // Find matching route
+            foreach ($this->routes as $route) {
+                $params = $this->matchRoute($route['path'], $path);
+                if ($route['method'] === $method && $params !== null) {
+                    // Add route params to request
+                    foreach ($params as $key => $value) {
+                        $request = $request->withAttribute($key, $value);
+                    }
+
+                    // Execute the route handler
+                    return ($route['handler'])($request);
                 }
-
-                // Build middleware pipeline with handler at the end
-                $handler = $route['handler'];
-                $pipeline = $this->buildPipeline($handler);
-
-                return $pipeline($request);
             }
-        }
 
-        // No route found - return 404
-        return $this->notFoundResponse();
+            // No route found - return 404
+            return $this->notFoundResponse();
+        };
+
+        // Build middleware pipeline wrapping the core handler
+        $pipeline = $this->buildPipeline($coreHandler);
+
+        return $pipeline($request);
     }
 
     /**

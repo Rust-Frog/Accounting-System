@@ -64,39 +64,53 @@ class LoginManager {
         const password = this.elements.password.value;
         const otpCode = this.elements.otpCode.value;
 
-        this.elements.btnLogin.disabled = true;
-        this.elements.btnLogin.innerHTML = '<span class="spinner"></span> Logging in...';
+        this.setLoginButtonLoading(true);
         this.hideError('auth');
 
         try {
-            const response = await fetch(`${this.apiBase}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: this.username,
-                    password: password,
-                    otp_code: otpCode
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                const errorMsg = data.error?.message || data.error || 'Authentication failed';
-                throw new Error(errorMsg);
-            }
-
+            const data = await this.performLoginRequest(password, otpCode);
             if (data.data?.token) {
                 this.handleLoginSuccess(data.data);
             }
         } catch (error) {
-            this.showError('auth', error.message);
-            this.elements.otpCode.value = '';
-            this.elements.otpCode.focus();
+            this.handleAuthError(error);
         } finally {
-            this.elements.btnLogin.disabled = false;
-            this.elements.btnLogin.textContent = 'Login';
+            this.setLoginButtonLoading(false);
         }
+    }
+
+    async performLoginRequest(password, otpCode) {
+        const response = await fetch(`${this.apiBase}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: this.username,
+                password: password,
+                otp_code: otpCode
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMsg = data.error?.message || data.error || 'Authentication failed';
+            throw new Error(errorMsg);
+        }
+
+        return data;
+    }
+
+    setLoginButtonLoading(isLoading) {
+        this.elements.btnLogin.disabled = isLoading;
+        this.elements.btnLogin.innerHTML = isLoading
+            ? '<span class="spinner"></span> Logging in...'
+            : 'Login';
+    }
+
+    handleAuthError(error) {
+        this.showError('auth', error.message);
+        this.elements.otpCode.value = '';
+        this.elements.otpCode.focus();
     }
 
     handleLoginSuccess(sessionData) {

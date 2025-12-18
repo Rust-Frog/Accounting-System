@@ -24,7 +24,6 @@ use Infrastructure\Persistence\Mysql\Repository\MysqlApprovalRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlCompanyRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlLedgerRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlReportRepository;
-use Infrastructure\Persistence\Mysql\Repository\MysqlSessionRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlTransactionRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlUserRepository;
 use Infrastructure\Persistence\Mysql\Connection\PdoConnectionFactory;
@@ -78,6 +77,17 @@ final class ContainerBuilder
         $container->singleton(PdoConnectionFactory::class, fn() =>
             new PdoConnectionFactory()
         );
+
+        // Redis Client
+        $container->singleton(\Predis\ClientInterface::class, function () {
+            $host = $_ENV['REDIS_HOST'] ?? 'accounting-redis-dev';
+            $port = $_ENV['REDIS_PORT'] ?? 6379;
+            return new \Predis\Client([
+                'scheme' => 'tcp',
+                'host'   => $host,
+                'port'   => $port,
+            ]);
+        });
     }
 
     private static function registerRepositories(Container $container): void
@@ -120,6 +130,10 @@ final class ContainerBuilder
 
         $container->singleton(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class, fn(ContainerInterface $c) =>
             new \Infrastructure\Persistence\Mysql\Repository\MysqlJournalEntryRepository($c->get(PDO::class))
+        );
+
+        $container->singleton(\Domain\Ledger\Repository\BalanceChangeRepositoryInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Persistence\Mysql\Repository\MysqlBalanceChangeRepository($c->get(PDO::class))
         );
     }
 
@@ -185,7 +199,7 @@ final class ContainerBuilder
 
         $container->singleton(AuthenticationServiceInterface::class, fn(ContainerInterface $c) =>
             new SessionAuthenticationService(
-                $c->get(PdoConnectionFactory::class),
+                $c->get(\Predis\ClientInterface::class),
                 $c->get(UserRepositoryInterface::class),
                 $c->get('password_service')
             )
@@ -233,6 +247,15 @@ final class ContainerBuilder
             new \Application\Handler\Admin\SetupAdminHandler(
                 $c->get(UserRepositoryInterface::class),
                 $c->get(\Infrastructure\Service\TotpService::class)
+            )
+        );
+
+        // Report Generation Handler
+        $container->singleton(\Application\Handler\Reporting\GenerateReportHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Reporting\GenerateReportHandler(
+                $c->get(\Domain\Ledger\Repository\BalanceChangeRepositoryInterface::class),
+                $c->get(AccountRepositoryInterface::class),
+                $c->get(ReportRepositoryInterface::class)
             )
         );
     }

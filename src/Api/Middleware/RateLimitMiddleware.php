@@ -5,19 +5,18 @@ declare(strict_types=1);
 namespace Api\Middleware;
 
 use Api\Response\JsonResponse;
+use Predis\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Rate limiting middleware to prevent API abuse.
- * Uses in-memory storage (for demo). Production should use Redis/Memcached.
+ * Uses Redis for distributed rate limiting.
  */
 final class RateLimitMiddleware
 {
-    /** @var array<string, array{count: int, window_start: int}> */
-    private static array $storage = [];
-
     public function __construct(
+        private readonly ClientInterface $redis,
         private readonly int $maxRequests = 100,
         private readonly int $windowSeconds = 60,
     ) {
@@ -29,32 +28,31 @@ final class RateLimitMiddleware
     public function __invoke(ServerRequestInterface $request, callable $next): ResponseInterface
     {
         $clientId = $this->getClientIdentifier($request);
-        $now = time();
-
-        // Initialize or reset window
-        if (!isset(self::$storage[$clientId]) || 
-            self::$storage[$clientId]['window_start'] + $this->windowSeconds < $now
-        ) {
-            self::$storage[$clientId] = [
-                'count' => 0,
-                'window_start' => $now,
-            ];
+        $key = "ratelimit:{$clientId}";
+        
+        $current = (int) $this->redis->incr($key);
+        
+        // Set expiration on first increment
+        if ($current === 1) {
+            $this->redis->expire($key, $this->windowSeconds);
         }
 
-        // Check rate limit
-        if (self::$storage[$clientId]['count'] >= $this->maxRequests) {
-            $retryAfter = self::$storage[$clientId]['window_start'] + $this->windowSeconds - $now;
-            
-            return $this->createRateLimitResponse($retryAfter);
+        if ($current > $this->maxRequests) {
+            $ttl = $this->redis->ttl($key);
+            return $this->createRateLimitResponse($ttl > 0 ? $ttl : $this->windowSeconds);
         }
 
-        // Increment counter
-        self::$storage[$clientId]['count']++;
-
-        // Add rate limit headers to response
         $response = $next($request);
         
-        return $this->addRateLimitHeaders($response, $clientId);
+        // Add headers
+        $ttl = $this->redis->ttl($key);
+        $remaining = max(0, $this->maxRequests - $current);
+        $resetTime = time() + ($ttl > 0 ? $ttl : 0);
+
+        return $response
+            ->withHeader('X-RateLimit-Limit', (string) $this->maxRequests)
+            ->withHeader('X-RateLimit-Remaining', (string) $remaining)
+            ->withHeader('X-RateLimit-Reset', (string) $resetTime);
     }
 
     /**
@@ -62,7 +60,10 @@ final class RateLimitMiddleware
      */
     private function getClientIdentifier(ServerRequestInterface $request): string
     {
-        $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
+        // Try mapped IP first (e.g. from load balancer), then REMOTE_ADDR
+        $params = $request->getServerParams();
+        $ip = $params['HTTP_X_FORWARDED_FOR'] ?? $params['REMOTE_ADDR'] ?? 'unknown';
+        
         $userId = $request->getAttribute('user_id');
 
         return $userId ? "{$ip}:{$userId}" : $ip;
@@ -78,27 +79,5 @@ final class RateLimitMiddleware
             429,
             ['retry_after' => $retryAfter]
         )->withHeader('Retry-After', (string) $retryAfter);
-    }
-
-    /**
-     * Add rate limit headers to response.
-     */
-    private function addRateLimitHeaders(ResponseInterface $response, string $clientId): ResponseInterface
-    {
-        $remaining = $this->maxRequests - self::$storage[$clientId]['count'];
-        $resetTime = self::$storage[$clientId]['window_start'] + $this->windowSeconds;
-
-        return $response
-            ->withHeader('X-RateLimit-Limit', (string) $this->maxRequests)
-            ->withHeader('X-RateLimit-Remaining', (string) max(0, $remaining))
-            ->withHeader('X-RateLimit-Reset', (string) $resetTime);
-    }
-
-    /**
-     * Clear rate limit storage (for testing).
-     */
-    public static function clearStorage(): void
-    {
-        self::$storage = [];
     }
 }

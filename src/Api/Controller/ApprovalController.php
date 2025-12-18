@@ -34,13 +34,26 @@ final class ApprovalController
         }
 
         try {
+            $queryParams = $request->getQueryParams();
+            $page = max(1, (int)($queryParams['page'] ?? 1)); 
+            $limit = min(100, max(1, (int)($queryParams['limit'] ?? 20)));
+            $offset = ($page - 1) * $limit;
+
             $approvals = $this->approvalRepository->findPendingByCompany(
-                CompanyId::fromString($companyId)
+                CompanyId::fromString($companyId),
+                $limit,
+                $offset
             );
 
             $data = array_map(fn(Approval $a) => $this->formatApproval($a), $approvals);
 
-            return JsonResponse::success($data);
+            return JsonResponse::success([
+                'data' => $data,
+                'meta' => [
+                    'page' => $page,
+                    'limit' => $limit,
+                ]
+            ]);
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 500);
         }

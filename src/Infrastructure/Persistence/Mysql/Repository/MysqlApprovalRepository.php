@@ -58,13 +58,18 @@ final class MysqlApprovalRepository extends AbstractMysqlRepository implements A
     /**
      * @return array<Approval>
      */
-    public function findPendingByCompany(CompanyId $companyId): array
+    public function findPendingByCompany(CompanyId $companyId, int $limit = 20, int $offset = 0): array
     {
         $rows = $this->fetchAll(
             "SELECT * FROM approvals 
              WHERE company_id = :company_id AND status = 'pending'
-             ORDER BY priority DESC, requested_at ASC",
-            ['company_id' => $companyId->toString()]
+             ORDER BY priority DESC, requested_at ASC
+             LIMIT :limit OFFSET :offset",
+            [
+                'company_id' => $companyId->toString(),
+                'limit' => $limit,
+                'offset' => $offset
+            ]
         );
 
         return array_map(fn(array $row) => $this->hydrator->hydrate($row), $rows);

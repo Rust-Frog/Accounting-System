@@ -21,7 +21,12 @@ interface TransactionRepositoryInterface
     /**
      * @return array<Transaction>
      */
-    public function findByCompany(CompanyId $companyId, ?TransactionStatus $status = null): array;
+    public function findByCompany(
+        CompanyId $companyId, 
+        ?TransactionStatus $status = null,
+        int $limit = 20,
+        int $offset = 0
+    ): array;
 
     /**
      * @return array<Transaction>

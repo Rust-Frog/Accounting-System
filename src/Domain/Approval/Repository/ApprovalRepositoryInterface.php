@@ -21,7 +21,7 @@ interface ApprovalRepositoryInterface
     /**
      * @return array<Approval>
      */
-    public function findPendingByCompany(CompanyId $companyId): array;
+    public function findPendingByCompany(CompanyId $companyId, int $limit = 20, int $offset = 0): array;
 
     /**
      * @return array<Approval>
