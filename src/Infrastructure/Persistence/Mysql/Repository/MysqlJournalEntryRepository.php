@@ -58,15 +58,20 @@ final class MysqlJournalEntryRepository extends AbstractMysqlRepository implemen
     public function getLatestHash(CompanyId $companyId): ?ContentHash
     {
         $row = $this->fetchOne(
-            'SELECT chain_hash FROM journal_entries WHERE company_id = :company_id ORDER BY occurred_at DESC LIMIT 1',
+            'SELECT chain_hash, content_hash FROM journal_entries WHERE company_id = :company_id ORDER BY occurred_at DESC LIMIT 1',
             ['company_id' => $companyId->toString()]
         );
 
-        if ($row === null || empty($row['chain_hash'])) {
+        if ($row === null) {
             return null;
         }
 
-        return ContentHash::fromContent($row['chain_hash']); // Assuming direct content for now, or use appropriate factory
+        if (!empty($row['chain_hash'])) {
+            return ContentHash::fromContent($row['chain_hash']);
+        }
+
+        // Fallback to content_hash for Genesis entry to maintain chain continuity
+        return ContentHash::fromContent($row['content_hash']);
     }
 
     private function hydrate(array $row): JournalEntry

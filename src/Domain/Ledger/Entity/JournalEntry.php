@@ -11,8 +11,6 @@ use Domain\Shared\ValueObject\HashChain\ContentHash;
 use Domain\Transaction\ValueObject\TransactionId;
 use Domain\Transaction\ValueObject\TransactionStatus;
 use InvalidArgumentException;
-use Domain\Transaction\ValueObject\TransactionStatus;
-use InvalidArgumentException;
 
 /**
  * Immutable Ledger Entry.

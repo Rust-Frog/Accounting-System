@@ -125,6 +125,14 @@ final class ContainerBuilder
 
     private static function registerServices(Container $container): void
     {
+        self::registerCoreServices($container);
+        self::registerAuditServices($container);
+        self::registerAuthServices($container);
+    }
+
+    private static function registerCoreServices(Container $container): void
+    {
+        // Event Dispatcher and Listeners
         $container->singleton(EventDispatcherInterface::class, function (ContainerInterface $c) {
             $dispatcher = new \Infrastructure\Service\InMemoryEventDispatcher();
             
@@ -137,6 +145,18 @@ final class ContainerBuilder
             return $dispatcher;
         });
 
+        // JWT Service
+        $container->singleton(JwtService::class, function () {
+            $secretKey = $_ENV['JWT_SECRET'] ?? 'default-secret-change-in-production';
+            $expiration = (int) ($_ENV['JWT_EXPIRATION'] ?? 3600);
+            $issuer = $_ENV['JWT_ISSUER'] ?? 'accounting-api';
+
+            return new JwtService($secretKey, $expiration, $issuer);
+        });
+    }
+
+    private static function registerAuditServices(Container $container): void
+    {
         $container->singleton(\Domain\Audit\Service\AuditChainServiceInterface::class, fn(ContainerInterface $c) =>
             new \Infrastructure\Service\AuditChainService(
                 $c->get(\Domain\Audit\Repository\ActivityLogRepositoryInterface::class)
@@ -149,13 +169,16 @@ final class ContainerBuilder
                 $c->get(\Domain\Audit\Service\AuditChainServiceInterface::class)
             )
         );
-        
+
         $container->singleton(\Application\Listener\ActivityLogListener::class, fn(ContainerInterface $c) =>
             new \Application\Listener\ActivityLogListener(
                 $c->get(\Domain\Audit\Service\ActivityLogService::class)
             )
         );
+    }
 
+    private static function registerAuthServices(Container $container): void
+    {
         $container->singleton('password_service', fn() =>
             new BcryptPasswordHashingService()
         );
@@ -167,15 +190,6 @@ final class ContainerBuilder
                 $c->get('password_service')
             )
         );
-
-        // JWT Service
-        $container->singleton(JwtService::class, function () {
-            $secretKey = $_ENV['JWT_SECRET'] ?? 'default-secret-change-in-production';
-            $expiration = (int) ($_ENV['JWT_EXPIRATION'] ?? 3600);
-            $issuer = $_ENV['JWT_ISSUER'] ?? 'accounting-api';
-            
-            return new JwtService($secretKey, $expiration, $issuer);
-        });
     }
 
     private static function registerHandlers(Container $container): void

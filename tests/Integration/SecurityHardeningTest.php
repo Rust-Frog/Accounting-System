@@ -104,16 +104,20 @@ final class SecurityHardeningTest extends BaseIntegrationTestCase
         $this->assertEquals($transactionId, $proof['entity_id']);
         $this->assertEquals($userId, $proof['approver_id']);
         $this->assertNotEmpty($proof['entity_hash']);
+
+        // 6. Verify Immutable Ledger Entry
+        $stmt = $this->pdo->prepare("SELECT * FROM journal_entries WHERE transaction_id = :id");
+        $stmt->execute(['id' => $transactionId]);
+        $entry = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $this->assertNotFalse($entry, 'Journal Entry should exist');
+        $this->assertEquals('POSTING', $entry['entry_type']);
+        $this->assertNotEmpty($entry['content_hash'], 'Content Hash must be present');
         
-        // 6. Verify Activity Log Chain (Optional but good)
-        // Since we dispatched events, ActivityLogListener should have caught them.
-        // But ActivityLogListener needs the ActivityLogService which needs AuditChainService.
-        // We constructed the dispatcher from container, so listeners ARE registered.
-        // BUT, they might use the Container's PDO if services are singletons!
-        // This is the Cross-Connection Risk. 
-        // If listeners use a different PDO, they might miss the transaction inserts if we haven't committed.
-        // But ActivityLogListener is triggered synchronously.
-        
-        // Let's just verify Proof for now.
+        if (empty($entry['previous_hash'])) {
+            $this->assertNull($entry['chain_hash'], 'Genesis entry should have no chain hash');
+        } else {
+            $this->assertNotEmpty($entry['chain_hash'], 'Chain Hash must be present');
+        }
     }
 }

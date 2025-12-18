@@ -90,7 +90,7 @@ final class TransactionController
         $userId = $request->getAttribute('user_id');
         $body = $request->getParsedBody();
 
-        if ($companyId === null || $userId === null) {
+        if ($this->isMissingContext($companyId, $userId)) {
             return JsonResponse::error('Company ID and authentication required', 400);
         }
 
@@ -100,24 +100,33 @@ final class TransactionController
         }
 
         try {
-            $lines = $this->parseTransactionLines($body['lines']);
-
-            $command = new CreateTransactionCommand(
-                companyId: $companyId,
-                createdBy: $userId,
-                description: $body['description'],
-                currency: $body['currency'] ?? 'USD',
-                lines: $lines,
-                transactionDate: $body['date'] ?? null,
-                referenceNumber: $body['reference_number'] ?? null,
-            );
-
+            $command = $this->buildCreateCommand($companyId, $userId, $body);
             $dto = $this->createHandler->handle($command);
 
             return JsonResponse::created($dto->toArray());
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 400);
         }
+    }
+
+    private function isMissingContext(?string $companyId, ?string $userId): bool
+    {
+        return $companyId === null || $userId === null;
+    }
+
+    private function buildCreateCommand(string $companyId, string $userId, array $body): CreateTransactionCommand
+    {
+        $lines = $this->parseTransactionLines($body['lines']);
+
+        return new CreateTransactionCommand(
+            companyId: $companyId,
+            createdBy: $userId,
+            description: $body['description'],
+            currency: $body['currency'] ?? 'USD',
+            lines: $lines,
+            transactionDate: $body['date'] ?? null,
+            referenceNumber: $body['reference_number'] ?? null,
+        );
     }
 
     private function validateCreateRequest(array $body): ?ResponseInterface
@@ -135,8 +144,8 @@ final class TransactionController
 
     private function hasValidLines(array $body): bool
     {
-        return !empty($body['lines']) 
-            && is_array($body['lines']) 
+        return !empty($body['lines'])
+            && is_array($body['lines'])
             && count($body['lines']) >= 2;
     }
 
@@ -201,7 +210,7 @@ final class TransactionController
         $id = $request->getAttribute('id');
         $userId = $request->getAttribute('user_id');
 
-        if ($id === null || $userId === null) {
+        if ($this->isMissingContext($id, $userId)) {
             return JsonResponse::error('Transaction ID and authentication required', 400);
         }
 
