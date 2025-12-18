@@ -47,6 +47,16 @@ final class ContainerBuilder
     {
         $container = new Container();
 
+        self::registerDatabase($container);
+        self::registerRepositories($container);
+        self::registerServices($container);
+        self::registerHandlers($container);
+
+        return $container;
+    }
+
+    private static function registerDatabase(Container $container): void
+    {
         // Database connection
         $container->singleton(PDO::class, function () {
             $host = $_ENV['DB_HOST'] ?? 'mysql';
@@ -68,8 +78,10 @@ final class ContainerBuilder
         $container->singleton(PdoConnectionFactory::class, fn() =>
             new PdoConnectionFactory()
         );
+    }
 
-        // Repositories
+    private static function registerRepositories(Container $container): void
+    {
         $container->singleton(UserRepositoryInterface::class, fn(ContainerInterface $c) =>
             new MysqlUserRepository($c->get(PDO::class))
         );
@@ -106,9 +118,42 @@ final class ContainerBuilder
             new MysqlReportRepository($c->get(PDO::class))
         );
 
-        // Services
-        $container->singleton(EventDispatcherInterface::class, fn() =>
-            new InMemoryEventDispatcher()
+        $container->singleton(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Persistence\Mysql\Repository\MysqlJournalEntryRepository($c->get(PDO::class))
+        );
+    }
+
+    private static function registerServices(Container $container): void
+    {
+        $container->singleton(EventDispatcherInterface::class, function (ContainerInterface $c) {
+            $dispatcher = new \Infrastructure\Service\InMemoryEventDispatcher();
+            
+            // Register ActivityLogListener
+            if ($c->has(\Application\Listener\ActivityLogListener::class)) {
+                $listener = $c->get(\Application\Listener\ActivityLogListener::class);
+                $dispatcher->addListener('*', $listener);
+            }
+            
+            return $dispatcher;
+        });
+
+        $container->singleton(\Domain\Audit\Service\AuditChainServiceInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Service\AuditChainService(
+                $c->get(\Domain\Audit\Repository\ActivityLogRepositoryInterface::class)
+            )
+        );
+
+        $container->singleton(\Domain\Audit\Service\ActivityLogService::class, fn(ContainerInterface $c) =>
+            new \Domain\Audit\Service\ActivityLogService(
+                $c->get(\Domain\Audit\Repository\ActivityLogRepositoryInterface::class),
+                $c->get(\Domain\Audit\Service\AuditChainServiceInterface::class)
+            )
+        );
+        
+        $container->singleton(\Application\Listener\ActivityLogListener::class, fn(ContainerInterface $c) =>
+            new \Application\Listener\ActivityLogListener(
+                $c->get(\Domain\Audit\Service\ActivityLogService::class)
+            )
         );
 
         $container->singleton('password_service', fn() =>
@@ -131,8 +176,10 @@ final class ContainerBuilder
             
             return new JwtService($secretKey, $expiration, $issuer);
         });
+    }
 
-        // Transaction Handlers
+    private static function registerHandlers(Container $container): void
+    {
         $container->singleton(CreateTransactionHandler::class, fn(ContainerInterface $c) =>
             new CreateTransactionHandler(
                 $c->get(TransactionRepositoryInterface::class),
@@ -144,6 +191,8 @@ final class ContainerBuilder
         $container->singleton(PostTransactionHandler::class, fn(ContainerInterface $c) =>
             new PostTransactionHandler(
                 $c->get(TransactionRepositoryInterface::class),
+                $c->get(ApprovalRepositoryInterface::class),
+                $c->get(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class),
                 $c->get(EventDispatcherInterface::class)
             )
         );
@@ -151,11 +200,10 @@ final class ContainerBuilder
         $container->singleton(VoidTransactionHandler::class, fn(ContainerInterface $c) =>
             new VoidTransactionHandler(
                 $c->get(TransactionRepositoryInterface::class),
+                $c->get(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class),
                 $c->get(EventDispatcherInterface::class)
             )
         );
-
-        return $container;
     }
 }
 

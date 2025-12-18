@@ -14,6 +14,7 @@ use Domain\Approval\ValueObject\ApprovalId;
 use Domain\Approval\ValueObject\ApprovalReason;
 use Domain\Approval\ValueObject\ApprovalStatus;
 use Domain\Approval\ValueObject\ApprovalType;
+use Domain\Approval\ValueObject\CreateApprovalRequest;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\Event\DomainEvent;
@@ -29,6 +30,7 @@ final class Approval
     private ?UserId $reviewedBy = null;
     private ?DateTimeImmutable $reviewedAt = null;
     private ?string $reviewNotes = null;
+    private ?\Domain\Shared\ValueObject\Proof\ApprovalProof $proof = null;
 
     private function __construct(
         private readonly ApprovalId $id,
@@ -46,50 +48,34 @@ final class Approval
     ) {
     }
 
-    public static function request(
-        CompanyId $companyId,
-        ApprovalType $approvalType,
-        string $entityType,
-        string $entityId,
-        ApprovalReason $reason,
-        UserId $requestedBy,
-        int $amountCents = 0,
-        ?int $priority = null,
-        ?int $expirationHours = null,
-    ): self {
-        $id = ApprovalId::generate();
-        $now = new DateTimeImmutable();
-
-        $actualPriority = $priority ?? $approvalType->getDefaultPriority();
-        $actualExpirationHours = $expirationHours ?? $approvalType->getDefaultExpirationHours();
-        $expiresAt = $now->modify(sprintf('+%d hours', $actualExpirationHours));
-
+    public static function request(CreateApprovalRequest $request): self
+    {
         $approval = new self(
-            id: $id,
-            companyId: $companyId,
-            approvalType: $approvalType,
-            entityType: $entityType,
-            entityId: $entityId,
-            reason: $reason,
-            requestedBy: $requestedBy,
-            requestedAt: $now,
-            amountCents: $amountCents,
-            priority: $actualPriority,
-            expiresAt: $expiresAt,
-            status: ApprovalStatus::PENDING,
+            ApprovalId::generate(),
+            $request->companyId,
+            $request->approvalType,
+            $request->entityType,
+            $request->entityId,
+            $request->reason,
+            $request->requestedBy,
+            new DateTimeImmutable(),
+            $request->amountCents,
+            $request->priority,
+            (new DateTimeImmutable())->modify("+{$request->approvalType->getDefaultExpirationHours()} hours"),
+            ApprovalStatus::PENDING
         );
 
         $approval->recordEvent(new ApprovalRequested(
-            approvalId: $id->toString(),
-            companyId: $companyId->toString(),
-            approvalType: $approvalType->value,
-            entityType: $entityType,
-            entityId: $entityId,
-            reason: $reason->toArray(),
-            requestedBy: $requestedBy->toString(),
-            priority: $actualPriority,
-            expiresAt: $expiresAt,
-            occurredAt: $now,
+            approvalId: $approval->id()->toString(),
+            companyId: $request->companyId->toString(),
+            approvalType: $request->approvalType->value,
+            entityType: $request->entityType,
+            entityId: $request->entityId,
+            reason: $request->reason->toArray(),
+            requestedBy: $request->requestedBy->toString(),
+            priority: $request->priority,
+            expiresAt: $approval->expiresAt(),
+            occurredAt: $approval->requestedAt(),
         ));
 
         return $approval;
@@ -98,7 +84,7 @@ final class Approval
     /**
      * BR-AW-001, BR-AW-002: Only admin can approve, cannot self-approve.
      */
-    public function approve(UserId $approver, ?string $notes = null): void
+    public function approve(UserId $approver, ?string $notes = null, ?\Domain\Shared\ValueObject\Proof\ApprovalProof $proof = null): void
     {
         $this->ensureCanTransition(ApprovalStatus::APPROVED);
         $this->ensureNotSelfApproval($approver);
@@ -107,6 +93,7 @@ final class Approval
         $this->reviewedBy = $approver;
         $this->reviewedAt = new DateTimeImmutable();
         $this->reviewNotes = $notes;
+        $this->proof = $proof;
 
         $this->recordEvent(new ApprovalGranted(
             approvalId: $this->id->toString(),
@@ -116,6 +103,17 @@ final class Approval
             notes: $notes,
             occurredAt: $this->reviewedAt,
         ));
+    }
+    
+    public function proof(): ?\Domain\Shared\ValueObject\Proof\ApprovalProof
+    {
+        return $this->proof;
+    }
+    
+    // Allow reconstruction with proof (hydrator support)
+    public function setProof(\Domain\Shared\ValueObject\Proof\ApprovalProof $proof): void
+    {
+        $this->proof = $proof;
     }
 
     /**
@@ -285,6 +283,10 @@ final class Approval
 
     private function ensureNotSelfApproval(UserId $reviewer): void
     {
+        if ($this->approvalType->isTransactionPosting()) {
+            return;
+        }
+
         if ($this->requestedBy->equals($reviewer)) {
             throw new BusinessRuleException('Cannot approve or reject your own request');
         }

@@ -149,7 +149,8 @@ final class MysqlApprovalRepository extends AbstractMysqlRepository implements A
                     status = :status,
                     reviewed_by = :reviewed_by,
                     reviewed_at = :reviewed_at,
-                    review_notes = :review_notes
+                    review_notes = :review_notes,
+                    proof_json = :proof_json
                 WHERE id = :id
             SQL;
 
@@ -159,17 +160,18 @@ final class MysqlApprovalRepository extends AbstractMysqlRepository implements A
                 'reviewed_by' => $data['reviewed_by'],
                 'reviewed_at' => $data['reviewed_at'],
                 'review_notes' => $data['review_notes'],
+                'proof_json' => $data['proof_json'],
             ]);
         } else {
             $sql = <<<SQL
                 INSERT INTO approvals (
                     id, company_id, approval_type, entity_type, entity_id, reason,
                     requested_by, requested_at, amount_cents, priority, expires_at, status,
-                    reviewed_by, reviewed_at, review_notes
+                    reviewed_by, reviewed_at, review_notes, proof_json
                 ) VALUES (
                     :id, :company_id, :approval_type, :entity_type, :entity_id, :reason,
                     :requested_by, :requested_at, :amount_cents, :priority, :expires_at, :status,
-                    :reviewed_by, :reviewed_at, :review_notes
+                    :reviewed_by, :reviewed_at, :review_notes, :proof_json
                 )
             SQL;
 

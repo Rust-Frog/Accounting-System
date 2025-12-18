@@ -94,33 +94,13 @@ final class TransactionController
             return JsonResponse::error('Company ID and authentication required', 400);
         }
 
-        // Validate required fields
-        if (empty($body['description'])) {
-            return JsonResponse::error('Missing required field: description', 422);
-        }
-
-        if (empty($body['lines']) || !is_array($body['lines']) || count($body['lines']) < 2) {
-            return JsonResponse::error('At least 2 transaction lines required', 422);
+        $errorResponse = $this->validateCreateRequest($body);
+        if ($errorResponse !== null) {
+            return $errorResponse;
         }
 
         try {
-            // Build line data for command
-            $lines = [];
-            foreach ($body['lines'] as $line) {
-                if (empty($line['account_id']) || empty($line['line_type']) || !isset($line['amount_cents'])) {
-                    return JsonResponse::error(
-                        'Invalid line: account_id, line_type, amount_cents required', 
-                        422
-                    );
-                }
-
-                $lines[] = new TransactionLineData(
-                    accountId: $line['account_id'],
-                    lineType: $line['line_type'], // 'debit' or 'credit'
-                    amountCents: (int) $line['amount_cents'],
-                    description: $line['description'] ?? '',
-                );
-            }
+            $lines = $this->parseTransactionLines($body['lines']);
 
             $command = new CreateTransactionCommand(
                 companyId: $companyId,
@@ -140,54 +120,93 @@ final class TransactionController
         }
     }
 
-    /**
-     * POST /api/v1/companies/{companyId}/transactions/{id}/post
-     */
-    public function post(ServerRequestInterface $request): ResponseInterface
+    private function validateCreateRequest(array $body): ?ResponseInterface
     {
-        $id = $request->getAttribute('id');
-        $userId = $request->getAttribute('user_id');
-
-        if ($id === null || $userId === null) {
-            return JsonResponse::error('Transaction ID and authentication required', 400);
+        if (empty($body['description'])) {
+            return JsonResponse::error('Missing required field: description', 422);
         }
 
-        try {
-            $command = new PostTransactionCommand(
-                transactionId: $id,
-                postedBy: $userId,
-            );
-
-            $dto = $this->postHandler->handle($command);
-
-            return JsonResponse::success($dto->toArray());
-        } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+        if (!$this->hasValidLines($body)) {
+            return JsonResponse::error('At least 2 transaction lines required', 422);
         }
+
+        return null;
+    }
+
+    private function hasValidLines(array $body): bool
+    {
+        return !empty($body['lines']) 
+            && is_array($body['lines']) 
+            && count($body['lines']) >= 2;
     }
 
     /**
-     * POST /api/v1/companies/{companyId}/transactions/{id}/void
+     * @return TransactionLineData[]
+     * @throws \InvalidArgumentException
      */
+    private function parseTransactionLines(array $linesData): array
+    {
+        $lines = [];
+        foreach ($linesData as $line) {
+            if (!$this->isValidLine($line)) {
+                throw new \InvalidArgumentException('Invalid line: account_id, line_type, amount_cents required');
+            }
+
+            $lines[] = new TransactionLineData(
+                accountId: $line['account_id'],
+                lineType: $line['line_type'], // 'debit' or 'credit'
+                amountCents: (int) $line['amount_cents'],
+                description: $line['description'] ?? '',
+            );
+        }
+        return $lines;
+    }
+
+    private function isValidLine(array $line): bool
+    {
+        return !empty($line['account_id']) 
+            && !empty($line['line_type']) 
+            && isset($line['amount_cents']);
+    }
+
+    public function post(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->handleTransactionAction(
+            $request,
+            fn($id, $userId) => $this->postHandler->handle(
+                new PostTransactionCommand($id, $userId)
+            )
+        );
+    }
+
     public function void(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->handleTransactionAction(
+            $request,
+            function ($id, $userId, $request) {
+                $body = $request->getParsedBody();
+                return $this->voidHandler->handle(
+                    new VoidTransactionCommand(
+                        $id,
+                        $userId,
+                        $body['reason'] ?? 'Voided via API'
+                    )
+                );
+            }
+        );
+    }
+
+    private function handleTransactionAction(ServerRequestInterface $request, callable $action): ResponseInterface
     {
         $id = $request->getAttribute('id');
         $userId = $request->getAttribute('user_id');
-        $body = $request->getParsedBody();
 
         if ($id === null || $userId === null) {
             return JsonResponse::error('Transaction ID and authentication required', 400);
         }
 
         try {
-            $command = new VoidTransactionCommand(
-                transactionId: $id,
-                voidedBy: $userId,
-                reason: $body['reason'] ?? 'Voided via API',
-            );
-
-            $dto = $this->voidHandler->handle($command);
-
+            $dto = $action($id, $userId, $request);
             return JsonResponse::success($dto->toArray());
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 400);

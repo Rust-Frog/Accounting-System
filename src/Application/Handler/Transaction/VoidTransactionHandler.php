@@ -25,6 +25,7 @@ final readonly class VoidTransactionHandler implements HandlerInterface
 {
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository,
+        private \Domain\Ledger\Repository\JournalEntryRepositoryInterface $journalEntryRepository,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -50,6 +51,34 @@ final readonly class VoidTransactionHandler implements HandlerInterface
 
         // Persist
         $this->transactionRepository->save($transaction);
+
+        // --- IMMUTABLE LEDGER REVERSAL ---
+        // Get latest chain hash
+        $previousHash = $this->journalEntryRepository->getLatestHash($transaction->companyId());
+
+        // Create reversing bookings
+        $bookings = [];
+        foreach ($transaction->lines() as $line) {
+            $reversedType = ($line->lineType()->value === 'debit') ? 'credit' : 'debit';
+            $bookings[] = [
+                'account_id' => $line->accountId()->toString(),
+                'type' => $reversedType, // FLIPPED for reversal
+                'amount' => $line->amount()->cents()
+            ];
+        }
+
+        // Create Journal Entry
+        $journalEntry = \Domain\Ledger\Entity\JournalEntry::create(
+            companyId: $transaction->companyId(),
+            transactionId: $transaction->id(),
+            entryType: 'REVERSAL', // Explicit reversal
+            bookings: $bookings,
+            occurredAt: new \DateTimeImmutable(),
+            previousHash: $previousHash
+        );
+
+        $this->journalEntryRepository->save($journalEntry);
+        // --------------------------------
 
         // Dispatch events
         foreach ($transaction->releaseEvents() as $event) {

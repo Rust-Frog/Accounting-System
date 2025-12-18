@@ -68,6 +68,34 @@ final class ApprovalHydrator
             $row['reviewed_at'] !== null ? new DateTimeImmutable($row['reviewed_at']) : null
         );
         $this->setProperty($reflection, $approval, 'reviewNotes', $row['review_notes']);
+        
+        if (isset($row['proof_json']) && $row['proof_json']) {
+            $proofData = json_decode($row['proof_json'], true);
+            // We need a way to reconstruct ApprovalProof from array.
+            // ApprovalProof::computeProofHash implementation suggests keys.
+            // We need a fromArray/reconstruct method on ApprovalProof to be clean, 
+            // or pass args to constructor via reflection if needed (it is final with private ctor).
+            // But ApprovalProof is in Domain. Hydrator is Infrastructure.
+            // Let's assume we can use reflection or add a static reconstruct method to ApprovalProof.
+            // I'll assume reflection for now since it's used elsewhere here.
+            
+            $proofReflector = new ReflectionClass(\Domain\Shared\ValueObject\Proof\ApprovalProof::class);
+            $proof = $proofReflector->newInstanceWithoutConstructor();
+            
+            $this->setProperty($proofReflector, $proof, 'proofId', $proofData['proof_id']);
+            $this->setProperty($proofReflector, $proof, 'entityType', $proofData['entity_type']);
+            $this->setProperty($proofReflector, $proof, 'entityId', $proofData['entity_id']);
+            $this->setProperty($proofReflector, $proof, 'approvalType', $proofData['approval_type']);
+            $this->setProperty($proofReflector, $proof, 'approverId', UserId::fromString($proofData['approver_id']));
+            $this->setProperty($proofReflector, $proof, 'entityHash', \Domain\Shared\ValueObject\HashChain\ContentHash::fromString($proofData['entity_hash'])); // Assuming fromString works on hash val
+            $this->setProperty($proofReflector, $proof, 'approvedAt', new DateTimeImmutable($proofData['approved_at']));
+            $this->setProperty($proofReflector, $proof, 'notes', $proofData['notes'] ?? null);
+            
+            $this->setProperty($reflection, $approval, 'proof', $proof);
+        } else {
+            $this->setProperty($reflection, $approval, 'proof', null);
+        }
+        
         $this->setProperty($reflection, $approval, 'domainEvents', []);
 
         return $approval;
@@ -96,6 +124,7 @@ final class ApprovalHydrator
             'reviewed_by' => $approval->reviewedBy()?->toString(),
             'reviewed_at' => $approval->reviewedAt()?->format('Y-m-d H:i:s'),
             'review_notes' => $approval->reviewNotes(),
+            'proof_json' => $approval->proof() ? json_encode($approval->proof()) : null,
         ];
     }
 

@@ -280,6 +280,34 @@ final class Transaction
         return false;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function toContentArray(): array
+    {
+        $linesData = [];
+        foreach ($this->lines as $line) {
+            $linesData[] = [
+                'account_id' => $line->accountId()->toString(),
+                'line_type' => $line->lineType()->value,
+                'amount_cents' => $line->amount()->cents(),
+                'description' => $line->description(),
+            ];
+        }
+        
+        // Sort lines by something deterministic? 
+        // For now, rely on insertion order as critical content.
+        
+        return [
+            'id' => $this->id->toString(),
+            'company_id' => $this->companyId->toString(),
+            'transaction_date' => $this->transactionDate->format('Y-m-d'),
+            'description' => $this->description,
+            'reference_number' => $this->referenceNumber,
+            'lines' => $linesData,
+        ];
+    }
+
     private function ensureCanModify(): void
     {
         if ($this->status->isVoided()) {

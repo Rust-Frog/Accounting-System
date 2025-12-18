@@ -79,16 +79,20 @@ $router = new Router();
 $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
 $router->addMiddleware(new ErrorHandlerMiddleware($debug));
 $router->addMiddleware(new CorsMiddleware());
+$router->addMiddleware(new \Api\Middleware\InputSanitizationMiddleware());
 $router->addMiddleware(new AuthenticationMiddleware(
     $container->get(AuthenticationServiceInterface::class),
     $container->get(\Infrastructure\Service\JwtService::class),
     ['/api/v1/auth/register', '/api/v1/auth/login', '/api/v1/', '/']
 ));
+$router->addMiddleware(new \Api\Middleware\RoleEnforcementMiddleware());
+$router->addMiddleware(new \Api\Middleware\CompanyScopingMiddleware(
+    $container->get(UserRepositoryInterface::class)
+));
 
 // API Info route
-$router->get('/', fn() => new \Api\Response\JsonResponse([
-    'status' => 'success',
-    'message' => 'Accounting System API',
+$router->get('/', fn() => \Api\Response\JsonResponse::success([
+    'service' => 'Accounting System API',
     'version' => '2.0.0',
     'endpoints' => [
         'auth' => '/api/v1/auth',

@@ -11,6 +11,8 @@ use Domain\Audit\ValueObject\ActivityType;
 use Domain\Audit\ValueObject\Actor;
 use Domain\Audit\ValueObject\RequestContext;
 use Domain\Company\ValueObject\CompanyId;
+use Domain\Shared\ValueObject\HashChain\ChainLink;
+use Domain\Shared\ValueObject\HashChain\ContentHash;
 use Infrastructure\Persistence\Mysql\Repository\MysqlActivityLogRepository;
 use Tests\Integration\BaseIntegrationTestCase;
 use Tests\Integration\DatabaseTestHelper;
@@ -44,7 +46,14 @@ class MysqlActivityLogRepositoryTest extends BaseIntegrationTestCase
             ['name' => 'Cash', 'code' => '1001'],
             [],
             RequestContext::empty(),
-            new DateTimeImmutable()
+            new DateTimeImmutable(),
+            ContentHash::fromContent('dummy_content'),
+            ContentHash::fromContent('previous_hash'),
+            new ChainLink(
+                ContentHash::fromContent('previous_hash'), 
+                ContentHash::fromContent('dummy_content'), 
+                new DateTimeImmutable()
+            )
         );
 
         $this->repository->save($log);
@@ -73,7 +82,10 @@ class MysqlActivityLogRepositoryTest extends BaseIntegrationTestCase
             ['name' => 'Accounts Receivable'],
             [],
             RequestContext::empty(),
-            new DateTimeImmutable()
+            new DateTimeImmutable(),
+            ContentHash::fromContent('dummy1'),
+            ContentHash::fromContent('prev1'),
+            new ChainLink(ContentHash::fromContent('prev1'), ContentHash::fromContent('dummy1'), new DateTimeImmutable())
         );
 
         $log2 = new ActivityLog(
@@ -88,7 +100,10 @@ class MysqlActivityLogRepositoryTest extends BaseIntegrationTestCase
             ['amount' => 5000],
             [],
             RequestContext::empty(),
-            new DateTimeImmutable()
+            new DateTimeImmutable(),
+            ContentHash::fromContent('dummy2'),
+            ContentHash::fromContent('prev2'),
+            new ChainLink(ContentHash::fromContent('prev2'), ContentHash::fromContent('dummy2'), new DateTimeImmutable())
         );
 
         $this->repository->save($log1);

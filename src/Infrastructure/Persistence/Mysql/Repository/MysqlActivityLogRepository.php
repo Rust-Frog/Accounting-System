@@ -39,11 +39,13 @@ final class MysqlActivityLogRepository extends AbstractMysqlRepository implement
             INSERT INTO activity_logs (
                 id, company_id, actor_user_id, actor_username, actor_ip_address,
                 actor_user_agent, activity_type, severity, entity_type, entity_id,
-                changes_json, request_id, correlation_id, occurred_at
+                changes_json, request_id, correlation_id, occurred_at,
+                content_hash, previous_hash, chain_hash
             ) VALUES (
                 :id, :company_id, :actor_user_id, :actor_username, :actor_ip_address,
                 :actor_user_agent, :activity_type, :severity, :entity_type, :entity_id,
-                :changes_json, :request_id, :correlation_id, :occurred_at
+                :changes_json, :request_id, :correlation_id, :occurred_at,
+                :content_hash, :previous_hash, :chain_hash
             )
         SQL;
 
@@ -119,6 +121,24 @@ final class MysqlActivityLogRepository extends AbstractMysqlRepository implement
             'company_id = :company_id',
             ['company_id' => $companyId->toString()],
             $limit
+        );
+    }
+
+    /**
+     * @return array<ActivityLog>
+     */
+    public function findByCompany(
+        CompanyId $companyId,
+        int $limit = 100,
+        int $offset = 0,
+        string $sortOrder = 'DESC'
+    ): array {
+        return $this->findWhere(
+            'company_id = :company_id',
+            ['company_id' => $companyId->toString()],
+            $limit,
+            $offset,
+            'occurred_at ' . $sortOrder
         );
     }
 

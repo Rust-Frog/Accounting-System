@@ -35,15 +35,16 @@ class MysqlApprovalRepositoryTest extends BaseIntegrationTestCase
         $userId = UserId::generate();
         $this->createUser($this->pdo, $userId->toString(), $companyId->toString());
 
-        $approval = Approval::request(
+        $approval = Approval::request(new \Domain\Approval\ValueObject\CreateApprovalRequest(
             $companyId,
             ApprovalType::HIGH_VALUE,
             'Transaction',
             'txn-12345',
             ApprovalReason::highValue(100000, 50000),
             $userId,
-            100000
-        );
+            100000,
+            1 
+        ));
 
         $this->repository->save($approval);
 
@@ -62,24 +63,27 @@ class MysqlApprovalRepositoryTest extends BaseIntegrationTestCase
         $userId = UserId::generate();
         $this->createUser($this->pdo, $userId->toString(), $companyId->toString());
 
-        $approval1 = Approval::request(
+        $approval1 = Approval::request(new \Domain\Approval\ValueObject\CreateApprovalRequest(
             $companyId,
             ApprovalType::HIGH_VALUE,
             'Transaction',
             'txn-001',
             ApprovalReason::highValue(80000, 50000),
             $userId,
-            80000
-        );
+            80000,
+            1
+        ));
 
-        $approval2 = Approval::request(
+        $approval2 = Approval::request(new \Domain\Approval\ValueObject\CreateApprovalRequest(
             $companyId,
             ApprovalType::NEGATIVE_EQUITY,
             'Account',
             'acc-001',
             ApprovalReason::negativeEquity('Cash', -5000),
-            $userId
-        );
+            $userId,
+            0,
+            2
+        ));
 
         $this->repository->save($approval1);
         $this->repository->save($approval2);

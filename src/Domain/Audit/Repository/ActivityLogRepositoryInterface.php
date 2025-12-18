@@ -47,5 +47,15 @@ interface ActivityLogRepositoryInterface
      */
     public function getRecent(CompanyId $companyId, int $limit = 100): array;
 
+    /**
+     * @return array<ActivityLog>
+     */
+    public function findByCompany(
+        CompanyId $companyId,
+        int $limit = 100,
+        int $offset = 0,
+        string $sortOrder = 'DESC'
+    ): array;
+
     // NOTE: No update or delete methods - audit logs are immutable
 }

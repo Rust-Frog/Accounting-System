@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace Domain\Shared\ValueObject\HashChain;
 
 use DateTimeImmutable;
-use JsonSerializable;
 
 /**
- * Represents a link in a hash chain.
- * Contains the previous hash, current content hash, and timestamp.
- * The computed hash of this link becomes the "previous hash" for the next entry.
+ * A link in the immutable hash chain.
  */
-final class ChainLink implements JsonSerializable
+final class ChainLink
 {
     public function __construct(
         private readonly ContentHash $previousHash,
         private readonly ContentHash $contentHash,
         private readonly DateTimeImmutable $timestamp
-    ) {
-    }
+    ) {}
 
     public function previousHash(): ContentHash
     {
@@ -36,9 +32,11 @@ final class ChainLink implements JsonSerializable
         return $this->timestamp;
     }
 
-    /**
-     * Compute the hash of this link (becomes previous hash for next entry).
-     */
+    public function verify(ContentHash $previousHash): bool
+    {
+        return $this->previousHash->equals($previousHash);
+    }
+
     public function computeHash(): ContentHash
     {
         return ContentHash::fromContent(
@@ -46,26 +44,5 @@ final class ChainLink implements JsonSerializable
             $this->contentHash->toString() .
             $this->timestamp->format('Y-m-d H:i:s.u')
         );
-    }
-
-    /**
-     * Verify that this link correctly chains to the expected previous hash.
-     */
-    public function verify(ContentHash $expectedPreviousHash): bool
-    {
-        return $this->previousHash->equals($expectedPreviousHash);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'previous_hash' => $this->previousHash->toString(),
-            'content_hash' => $this->contentHash->toString(),
-            'timestamp' => $this->timestamp->format('Y-m-d H:i:s.u'),
-            'link_hash' => $this->computeHash()->toString(),
-        ];
     }
 }

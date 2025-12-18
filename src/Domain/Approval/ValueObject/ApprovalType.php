@@ -13,6 +13,7 @@ enum ApprovalType: string
     case ACCOUNT_DEACTIVATION = 'account_deactivation';
     case VOID_TRANSACTION = 'void_transaction';
     case BACKDATED_TRANSACTION = 'backdated_transaction';
+    case TRANSACTION_POSTING = 'transaction_posting';
 
     /**
      * Get default priority for this approval type.
@@ -26,6 +27,7 @@ enum ApprovalType: string
             self::HIGH_VALUE => 2,
             self::BACKDATED_TRANSACTION => 3,
             self::TRANSACTION => 3,
+            self::TRANSACTION_POSTING => 3,
             self::USER_REGISTRATION => 4,
             self::ACCOUNT_DEACTIVATION => 4,
         };
@@ -40,7 +42,13 @@ enum ApprovalType: string
             self::VOID_TRANSACTION => 4,
             self::NEGATIVE_EQUITY, self::HIGH_VALUE => 24,
             self::TRANSACTION, self::BACKDATED_TRANSACTION => 48,
+            self::TRANSACTION_POSTING => 48,
             self::USER_REGISTRATION, self::ACCOUNT_DEACTIVATION => 72,
         };
+    }
+
+    public function isTransactionPosting(): bool
+    {
+        return $this === self::TRANSACTION_POSTING;
     }
 }

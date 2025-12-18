@@ -36,7 +36,10 @@ final readonly class ActivityLog
         private array $newState,
         private array $changes,
         private RequestContext $context,
-        private DateTimeImmutable $occurredAt
+        private DateTimeImmutable $occurredAt,
+        private ?\Domain\Shared\ValueObject\HashChain\ContentHash $contentHash = null,
+        private ?\Domain\Shared\ValueObject\HashChain\ContentHash $previousHash = null,
+        private ?\Domain\Shared\ValueObject\HashChain\ChainLink $chainLink = null
     ) {
     }
 
@@ -119,10 +122,25 @@ final readonly class ActivityLog
         return \Domain\Audit\Service\ActivityClassification::getSeverity($this->activityType);
     }
 
+    public function contentHash(): ?\Domain\Shared\ValueObject\HashChain\ContentHash
+    {
+        return $this->contentHash;
+    }
+
+    public function previousHash(): ?\Domain\Shared\ValueObject\HashChain\ContentHash
+    {
+        return $this->previousHash;
+    }
+
+    public function chainLink(): ?\Domain\Shared\ValueObject\HashChain\ChainLink
+    {
+        return $this->chainLink;
+    }
+
     /**
      * @return array<string, mixed>
      */
-    public function toArray(): array
+    public function toContentArray(): array
     {
         return [
             'id' => $this->id->toString(),
@@ -140,5 +158,18 @@ final readonly class ActivityLog
             'category' => $this->category(),
             'occurred_at' => $this->occurredAt->format('Y-m-d H:i:s'),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        $data = $this->toContentArray();
+        $data['content_hash'] = $this->contentHash?->toString();
+        $data['previous_hash'] = $this->previousHash?->toString();
+        $data['chain_hash'] = $this->chainLink?->computeHash()->toString();
+        
+        return $data;
     }
 }

@@ -47,9 +47,9 @@ trait DatabaseTestHelper
     protected function createTransactionLine(PDO $pdo, string $id, string $transactionId, string $accountId, int $amount, string $type): void
     {
          $stmt = $pdo->prepare("INSERT INTO transaction_lines (
-            id, transaction_id, account_id, amount_cents, line_type, description, created_at
+            id, transaction_id, account_id, amount_cents, line_type, description
         ) VALUES (
-            :id, :transaction_id, :account_id, :amount, :type, 'Line', NOW()
+            :id, :transaction_id, :account_id, :amount, :type, 'Line'
         )");
         $stmt->execute([
             'id' => $id,

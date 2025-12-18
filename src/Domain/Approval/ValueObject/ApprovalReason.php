@@ -63,12 +63,34 @@ final readonly class ApprovalReason
 
     public static function voidTransaction(string $transactionNumber): self
     {
-        return new self(
+        return self::createTransactionRequest(
             ApprovalType::VOID_TRANSACTION,
-            sprintf('Request to void transaction %s', $transactionNumber),
-            [
-                'transaction_number' => $transactionNumber,
-            ]
+            'void',
+            $transactionNumber,
+            'transaction_number'
+        );
+    }
+
+    public static function transactionPosting(string $transactionId): self
+    {
+        return self::createTransactionRequest(
+            ApprovalType::TRANSACTION_POSTING,
+            'post',
+            $transactionId,
+            'transaction_id'
+        );
+    }
+
+    private static function createTransactionRequest(
+        ApprovalType $type,
+        string $actionVerb,
+        string $id,
+        string $idKey
+    ): self {
+        return new self(
+            $type,
+            sprintf('Request to %s transaction %s', $actionVerb, $id),
+            [$idKey => $id]
         );
     }
 

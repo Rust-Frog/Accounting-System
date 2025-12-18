@@ -79,7 +79,14 @@ final class ActivityLogHydrator
             newState: $changesJson['new_state'] ?? [],
             changes: $changes,
             context: $context,
-            occurredAt: new DateTimeImmutable($row['occurred_at'])
+            occurredAt: new DateTimeImmutable($row['occurred_at']),
+            contentHash: isset($row['content_hash']) ? \Domain\Shared\ValueObject\HashChain\ContentHash::fromString($row['content_hash']) : null,
+            previousHash: isset($row['previous_hash']) ? \Domain\Shared\ValueObject\HashChain\ContentHash::fromString($row['previous_hash']) : null,
+            chainLink: isset($row['chain_hash']) ? new \Domain\Shared\ValueObject\HashChain\ChainLink(
+                \Domain\Shared\ValueObject\HashChain\ContentHash::fromString($row['previous_hash']),
+                \Domain\Shared\ValueObject\HashChain\ContentHash::fromString($row['content_hash']),
+                new DateTimeImmutable($row['occurred_at'])
+            ) : null
         );
     }
 
@@ -114,6 +121,9 @@ final class ActivityLogHydrator
             'request_id' => $log->context()->requestId(),
             'correlation_id' => $log->context()->correlationId(),
             'occurred_at' => $log->occurredAt()->format('Y-m-d H:i:s'),
+            'content_hash' => $log->contentHash()?->toString() ?? '',
+            'previous_hash' => $log->previousHash()?->toString() ?? '',
+            'chain_hash' => $log->chainLink()?->computeHash()->toString() ?? '',
         ];
     }
 

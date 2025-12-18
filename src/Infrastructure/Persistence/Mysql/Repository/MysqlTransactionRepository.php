@@ -293,7 +293,20 @@ final class MysqlTransactionRepository extends AbstractMysqlRepository implement
             WHERE id = :id
         SQL;
 
-        $this->execute($sql, $data);
+        $params = [
+            'transaction_date' => $data['transaction_date'],
+            'description' => $data['description'],
+            'reference_number' => $data['reference_number'],
+            'status' => $data['status'],
+            'posted_by' => $data['posted_by'],
+            'posted_at' => $data['posted_at'],
+            'voided_by' => $data['voided_by'],
+            'voided_at' => $data['voided_at'],
+            'void_reason' => $data['void_reason'],
+            'id' => $data['id'],
+        ];
+
+        $this->execute($sql, $params);
     }
 
     /**

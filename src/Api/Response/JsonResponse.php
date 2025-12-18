@@ -60,19 +60,36 @@ final class JsonResponse implements ResponseInterface
      */
     public static function success(mixed $data, int $status = 200): self
     {
-        return new self(['status' => 'success', 'data' => $data], $status);
+        return new self([
+            'success' => true,
+            'data' => $data,
+            'meta' => self::generateMeta(),
+        ], $status);
     }
 
     /**
      * Create an error response.
      */
-    public static function error(string $message, int $status = 400, ?array $details = null): self
-    {
-        $payload = ['status' => 'error', 'message' => $message];
+    public static function error(
+        string $message,
+        int $status = 400,
+        ?array $details = null,
+        string $code = 'ERROR'
+    ): self {
+        $error = [
+            'code' => $code,
+            'message' => $message,
+        ];
+
         if ($details !== null) {
-            $payload['details'] = $details;
+            $error['details'] = $details;
         }
-        return new self($payload, $status);
+
+        return new self([
+            'success' => false,
+            'error' => $error,
+            'meta' => self::generateMeta(),
+        ], $status);
     }
 
     /**
@@ -81,7 +98,11 @@ final class JsonResponse implements ResponseInterface
     public static function created(mixed $data, ?string $location = null): self
     {
         $headers = $location !== null ? ['Location' => $location] : [];
-        return new self(['status' => 'success', 'data' => $data], 201, $headers);
+        return new self([
+            'success' => true,
+            'data' => $data,
+            'meta' => self::generateMeta(),
+        ], 201, $headers);
     }
 
     /**
@@ -100,10 +121,26 @@ final class JsonResponse implements ResponseInterface
     public static function validationError(array $errors): self
     {
         return new self([
-            'status' => 'error',
-            'message' => 'Validation failed',
-            'errors' => $errors,
+            'success' => false,
+            'error' => [
+                'code' => 'VALIDATION_ERROR',
+                'message' => 'Validation failed',
+                'details' => $errors,
+            ],
+            'meta' => self::generateMeta(),
         ], 422);
+    }
+
+    /**
+     * Generate standard metadata.
+     * @return array{timestamp: string, requestId: string}
+     */
+    private static function generateMeta(): array
+    {
+        return [
+            'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+            'requestId' => uniqid('req_', true),
+        ];
     }
 
     // PSR-7 ResponseInterface implementation

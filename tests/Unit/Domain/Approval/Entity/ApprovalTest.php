@@ -144,7 +144,7 @@ final class ApprovalTest extends TestCase
 
     private function createApproval(): Approval
     {
-        return Approval::request(
+        return Approval::request(new \Domain\Approval\ValueObject\CreateApprovalRequest(
             companyId: $this->companyId,
             approvalType: ApprovalType::NEGATIVE_EQUITY,
             entityType: 'Transaction',
@@ -152,6 +152,7 @@ final class ApprovalTest extends TestCase
             reason: ApprovalReason::negativeEquity("Owner's Capital", -50000),
             requestedBy: $this->requesterId,
             amountCents: 550000,
-        );
+            priority: 2
+        ));
     }
 }

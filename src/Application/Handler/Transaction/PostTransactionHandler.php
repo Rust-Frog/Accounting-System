@@ -25,6 +25,8 @@ final readonly class PostTransactionHandler implements HandlerInterface
 {
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository,
+        private \Domain\Approval\Repository\ApprovalRepositoryInterface $approvalRepository,
+        private \Domain\Ledger\Repository\JournalEntryRepositoryInterface $journalEntryRepository,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -42,20 +44,84 @@ final readonly class PostTransactionHandler implements HandlerInterface
             throw new EntityNotFoundException("Transaction not found: {$command->transactionId}");
         }
 
+        $userId = UserId::fromString($command->postedBy);
+
+        // 1. Create Approval Proof
+        $contentHash = \Domain\Shared\ValueObject\HashChain\ContentHash::fromArray($transaction->toContentArray());
+        $proof = \Domain\Shared\ValueObject\Proof\ApprovalProof::create(
+            entityType: 'transaction',
+            entityId: $transactionId->toString(),
+            approvalType: 'posting_authorization', // Custom type for this
+            approverId: $userId,
+            entityHash: $contentHash,
+            notes: 'Automated proof generation during transaction posting'
+        );
+
+        // 2. Create Approval Entity (Implicitly approved)
+        // We use the request() factory then approve() immediately.
+        $approval = \Domain\Approval\Entity\Approval::request(
+            new \Domain\Approval\ValueObject\CreateApprovalRequest(
+                companyId: $transaction->companyId(),
+                approvalType: \Domain\Approval\ValueObject\ApprovalType::TRANSACTION_POSTING,
+                entityType: 'transaction',
+                entityId: $transactionId->toString(),
+                reason: \Domain\Approval\ValueObject\ApprovalReason::transactionPosting($transactionId->toString()),
+                requestedBy: $userId,
+                amountCents: $transaction->totalDebits()->cents(),
+                priority: 1 // High
+            )
+        );
+
+        $approval->approve($userId, 'Auto-approved via PostTransaction', $proof);
+        $this->approvalRepository->save($approval);
+
         // Post transaction
-        $transaction->post(UserId::fromString($command->postedBy));
+        $transaction->post($userId);
 
         // Persist
         $this->transactionRepository->save($transaction);
+
+        // --- IMMUTABLE LEDGER ENTRY ---
+        // Get latest chain hash for company
+        $previousHash = $this->journalEntryRepository->getLatestHash($transaction->companyId());
+        
+        // Serialize bookings from transaction lines
+        $bookings = [];
+        foreach ($transaction->lines() as $line) {
+            $bookings[] = [
+                'account_id' => $line->accountId()->toString(),
+                'type' => $line->lineType()->value,
+                'amount' => $line->amount()->cents()
+            ];
+        }
+
+        // Create Journal Entry
+        $journalEntry = \Domain\Ledger\Entity\JournalEntry::create(
+            companyId: $transaction->companyId(),
+            transactionId: $transaction->id(),
+            entryType: 'POSTING',
+            bookings: $bookings,
+            occurredAt: new \DateTimeImmutable(), // Now
+            previousHash: $previousHash
+        );
+
+        $this->journalEntryRepository->save($journalEntry);
+        // -----------------------------
 
         // Dispatch events
         foreach ($transaction->releaseEvents() as $event) {
             $this->eventDispatcher->dispatch($event);
         }
+        
+        // Also release approval events?
+        foreach ($approval->releaseEvents() as $event) {
+            $this->eventDispatcher->dispatch($event);
+        }
 
         return $this->toDto($transaction);
     }
-
+    
+    // ... toDto ...
     private function toDto(Transaction $transaction): TransactionDto
     {
         $lines = [];
@@ -69,13 +135,13 @@ final readonly class PostTransactionHandler implements HandlerInterface
                 lineType: $line->lineType()->value,
                 amountCents: $line->amount()->cents(),
                 lineOrder: $i++,
-                description: $line->description() ?? '' // Description is nullable in entity but string in DTO? Check entity.
+                description: $line->description() ?? '' 
             );
         }
 
         return new TransactionDto(
             id: $transaction->id()->toString(),
-            transactionNumber: $transaction->id()->toString(), // Mapping ID to transactionNumber
+            transactionNumber: $transaction->id()->toString(), 
             companyId: $transaction->companyId()->toString(),
             status: $transaction->status()->value,
             description: $transaction->description(),
