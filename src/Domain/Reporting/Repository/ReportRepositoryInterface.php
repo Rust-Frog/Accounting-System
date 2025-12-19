@@ -16,16 +16,11 @@ interface ReportRepositoryInterface
 {
     /**
      * Save generated report for history.
-     *
-    /**
-     * Save generated report for history.
      */
-    public function save(\Domain\Reporting\Entity\Report $report): void;
+    public function save(Report $report): void;
 
     /**
      * Find report by ID.
-     *
-     * @return array<string, mixed>|null
      */
     public function findById(ReportId $id): ?Report;
 
