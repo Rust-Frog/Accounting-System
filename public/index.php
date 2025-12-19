@@ -51,7 +51,8 @@ $redis = $container->get(\Predis\ClientInterface::class);
 // Create controllers
 $authController = new AuthController(
     $container->get(AuthenticationServiceInterface::class),
-    $container->get(UserRepositoryInterface::class)
+    $container->get(UserRepositoryInterface::class),
+    $container->get(\Infrastructure\Service\TotpService::class)
 );
 
 $companyController = new CompanyController(

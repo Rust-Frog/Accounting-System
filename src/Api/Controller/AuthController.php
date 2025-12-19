@@ -21,7 +21,8 @@ final class AuthController
 {
     public function __construct(
         private readonly AuthenticationServiceInterface $authService,
-        private readonly UserRepositoryInterface $userRepository
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly \Infrastructure\Service\TotpService $totpService
     ) {
     }
 
@@ -140,8 +141,7 @@ final class AuthController
 
     private function verifyOtp(User $user, string $code): bool
     {
-        $totpService = new \Infrastructure\Service\TotpService();
-        return $totpService->verify($user->otpSecret(), $code);
+        return $this->totpService->verify($user->otpSecret(), $code);
     }
 
     /**
