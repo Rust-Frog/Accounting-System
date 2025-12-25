@@ -118,12 +118,11 @@ final class RoleEnforcementMiddleware
      */
     private function matchesPattern(string $routeKey, string $pattern): bool
     {
-        // Convert pattern wildcards to regex
-        $regex = '/^' . str_replace(
-            ['/', '*'],
-            ['\/', '[^\/]+'],
-            $pattern
-        ) . '$/';
+        // First escape all regex special characters in the pattern
+        $escaped = preg_quote($pattern, '/');
+
+        // Then convert our escaped wildcard (\*) back to regex pattern for matching any path segment
+        $regex = '/^' . str_replace('\*', '[^\/]+', $escaped) . '$/';
 
         return preg_match($regex, $routeKey) === 1;
     }
