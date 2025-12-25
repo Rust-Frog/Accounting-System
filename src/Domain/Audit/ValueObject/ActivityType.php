@@ -49,4 +49,7 @@ enum ActivityType: string
     case DATA_EXPORTED = 'data_exported';
     case BACKUP_CREATED = 'backup_created';
 
+    // Security
+    case SECURITY_ACCESS_DENIED = 'security_access_denied';
+
 }

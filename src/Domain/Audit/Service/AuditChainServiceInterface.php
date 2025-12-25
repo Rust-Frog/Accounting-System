@@ -38,4 +38,12 @@ interface AuditChainServiceInterface
      * Compute and store the content hash for an activity log entry.
      */
     public function computeEntryHash(ActivityLog $log): ContentHash;
+
+    /**
+     * Log a security-related event for audit trail.
+     *
+     * @param string $eventType Type of security event (access_denied, login_failed, etc)
+     * @param array<string, mixed> $context Event context data
+     */
+    public function logSecurityEvent(string $eventType, array $context): void;
 }

@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace Infrastructure\Service;
 
+use DateTimeImmutable;
 use Domain\Audit\Entity\ActivityLog;
 use Domain\Audit\Repository\ActivityLogRepositoryInterface;
 use Domain\Audit\Service\AuditChainServiceInterface;
 use Domain\Audit\Service\IntegrityResult;
+use Domain\Audit\ValueObject\ActivityId;
+use Domain\Audit\ValueObject\ActivityType;
+use Domain\Audit\ValueObject\Actor;
+use Domain\Audit\ValueObject\RequestContext;
 use Domain\Company\ValueObject\CompanyId;
+use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\ValueObject\HashChain\ContentHash;
 
 /**
@@ -116,5 +122,36 @@ final class AuditChainService implements AuditChainServiceInterface
     public function computeEntryHash(ActivityLog $log): ContentHash
     {
         return ContentHash::fromArray($log->toArray());
+    }
+
+    public function logSecurityEvent(string $eventType, array $context): void
+    {
+        // Determine activity type based on event
+        $activityType = $eventType === 'access_denied'
+            ? ActivityType::SECURITY_ACCESS_DENIED
+            : ActivityType::SYSTEM_ERROR;
+
+        $log = new ActivityLog(
+            id: ActivityId::generate(),
+            companyId: CompanyId::fromString($context['company_id'] ?? '00000000-0000-0000-0000-000000000000'),
+            actor: isset($context['user_id'])
+                ? Actor::user(UserId::fromString($context['user_id']), $context['user_name'] ?? 'Unknown')
+                : Actor::system(),
+            activityType: $activityType,
+            entityType: 'security',
+            entityId: $context['route'] ?? 'unknown',
+            action: $eventType,
+            previousState: [],
+            newState: $context,
+            changes: [],
+            context: RequestContext::fromRequest(
+                ipAddress: $context['ip'] ?? '0.0.0.0',
+                userAgent: $context['user_agent'] ?? 'System',
+                requestId: uniqid('sec_', true)
+            ),
+            occurredAt: new DateTimeImmutable()
+        );
+
+        $this->activityLogRepository->save($log);
     }
 }
