@@ -15,6 +15,7 @@ enum ApprovalType: string
     case BACKDATED_TRANSACTION = 'backdated_transaction';
     case TRANSACTION_POSTING = 'transaction_posting';
     case TRANSACTION_APPROVAL = 'transaction_approval'; // Legacy alias
+    case PERIOD_CLOSE = 'period_close';
 
     /**
      * Get default priority for this approval type.
@@ -31,6 +32,7 @@ enum ApprovalType: string
             self::TRANSACTION_POSTING, self::TRANSACTION_APPROVAL => 3,
             self::USER_REGISTRATION => 4,
             self::ACCOUNT_DEACTIVATION => 4,
+            self::PERIOD_CLOSE => 2,
         };
     }
 
@@ -45,6 +47,7 @@ enum ApprovalType: string
             self::TRANSACTION, self::BACKDATED_TRANSACTION => 48,
             self::TRANSACTION_POSTING, self::TRANSACTION_APPROVAL => 48,
             self::USER_REGISTRATION, self::ACCOUNT_DEACTIVATION => 72,
+            self::PERIOD_CLOSE => 72,
         };
     }
 

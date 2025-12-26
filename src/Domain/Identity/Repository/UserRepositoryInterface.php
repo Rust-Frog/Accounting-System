@@ -28,4 +28,14 @@ interface UserRepositoryInterface
     public function findPendingUsers(): array;
 
     public function hasAnyAdmin(): bool;
+
+    /**
+     * @return array<User>
+     */
+    public function findAll(): array;
+
+    /**
+     * @return array<User>
+     */
+    public function findByRole(string $role): array;
 }

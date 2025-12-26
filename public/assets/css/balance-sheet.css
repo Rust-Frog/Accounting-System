@@ -1,0 +1,565 @@
+/**
+ * Balance Sheet Page Styles
+ * Page-specific styles only - common components are in components.css
+ */
+
+/* ========== Page Layout ========== */
+.content-body {
+    padding: 1.5rem 2rem;
+}
+
+/* ========== Page Header ========== */
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary, #2a2a35);
+    background: var(--surface-secondary, #111116);
+}
+
+.header-title h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+    margin: 0;
+}
+
+.header-title .subtitle {
+    font-size: 0.875rem;
+    color: var(--text-tertiary, #6b7280);
+    margin: 0.25rem 0 0 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* ========== Filter Bar Date Input ========== */
+.filter-bar .form-input {
+    min-width: 180px;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-tertiary, #1a1a1f);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-primary, #ffffff);
+    font-size: 0.875rem;
+    font-family: inherit;
+    color-scheme: dark;
+}
+
+.filter-bar .form-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+}
+
+.filter-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-tertiary, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ========== Generated At ========== */
+.generated-at {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+/* ========== Summary Card ========== */
+.summary-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.summary-value.assets {
+    color: #3b82f6;
+}
+
+.summary-value.liabilities {
+    color: #f97316;
+}
+
+.summary-value.equity {
+    color: #22c55e;
+}
+
+/* ========== Balance Status Badge ========== */
+.balance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.balance-badge.balanced {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.balance-badge.unbalanced {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ========== Statement Sections ========== */
+.balance-sheet-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.statement-section {
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    background: var(--surface-tertiary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.section-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ========== Subsections ========== */
+.subsection {
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.subsection:last-of-type {
+    border-bottom: none;
+}
+
+.subsection-header {
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.subsection-header h3 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ========== Statement Table ========== */
+.statement-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.statement-table .col-code {
+    width: 120px;
+}
+
+.statement-table .col-name {
+    width: auto;
+}
+
+.statement-table .col-amount {
+    width: 150px;
+    text-align: right;
+    padding-right: 1.5rem;
+}
+
+.statement-table th.col-amount {
+    text-align: right;
+    padding-right: 1.5rem;
+}
+
+.statement-table code {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8125rem;
+    background: var(--surface-tertiary);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--accent-primary);
+}
+
+.statement-table tbody td.col-amount {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.statement-table tbody td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--border-secondary, rgba(255,255,255,0.05));
+}
+
+.statement-table thead th {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+/* ========== Subtotal Row ========== */
+.subtotal-row {
+    background: var(--surface-tertiary);
+    border-top: 1px solid var(--border-primary);
+}
+
+.subtotal-row td {
+    padding: 0.75rem;
+    font-weight: 600;
+}
+
+.subtotal-label {
+    text-align: right;
+    padding-right: 1rem !important;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.subtotal-amount {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    text-align: right;
+    padding-right: 1.5rem !important;
+}
+
+.retained-earnings-row {
+    background: rgba(34, 197, 94, 0.05);
+}
+
+/* ========== Section Total ========== */
+.section-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, var(--surface-tertiary), var(--surface-secondary));
+    border-top: 2px solid var(--border-primary);
+}
+
+.section-total-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+}
+
+.section-total-amount {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ========== Balance Equation Section ========== */
+.balance-equation-section {
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.equation-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.equation-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--surface-primary);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-md);
+    min-width: 150px;
+}
+
+.equation-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.equation-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.equation-operator {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.equation-result {
+    text-align: center;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-secondary);
+}
+
+.equation-balanced {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+.equation-unbalanced {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* ========== Empty/Loading/Error Messages ========== */
+.empty-message,
+.loading-message,
+.error-message {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+.error-message {
+    color: #ef4444;
+}
+
+/* ========== Empty State ========== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    min-height: 300px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.empty-state .empty-icon {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    max-width: 400px;
+}
+
+/* ========== Spin Animation ========== */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .summary-card {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 1rem;
+    }
+
+    .filter-bar {
+        flex-wrap: wrap;
+    }
+
+    .filter-bar .form-input {
+        width: 100%;
+    }
+
+    .equation-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .equation-operator {
+        font-size: 1.25rem;
+    }
+
+    .equation-item {
+        width: 100%;
+    }
+}
+
+/* ========== Print Styles ========== */
+@media print {
+    /* Hide navigation and non-essential elements */
+    .sidebar,
+    .content-header,
+    .filter-bar,
+    .header-actions,
+    .empty-state,
+    .btnPrint,
+    #btnPrint,
+    #btnRefresh,
+    #generateBtn {
+        display: none !important;
+    }
+
+    /* Reset app layout for print */
+    .app-layout {
+        display: block;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
+
+    .content-body {
+        padding: 0;
+    }
+
+    /* Print header */
+    body::before {
+        content: "Balance Sheet";
+        display: block;
+        font-size: 24pt;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20pt;
+        color: #000;
+    }
+
+    /* Reset colors for print */
+    .statement-section,
+    .summary-card,
+    .balance-equation-section {
+        background: #fff !important;
+        border: 1px solid #ccc !important;
+        page-break-inside: avoid;
+    }
+
+    .section-header,
+    .subsection-header,
+    .subtotal-row,
+    .section-total {
+        background: #f0f0f0 !important;
+    }
+
+    .summary-item {
+        background: #f8f8f8 !important;
+        border: 1px solid #ddd !important;
+    }
+
+    /* Text colors for print */
+    .section-header h2,
+    .subsection-header h3,
+    .section-total-label,
+    .section-total-amount,
+    .summary-value,
+    .subtotal-amount,
+    .equation-value,
+    td,
+    th {
+        color: #000 !important;
+    }
+
+    .summary-label,
+    .equation-label,
+    .subtotal-label {
+        color: #333 !important;
+    }
+
+    /* Table styling for print */
+    .statement-table tbody td {
+        border-bottom: 1px solid #ddd !important;
+    }
+
+    code {
+        background: #eee !important;
+        color: #000 !important;
+    }
+
+    /* Balance badge for print */
+    .balance-badge.balanced {
+        background: #d4edda !important;
+        color: #155724 !important;
+        border: 1px solid #155724 !important;
+    }
+
+    .balance-badge.unbalanced {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+        border: 1px solid #721c24 !important;
+    }
+
+    /* Page margins */
+    @page {
+        margin: 1cm;
+    }
+}
+

@@ -1,0 +1,306 @@
+/**
+ * Trial Balance Page Styles
+ * Page-specific styles only - common components are in components.css
+ */
+
+/* ========== Balance Status Badge ========== */
+.balance-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.balance-status.balanced {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.balance-status.unbalanced {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ========== Generated At ========== */
+.generated-at {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+/* ========== Filter Bar Date Input ========== */
+.filter-bar .form-input {
+    width: 160px;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-tertiary, #1a1a1f);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-primary, #ffffff);
+    font-size: 0.875rem;
+    font-family: inherit;
+    color-scheme: dark;
+}
+
+.filter-bar .form-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+}
+
+/* ========== Summary Card ========== */
+.summary-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.summary-value.debit {
+    color: #3b82f6;
+}
+
+.summary-value.credit {
+    color: #22c55e;
+}
+
+.summary-value.balanced {
+    color: #22c55e;
+}
+
+.summary-value.unbalanced {
+    color: #ef4444;
+}
+
+/* ========== Trial Balance Table ========== */
+.trial-balance-table {
+    table-layout: fixed;
+    min-width: 700px;
+}
+
+.trial-balance-table .col-code {
+    width: 12%;
+}
+
+.trial-balance-table .col-name {
+    width: 38%;
+}
+
+.trial-balance-table .col-type {
+    width: 15%;
+}
+
+.trial-balance-table .col-debit {
+    width: 17.5%;
+    text-align: right;
+}
+
+.trial-balance-table .col-credit {
+    width: 17.5%;
+    text-align: right;
+}
+
+.trial-balance-table code {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+    background: var(--surface-tertiary);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--accent-primary);
+}
+
+.trial-balance-table tbody td.amount {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+}
+
+.trial-balance-table tbody td.col-debit {
+    color: #3b82f6;
+}
+
+.trial-balance-table tbody td.col-credit {
+    color: #22c55e;
+}
+
+/* ========== Type Badges ========== */
+.type-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.type-badge.type-asset {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.type-badge.type-liability {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.type-badge.type-equity {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+.type-badge.type-revenue {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.type-badge.type-expense {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+/* ========== Totals Row ========== */
+.trial-balance-table tfoot .totals-row {
+    background: var(--surface-secondary);
+    border-top: 2px solid var(--border-primary);
+}
+
+.trial-balance-table tfoot .totals-row td {
+    padding: 1rem 0.75rem;
+    font-family: 'Fira Code', monospace;
+}
+
+.trial-balance-table tfoot .totals-row .col-debit {
+    color: #3b82f6;
+}
+
+.trial-balance-table tfoot .totals-row .col-credit {
+    color: #22c55e;
+}
+
+.trial-balance-table tfoot .totals-row.unbalanced {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+/* ========== Empty/Loading States ========== */
+.empty-row td,
+.loading-row td,
+.error-row td {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-message,
+.loading-spinner,
+.error-message {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.loading-spinner::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-primary);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error-message {
+    color: #ef4444;
+}
+
+/* ========== Empty State ========== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    min-height: 300px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.empty-state .empty-icon {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    max-width: 400px;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .summary-card {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 1rem;
+    }
+
+    .filter-bar {
+        flex-wrap: wrap;
+    }
+
+    .filter-bar .form-input {
+        width: 100%;
+    }
+}

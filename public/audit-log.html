@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accounting System - Audit Log">
+    <title>AUDIT LOG | Accounting System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/companies.css">
+    <style>
+        .severity-info { color: var(--color-info); }
+        .severity-warning { color: var(--color-warning); }
+        .severity-critical { color: var(--color-danger); }
+        .severity-security { color: #9333ea; }
+        
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .severity-badge.info { background: rgba(33, 150, 243, 0.15); color: var(--color-info); }
+        .severity-badge.warning { background: rgba(255, 152, 0, 0.15); color: var(--color-warning); }
+        .severity-badge.critical { background: rgba(244, 67, 54, 0.15); color: var(--color-danger); }
+        .severity-badge.security { background: rgba(147, 51, 234, 0.15); color: #9333ea; }
+        
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-secondary);
+        }
+        
+        .activity-type-cell {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8125rem;
+        }
+        
+        .actor-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+        .actor-name { font-weight: 500; }
+        .actor-ip { font-size: 0.75rem; color: var(--color-text-muted); font-family: 'Fira Code', monospace; }
+        
+        .entity-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+        .entity-type { font-weight: 500; text-transform: capitalize; }
+        .entity-id { font-size: 0.75rem; color: var(--color-text-muted); font-family: 'Fira Code', monospace; }
+        
+        .change-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--color-bg-tertiary);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .change-field { font-weight: 600; color: var(--color-primary); }
+        .change-arrow { color: var(--color-text-muted); }
+        .change-old { color: var(--color-danger); text-decoration: line-through; }
+        .change-new { color: var(--color-success); }
+        
+        .hash-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            word-break: break-all;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-top: 1px solid var(--color-border);
+        }
+        .pagination-info {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-bar {
+            flex-wrap: wrap;
+        }
+        .filter-bar .filter-group {
+            min-width: 150px;
+        }
+        .date-input {
+            min-width: 160px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="24" height="24"
+                        fill="currentColor">
+                        <path d="M4 4a4 4 0 1 1 4.5 3.969V13.5a.5.5 0 0 1-1 0V7.97A4 4 0 0 1 4 4Z"></path>
+                    </svg>
+                    <span class="logo-text">ACCT<span class="logo-accent">SYS</span></span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">Main</span>
+                    <a href="/dashboard.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM6.5 6.5v8h7.75a.25.25 0 0 0 .25-.25V6.5Zm8-1.5V1.75a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25V5Zm-8 0V1.5h-5v4Z"></path>
+                        </svg>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a href="/transactions.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M5.22 14.78a.75.75 0 0 0 1.06-1.06L4.56 12h8.69a.75.75 0 0 0 0-1.5H4.56l1.72-1.72a.75.75 0 0 0-1.06-1.06l-3 3a.75.75 0 0 0 0 1.06l3 3Zm5.56-6.5a.75.75 0 1 1-1.06-1.06l1.72-1.72H2.75a.75.75 0 0 1 0-1.5h8.69L9.72 2.28a.75.75 0 0 1 1.06-1.06l3 3a.75.75 0 0 1 0 1.06l-3 3Z"></path>
+                        </svg>
+                        <span class="nav-label">Transactions</span>
+                    </a>
+                    <a href="/accounts.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm3.75-1.5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5ZM3 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path>
+                        </svg>
+                        <span class="nav-label">Chart of Accounts</span>
+                    </a>
+                    <a href="/journal.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"></path>
+                        </svg>
+                        <span class="nav-label">Journal</span>
+                    </a>
+                    <a href="/ledger.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM1.5 6.5v7.75c0 .138.112.25.25.25H5v-8Zm5 8h7.75a.25.25 0 0 0 .25-.25V6.5h-8ZM5 5V1.5H1.75a.25.25 0 0 0-.25.25V5Zm1.5 0h8V1.75a.25.25 0 0 0-.25-.25H6.5Z"></path>
+                        </svg>
+                        <span class="nav-label">Ledger</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Reports</span>
+                    <a href="/trial-balance.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm9.78-2.22-4.5 4.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 1 1 1.06-1.06l1.47 1.47 3.97-3.97a.75.75 0 1 1 1.06 1.06Z"></path>
+                        </svg>
+                        <span class="nav-label">Trial Balance</span>
+                    </a>
+                    <a href="/income-statement.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"></path>
+                        </svg>
+                        <span class="nav-label">Income Statement</span>
+                    </a>
+                    <a href="/balance-sheet.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M3 3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm2-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5Zm1.25 2.5a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5Z"></path>
+                        </svg>
+                        <span class="nav-label">Balance Sheet</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Administration</span>
+                    <a href="/users.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0-.001 3.999A2 2 0 0 0 5.5 3.5Z"></path>
+                        </svg>
+                        <span class="nav-label">Users</span>
+                    </a>
+                    <a href="/companies.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"></path>
+                        </svg>
+                        <span class="nav-label">Companies</span>
+                    </a>
+                    <a href="/audit-log.html" class="nav-item active">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0Zm.082 1.541a6.46 6.46 0 0 1 1.68.396 6.5 6.5 0 0 1 4.656 6.218 6.46 6.46 0 0 1-.191 1.55h-2.134c.074-.316.114-.646.118-.984v-.28a3.93 3.93 0 0 0-1.142-2.773.748.748 0 0 1 .067-1.123.75.75 0 0 1 .992.065A5.43 5.43 0 0 1 13.7 7.621v.28c0 .287-.025.57-.075.847h2.059a6.43 6.43 0 0 1-.251 1.198H1.57a6.42 6.42 0 0 1-.25-1.198h2.058a5.05 5.05 0 0 1-.075-.847v-.28c0-.364.036-.724.105-1.077a5.42 5.42 0 0 1 1.397-2.649.75.75 0 0 1 1.059.002.748.748 0 0 1-.002 1.058 3.93 3.93 0 0 0-.962 1.936A3.47 3.47 0 0 0 4.84 7.62v.28c.003.343.045.681.122 1.005H2.8a6.47 6.47 0 0 1-.192-1.542A6.466 6.466 0 0 1 8.082 1.54Z"></path>
+                        </svg>
+                        <span class="nav-label">Audit Log</span>
+                    </a>
+                    <a href="/settings.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0ZM1.07 8.084c-.042-.276-.07-.556-.07-.84 0-.284.028-.564.07-.84h2.023a12.74 12.74 0 0 0-.053.84c0 .283.018.562.053.84Zm.559 1.613A6.46 6.46 0 0 0 2.608 11h1.564a12.58 12.58 0 0 1-.53-1.303Zm.75-4.394H2.608a6.46 6.46 0 0 0-.98 1.303h1.72a12.58 12.58 0 0 1 .53-1.303ZM8 1.983c-.378.377-.724.864-1.009 1.43a11.09 11.09 0 0 0-.49 1.26H9.5a11.09 11.09 0 0 0-.49-1.26C8.724 2.847 8.378 2.36 8 1.983Z"></path>
+                        </svg>
+                        <span class="nav-label">Settings</span>
+                    </a>
+                </div>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Admin</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                </div>
+                <button class="btn-logout" id="btnLogout" title="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"
+                        fill="currentColor">
+                        <path
+                            d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm10.44 4.5-1.97-1.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.97-1.97H6.75a.75.75 0 0 1 0-1.5Z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Audit Log</h1>
+                    <span class="badge badge-info" id="logCount">Loading...</span>
+                </div>
+                <div class="top-bar-actions">
+                    <select class="form-select" id="companySelect" style="min-width: 200px;">
+                        <option value="">Select Company</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- Content Section -->
+            <div class="content-section">
+                <!-- Stats Overview -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Entries</div>
+                        <div class="stat-value" id="statTotal">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Info</div>
+                        <div class="stat-value severity-info" id="statInfo">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Warnings</div>
+                        <div class="stat-value severity-warning" id="statWarning">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Security</div>
+                        <div class="stat-value severity-security" id="statSecurity">-</div>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>From:</label>
+                        <input type="date" class="form-input date-input" id="filterFromDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>To:</label>
+                        <input type="date" class="form-input date-input" id="filterToDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>Severity:</label>
+                        <select class="form-select" id="filterSeverity">
+                            <option value="">All</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="critical">Critical</option>
+                            <option value="security">Security</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <select class="form-select" id="filterCategory">
+                            <option value="">All</option>
+                            <option value="authentication">Authentication</option>
+                            <option value="user_management">User Management</option>
+                            <option value="company_management">Company Management</option>
+                            <option value="chart_of_accounts">Chart of Accounts</option>
+                            <option value="transactions">Transactions</option>
+                            <option value="approvals">Approvals</option>
+                            <option value="reports">Reports</option>
+                            <option value="system">System</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="btnApplyFilters">Apply Filters</button>
+                    <button class="btn btn-secondary" id="btnClearFilters">Clear</button>
+                </div>
+
+                <!-- Audit Log Table -->
+                <div class="panel">
+                    <div class="table-container">
+                        <table class="data-table" id="auditTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Actor</th>
+                                    <th>Activity</th>
+                                    <th>Entity</th>
+                                    <th>Category</th>
+                                    <th>Severity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditBody">
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="loading-spinner">Loading audit logs...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination-controls">
+                        <div class="pagination-info" id="paginationInfo">
+                            Showing 0 entries
+                        </div>
+                        <div class="pagination-buttons">
+                            <button class="btn btn-secondary btn-sm" id="btnPrevPage" disabled>Previous</button>
+                            <button class="btn btn-secondary btn-sm" id="btnNextPage" disabled>Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="64"
+                        height="64" fill="currentColor">
+                        <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0Zm.082 1.541a6.46 6.46 0 0 1 1.68.396 6.5 6.5 0 0 1 4.656 6.218 6.46 6.46 0 0 1-.191 1.55h-2.134c.074-.316.114-.646.118-.984v-.28a3.93 3.93 0 0 0-1.142-2.773.748.748 0 0 1 .067-1.123.75.75 0 0 1 .992.065A5.43 5.43 0 0 1 13.7 7.621v.28c0 .287-.025.57-.075.847h2.059a6.43 6.43 0 0 1-.251 1.198H1.57a6.42 6.42 0 0 1-.25-1.198h2.058a5.05 5.05 0 0 1-.075-.847v-.28c0-.364.036-.724.105-1.077a5.42 5.42 0 0 1 1.397-2.649.75.75 0 0 1 1.059.002.748.748 0 0 1-.002 1.058 3.93 3.93 0 0 0-.962 1.936A3.47 3.47 0 0 0 4.84 7.62v.28c.003.343.045.681.122 1.005H2.8a6.47 6.47 0 0 1-.192-1.542A6.466 6.466 0 0 1 8.082 1.54Z"></path>
+                    </svg>
+                    <h3>No Audit Logs Found</h3>
+                    <p>No audit logs match the current filters or no activities have been recorded yet.</p>
+                </div>
+
+                <!-- Select Company Message -->
+                <div class="empty-state" id="selectCompanyState" style="display: none;">
+                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="64"
+                        height="64" fill="currentColor">
+                        <path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Z"></path>
+                    </svg>
+                    <h3>Select a Company</h3>
+                    <p style="text-align: center;">Choose a company from the dropdown above to view its audit logs.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="main-footer">
+                <span class="footer-text">ALL ACTIVITIES ARE MONITORED AND LOGGED</span>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 id="modalTitle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0Z"></path>
+                    </svg>
+                    Activity Details
+                </h2>
+                <button class="modal-close" id="btnCloseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Activity ID</label>
+                        <span id="detailId" class="hash-value">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Timestamp</label>
+                        <span id="detailTimestamp">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Actor</label>
+                        <span id="detailActor">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>IP Address</label>
+                        <span id="detailIp">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Activity Type</label>
+                        <span id="detailActivityType" class="activity-type-cell">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Category</label>
+                        <span id="detailCategory">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Entity Type</label>
+                        <span id="detailEntityType">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Entity ID</label>
+                        <span id="detailEntityId" class="hash-value">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Severity</label>
+                        <span id="detailSeverity">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Action</label>
+                        <span id="detailAction">-</span>
+                    </div>
+                </div>
+
+                <div class="detail-section" id="changesSection" style="display: none;">
+                    <h3 style="margin: 1rem 0 0.5rem; font-size: 0.875rem; color: var(--color-text-secondary);">Changes</h3>
+                    <div id="detailChanges"></div>
+                </div>
+
+                <div class="detail-section" id="hashSection" style="margin-top: 1rem;">
+                    <h3 style="margin: 0 0 0.5rem; font-size: 0.875rem; color: var(--color-text-secondary);">Integrity Hash</h3>
+                    <div class="hash-value" id="detailHash">-</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCloseDetail">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/audit-log.js"></script>
+</body>
+
+</html>

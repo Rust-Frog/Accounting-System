@@ -104,11 +104,6 @@ final readonly class CreateTransactionHandler implements HandlerInterface
     private function toDto(Transaction $transaction): TransactionDto
     {
         $lines = [];
-        // Need to loop with index to get line order if not available, but TransactionLine likely has it?
-        // TransactionLine entity Inspection needed? 
-        // Assuming TransactionLine works.
-        // But Transaction::lines() returns array<TransactionLine>.
-        // Let's assume lines are in order.
         $i = 0;
         foreach ($transaction->lines() as $line) {
             $accountId = $line->accountId();
@@ -117,23 +112,23 @@ final readonly class CreateTransactionHandler implements HandlerInterface
             $lines[] = new TransactionLineDto(
                 id: (string)$i,
                 accountId: $accountId->toString(),
-                accountCode: $account ? $account->code() : 'Unknown',
-                accountName: $account ? $account->name() : 'Unknown',
+                accountCode: $account !== null ? $account->code()->toString() : 'Unknown',
+                accountName: $account?->name() ?? 'Unknown',
                 lineType: $line->lineType()->value,
                 amountCents: $line->amount()->cents(),
                 lineOrder: $i++,
-                description: $line->description()
+                description: $line->description() ?? ''
             );
         }
 
         return new TransactionDto(
             id: $transaction->id()->toString(),
-            transactionNumber: $transaction->id()->toString(), // Was $transaction->transactionNumber()
+            transactionNumber: $transaction->id()->toString(),
             companyId: $transaction->companyId()->toString(),
             status: $transaction->status()->value,
             description: $transaction->description(),
-            totalDebitsCents: $transaction->totalDebits()->cents(), // Money::cents()
-            totalCreditsCents: $transaction->totalCredits()->cents(), // Money::cents()
+            totalDebitsCents: $transaction->totalDebits()->cents(),
+            totalCreditsCents: $transaction->totalCredits()->cents(),
             lines: $lines,
             referenceNumber: $transaction->referenceNumber(),
             transactionDate: $transaction->transactionDate()->format('Y-m-d'),

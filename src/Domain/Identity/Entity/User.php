@@ -84,6 +84,50 @@ final class User
         return $user;
     }
 
+    /**
+     * Create a user directly by an admin (bypasses pending approval).
+     * Created users are immediately APPROVED and active.
+     */
+    public static function createByAdmin(
+        Username $username,
+        Email $email,
+        Password $password,
+        Role $role,
+        ?CompanyId $companyId = null
+    ): self {
+        // BR-IAM-006: Admins have no company
+        if ($role === Role::ADMIN && $companyId !== null) {
+            throw new InvalidArgumentException('Admins cannot belong to a company');
+        }
+
+        // BR-IAM-007: Tenants must have company
+        if ($role === Role::TENANT && $companyId === null) {
+            throw new InvalidArgumentException('Tenants must belong to a company');
+        }
+
+        $now = new DateTimeImmutable();
+
+        $user = new self(
+            userId: UserId::generate(),
+            companyId: $companyId,
+            username: $username->toString(),
+            email: $email,
+            passwordHash: password_hash($password->toString(), PASSWORD_BCRYPT, ['cost' => 12]),
+            role: $role,
+            registrationStatus: RegistrationStatus::APPROVED, // Admin-created = auto-approved
+            isActive: true,
+            lastLoginAt: null,
+            lastLoginIp: null,
+            otpSecret: null,
+            createdAt: $now,
+            updatedAt: $now
+        );
+
+        $user->recordEvent(new UserRegistered($user->userId, $user->email, $user->role));
+
+        return $user;
+    }
+
     public function authenticate(string $password): bool
     {
         // BR-IAM-009: Deactivated users cannot authenticate

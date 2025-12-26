@@ -27,6 +27,7 @@ final readonly class PostTransactionHandler implements HandlerInterface
         private TransactionRepositoryInterface $transactionRepository,
         private \Domain\Approval\Repository\ApprovalRepositoryInterface $approvalRepository,
         private \Domain\Ledger\Repository\JournalEntryRepositoryInterface $journalEntryRepository,
+        private \Domain\ChartOfAccounts\Repository\AccountRepositoryInterface $accountRepository,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -107,6 +108,24 @@ final readonly class PostTransactionHandler implements HandlerInterface
 
         $this->journalEntryRepository->save($journalEntry);
         // -----------------------------
+
+        // --- UPDATE ACCOUNT BALANCES ---
+        foreach ($transaction->lines() as $line) {
+            $account = $this->accountRepository->findById($line->accountId());
+            if ($account === null) {
+                continue; // Skip if account not found (shouldn't happen)
+            }
+
+            $amount = $line->amount();
+            if ($line->lineType()->value === 'debit') {
+                $account->applyDebit($amount);
+            } else {
+                $account->applyCredit($amount);
+            }
+
+            $this->accountRepository->save($account);
+        }
+        // -------------------------------
 
         // Dispatch events
         foreach ($transaction->releaseEvents() as $event) {

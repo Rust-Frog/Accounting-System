@@ -35,6 +35,15 @@ final class Money
         return new self($cents, $currency);
     }
 
+    /**
+     * Create Money from cents allowing signed values.
+     * Use only for account balances which can be negative (e.g., overdrawn accounts).
+     */
+    public static function fromSignedCents(int $cents, Currency $currency): self
+    {
+        return new self($cents, $currency);
+    }
+
     public static function zero(Currency $currency): self
     {
         return new self(0, $currency);

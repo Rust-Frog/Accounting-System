@@ -81,6 +81,19 @@ final readonly class ApprovalReason
         );
     }
 
+    public static function periodClose(string $startDate, string $endDate, int $netIncomeCents): self
+    {
+        return new self(
+            ApprovalType::PERIOD_CLOSE,
+            sprintf('Request to close period %s to %s', $startDate, $endDate),
+            [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'net_income_cents' => $netIncomeCents,
+            ]
+        );
+    }
+
     private static function createTransactionRequest(
         ApprovalType $type,
         string $actionVerb,

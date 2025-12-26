@@ -16,7 +16,6 @@ use Domain\Transaction\ValueObject\LineType;
 use Domain\Transaction\ValueObject\TransactionId;
 use Domain\Transaction\ValueObject\TransactionLineId;
 use Domain\Transaction\ValueObject\TransactionStatus;
-use ReflectionClass;
 
 /**
  * Hydrates Transaction entities from database rows and extracts data for persistence.
@@ -31,59 +30,28 @@ final class TransactionHydrator
      */
     public function hydrate(array $row, array $lineRows = []): Transaction
     {
-        $reflection = new ReflectionClass(Transaction::class);
-        $transaction = $reflection->newInstanceWithoutConstructor();
-
-        $this->setProperty($reflection, $transaction, 'id', TransactionId::fromString($row['id']));
-        $this->setProperty($reflection, $transaction, 'companyId', CompanyId::fromString($row['company_id']));
-        $this->setProperty(
-            $reflection,
-            $transaction,
-            'transactionDate',
-            new DateTimeImmutable($row['transaction_date'])
-        );
-        $this->setProperty($reflection, $transaction, 'description', $row['description']);
-        $this->setProperty($reflection, $transaction, 'createdBy', UserId::fromString($row['created_by']));
-        $this->setProperty($reflection, $transaction, 'createdAt', new DateTimeImmutable($row['created_at']));
-        $this->setProperty($reflection, $transaction, 'status', TransactionStatus::from($row['status']));
-        $this->setProperty($reflection, $transaction, 'referenceNumber', $row['reference_number']);
-
-        // Optional fields
-        $this->setProperty(
-            $reflection,
-            $transaction,
-            'postedAt',
-            $row['posted_at'] !== null ? new DateTimeImmutable($row['posted_at']) : null
-        );
-        $this->setProperty(
-            $reflection,
-            $transaction,
-            'postedBy',
-            $row['posted_by'] !== null ? UserId::fromString($row['posted_by']) : null
-        );
-        $this->setProperty(
-            $reflection,
-            $transaction,
-            'voidedAt',
-            $row['voided_at'] !== null ? new DateTimeImmutable($row['voided_at']) : null
-        );
-        $this->setProperty(
-            $reflection,
-            $transaction,
-            'voidedBy',
-            $row['voided_by'] !== null ? UserId::fromString($row['voided_by']) : null
-        );
-        $this->setProperty($reflection, $transaction, 'voidReason', $row['void_reason']);
-        $this->setProperty($reflection, $transaction, 'domainEvents', []);
-
-        // Hydrate lines
+        // Hydrate lines first
         $lines = [];
         foreach ($lineRows as $lineRow) {
             $lines[] = $this->hydrateLine($lineRow);
         }
-        $this->setProperty($reflection, $transaction, 'lines', $lines);
 
-        return $transaction;
+        return Transaction::reconstitute(
+            id: TransactionId::fromString($row['id']),
+            companyId: CompanyId::fromString($row['company_id']),
+            transactionDate: new DateTimeImmutable($row['transaction_date']),
+            description: $row['description'],
+            createdBy: UserId::fromString($row['created_by']),
+            createdAt: new DateTimeImmutable($row['created_at']),
+            status: TransactionStatus::from($row['status']),
+            referenceNumber: $row['reference_number'],
+            postedAt: $row['posted_at'] !== null ? new DateTimeImmutable($row['posted_at']) : null,
+            postedBy: $row['posted_by'] !== null ? UserId::fromString($row['posted_by']) : null,
+            voidedAt: $row['voided_at'] !== null ? new DateTimeImmutable($row['voided_at']) : null,
+            voidedBy: $row['voided_by'] !== null ? UserId::fromString($row['voided_by']) : null,
+            voidReason: $row['void_reason'],
+            lines: $lines
+        );
     }
 
     /**
@@ -143,15 +111,5 @@ final class TransactionHydrator
             'description' => $line->description(),
             'line_order' => $lineOrder,
         ];
-    }
-
-    /**
-     * Set a property value using reflection.
-     */
-    private function setProperty(ReflectionClass $reflection, object $object, string $property, mixed $value): void
-    {
-        $prop = $reflection->getProperty($property);
-        $prop->setAccessible(true);
-        $prop->setValue($object, $value);
     }
 }

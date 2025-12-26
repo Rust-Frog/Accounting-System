@@ -107,6 +107,31 @@ final class MysqlUserRepository extends AbstractMysqlRepository implements UserR
     }
 
     /**
+     * @return array<User>
+     */
+    public function findAll(): array
+    {
+        $rows = $this->fetchAll(
+            'SELECT * FROM users ORDER BY created_at DESC'
+        );
+
+        return array_map(fn(array $row) => $this->hydrator->hydrate($row), $rows);
+    }
+
+    /**
+     * @return array<User>
+     */
+    public function findByRole(string $role): array
+    {
+        $rows = $this->fetchAll(
+            'SELECT * FROM users WHERE role = :role ORDER BY created_at DESC',
+            ['role' => $role]
+        );
+
+        return array_map(fn(array $row) => $this->hydrator->hydrate($row), $rows);
+    }
+
+    /**
      * Insert a new user.
      *
      * @param array<string, mixed> $data

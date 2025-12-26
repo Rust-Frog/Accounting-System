@@ -107,8 +107,8 @@ class AccountsManager {
     async loadUserInfo() {
         try {
             const result = await api.getMe();
-            if (result?.data?.name) {
-                this.elements.userName.textContent = result.data.name;
+            if (result?.data?.username) {
+                this.elements.userName.textContent = result.data.username;
             }
         } catch (error) {
             console.error('Failed to load user info:', error);

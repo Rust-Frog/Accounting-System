@@ -78,4 +78,23 @@ final class InMemoryUserRepository implements UserRepositoryInterface
         }
         return false;
     }
+
+    /**
+     * @return array<User>
+     */
+    public function findAll(): array
+    {
+        return array_values($this->users);
+    }
+
+    /**
+     * @return array<User>
+     */
+    public function findByRole(string $role): array
+    {
+        return array_values(array_filter(
+            $this->users,
+            fn(User $user) => $user->role()->value === $role
+        ));
+    }
 }

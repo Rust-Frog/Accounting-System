@@ -44,5 +44,7 @@ final readonly class DeleteTransactionHandler implements HandlerInterface
 
         // Delete from repository
         $this->transactionRepository->delete($transactionId);
+
+        return ['deleted' => true, 'id' => $command->transactionId];
     }
 }

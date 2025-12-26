@@ -145,6 +145,46 @@ final class Account
         $this->description = $description;
     }
 
+    /**
+     * Apply a debit to this account.
+     * For debit-normal accounts (Assets, Expenses): increases balance
+     * For credit-normal accounts (Liabilities, Equity, Revenue): decreases balance
+     */
+    public function applyDebit(Money $amount): void
+    {
+        if ($this->normalBalance()->value === 'debit') {
+            $this->balance = Money::fromSignedCents(
+                $this->balance->cents() + $amount->cents(),
+                $this->balance->currency()
+            );
+        } else {
+            $this->balance = Money::fromSignedCents(
+                $this->balance->cents() - $amount->cents(),
+                $this->balance->currency()
+            );
+        }
+    }
+
+    /**
+     * Apply a credit to this account.
+     * For credit-normal accounts (Liabilities, Equity, Revenue): increases balance
+     * For debit-normal accounts (Assets, Expenses): decreases balance
+     */
+    public function applyCredit(Money $amount): void
+    {
+        if ($this->normalBalance()->value === 'credit') {
+            $this->balance = Money::fromSignedCents(
+                $this->balance->cents() + $amount->cents(),
+                $this->balance->currency()
+            );
+        } else {
+            $this->balance = Money::fromSignedCents(
+                $this->balance->cents() - $amount->cents(),
+                $this->balance->currency()
+            );
+        }
+    }
+
     private function recordEvent(DomainEvent $event): void
     {
         $this->domainEvents[] = $event;

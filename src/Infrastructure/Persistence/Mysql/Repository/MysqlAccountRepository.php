@@ -177,7 +177,15 @@ final class MysqlAccountRepository extends AbstractMysqlRepository implements Ac
             WHERE id = :id
         SQL;
 
-        $this->execute($sql, $data);
+        $this->execute($sql, [
+            'id' => $data['id'],
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'is_active' => $data['is_active'],
+            'parent_account_id' => $data['parent_account_id'],
+            'balance_cents' => $data['balance_cents'],
+            'currency' => $data['currency'],
+        ]);
     }
 }
 

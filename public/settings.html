@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accounting System - Settings">
+    <title>SETTINGS | Accounting System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/settings.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="24" height="24"
+                        fill="currentColor">
+                        <path d="M4 4a4 4 0 1 1 4.5 3.969V13.5a.5.5 0 0 1-1 0V7.97A4 4 0 0 1 4 4Z"></path>
+                    </svg>
+                    <span class="logo-text">ACCT<span class="logo-accent">SYS</span></span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">Main</span>
+                    <a href="/dashboard.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM6.5 6.5v8h7.75a.25.25 0 0 0 .25-.25V6.5Zm8-1.5V1.75a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25V5Zm-8 0V1.5h-5v4Z"></path>
+                        </svg>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a href="/transactions.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M5.22 14.78a.75.75 0 0 0 1.06-1.06L4.56 12h8.69a.75.75 0 0 0 0-1.5H4.56l1.72-1.72a.75.75 0 0 0-1.06-1.06l-3 3a.75.75 0 0 0 0 1.06l3 3Zm5.56-6.5a.75.75 0 1 1-1.06-1.06l1.72-1.72H2.75a.75.75 0 0 1 0-1.5h8.69L9.72 2.28a.75.75 0 0 1 1.06-1.06l3 3a.75.75 0 0 1 0 1.06l-3 3Z"></path>
+                        </svg>
+                        <span class="nav-label">Transactions</span>
+                    </a>
+                    <a href="/accounts.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm3.75-1.5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5ZM3 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path>
+                        </svg>
+                        <span class="nav-label">Chart of Accounts</span>
+                    </a>
+                    <a href="/journal.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"></path>
+                        </svg>
+                        <span class="nav-label">Journal</span>
+                    </a>
+                    <a href="/ledger.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM1.5 6.5v7.75c0 .138.112.25.25.25H5v-8Zm5 8h7.75a.25.25 0 0 0 .25-.25V6.5h-8ZM5 5V1.5H1.75a.25.25 0 0 0-.25.25V5Zm1.5 0h8V1.75a.25.25 0 0 0-.25-.25H6.5Z"></path>
+                        </svg>
+                        <span class="nav-label">Ledger</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Reports</span>
+                    <a href="/trial-balance.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm9.78-2.22-4.5 4.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 1 1 1.06-1.06l1.47 1.47 3.97-3.97a.75.75 0 1 1 1.06 1.06Z"></path>
+                        </svg>
+                        <span class="nav-label">Trial Balance</span>
+                    </a>
+                    <a href="/income-statement.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"></path>
+                        </svg>
+                        <span class="nav-label">Income Statement</span>
+                    </a>
+                    <a href="/balance-sheet.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M3 3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm2-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5Zm1.25 2.5a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5Z"></path>
+                        </svg>
+                        <span class="nav-label">Balance Sheet</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Administration</span>
+                    <a href="/users.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0-.001 3.999A2 2 0 0 0 5.5 3.5Z"></path>
+                        </svg>
+                        <span class="nav-label">Users</span>
+                    </a>
+                    <a href="/companies.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"></path>
+                        </svg>
+                        <span class="nav-label">Companies</span>
+                    </a>
+                    <a href="/audit-log.html" class="nav-item">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0Zm.082 1.541a6.46 6.46 0 0 1 1.68.396 6.5 6.5 0 0 1 4.656 6.218 6.46 6.46 0 0 1-.191 1.55h-2.134c.074-.316.114-.646.118-.984v-.28a3.93 3.93 0 0 0-1.142-2.773.748.748 0 0 1 .067-1.123.75.75 0 0 1 .992.065A5.43 5.43 0 0 1 13.7 7.621v.28c0 .287-.025.57-.075.847h2.059a6.43 6.43 0 0 1-.251 1.198H1.57a6.42 6.42 0 0 1-.25-1.198h2.058a5.05 5.05 0 0 1-.075-.847v-.28c0-.364.036-.724.105-1.077a5.42 5.42 0 0 1 1.397-2.649.75.75 0 0 1 1.059.002.748.748 0 0 1-.002 1.058 3.93 3.93 0 0 0-.962 1.936A3.47 3.47 0 0 0 4.84 7.62v.28c.003.343.045.681.122 1.005H2.8a6.47 6.47 0 0 1-.192-1.542A6.466 6.466 0 0 1 8.082 1.54Z"></path>
+                        </svg>
+                        <span class="nav-label">Audit Log</span>
+                    </a>
+                    <a href="/settings.html" class="nav-item active">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0ZM1.07 8.084c-.042-.276-.07-.556-.07-.84 0-.284.028-.564.07-.84h2.023a12.74 12.74 0 0 0-.053.84c0 .283.018.562.053.84Zm.559 1.613A6.46 6.46 0 0 0 2.608 11h1.564a12.58 12.58 0 0 1-.53-1.303Zm.75-4.394H2.608a6.46 6.46 0 0 0-.98 1.303h1.72a12.58 12.58 0 0 1 .53-1.303ZM8 1.983c-.378.377-.724.864-1.009 1.43a11.09 11.09 0 0 0-.49 1.26H9.5a11.09 11.09 0 0 0-.49-1.26C8.724 2.847 8.378 2.36 8 1.983Z"></path>
+                        </svg>
+                        <span class="nav-label">Settings</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Admin</span>
+                        <span class="user-role" id="userRole">Administrator</span>
+                    </div>
+                </div>
+                <button class="btn-logout" id="btnLogout" title="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"
+                        fill="currentColor">
+                        <path
+                            d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm10.44 4.5-1.97-1.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.97-1.97H6.75a.75.75 0 0 1 0-1.5Z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Settings</h1>
+                </div>
+            </header>
+
+            <!-- Content Section -->
+            <div class="content-section">
+                <div class="settings-layout">
+                    <!-- Profile Sidebar -->
+                    <aside class="settings-profile">
+                        <div class="profile-card">
+                            <div class="profile-avatar-large" id="profileAvatar">A</div>
+                            <div class="profile-name" id="profileUsername">Loading...</div>
+                            <div class="profile-email-text" id="profileEmail">Loading...</div>
+                            <div class="profile-badge" id="profileRole">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M9.504.43a1.516 1.516 0 0 1 2.437 1.713L10.415 5.5h2.835c1.112 0 1.801 1.194 1.252 2.171l-4.5 8A1.516 1.516 0 0 1 7.435 13.9l1.526-3.4H6.21c-1.112 0-1.801-1.194-1.252-2.171l4.5-8Z"></path>
+                                </svg>
+                                <span>-</span>
+                            </div>
+                            <div class="profile-meta-info" id="profileCreatedAt"></div>
+                        </div>
+                    </aside>
+
+                    <!-- Settings Main Content -->
+                    <div class="settings-main">
+                        <!-- Appearance Section -->
+                        <div class="settings-section">
+                            <div class="settings-section-header">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path>
+                                </svg>
+                                <h3>Appearance</h3>
+                            </div>
+                            <div class="settings-section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Theme</div>
+                                        <div class="setting-description">Choose your preferred color scheme</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-selector">
+                                <div class="theme-options">
+                                    <div class="theme-option" data-theme="light" id="themeLight">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 1.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0Zm0 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13Zm7.25-5.75a.75.75 0 0 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5h1.5ZM3 7.25a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Z"></path>
+                                        </svg>
+                                        <div class="theme-option-label">Light</div>
+                                    </div>
+                                    <div class="theme-option active" data-theme="dark" id="themeDark">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"></path>
+                                        </svg>
+                                        <div class="theme-option-label">Dark</div>
+                                    </div>
+                                    <div class="theme-option" data-theme="system" id="themeSystem">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M1.75 1h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 13H1.75A1.75 1.75 0 0 1 0 11.25v-8.5C0 1.784.784 1 1.75 1ZM1.5 2.75v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25ZM14.25 15H1.75a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5Z"></path>
+                                        </svg>
+                                        <div class="theme-option-label">System</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Localization Section -->
+                        <div class="settings-section">
+                            <div class="settings-section-header">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM5.78 8.75a9.64 9.64 0 0 0 1.363 4.177c.255.426.542.832.857 1.215.245-.296.551-.705.857-1.215A9.64 9.64 0 0 0 10.22 8.75Zm4.44-1.5a9.64 9.64 0 0 0-1.363-4.177c-.307-.51-.612-.919-.857-1.215a9.927 9.927 0 0 0-.857 1.215A9.64 9.64 0 0 0 5.78 7.25Zm-5.944 1.5H1.543a6.507 6.507 0 0 0 4.666 5.5c-.123-.181-.24-.365-.352-.552-.715-1.192-1.437-2.874-1.581-4.948Zm-2.733-1.5h2.733c.144-2.074.866-3.756 1.58-4.948.12-.197.237-.381.353-.552a6.507 6.507 0 0 0-4.666 5.5Zm10.181 1.5c-.144 2.074-.866 3.756-1.58 4.948-.12.197-.237.381-.353.552a6.507 6.507 0 0 0 4.666-5.5Zm2.733-1.5a6.507 6.507 0 0 0-4.666-5.5c.123.181.24.365.353.552.714 1.192 1.436 2.874 1.58 4.948Z"></path>
+                                </svg>
+                                <h3>Localization</h3>
+                            </div>
+                            <div class="settings-section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Timezone</div>
+                                        <div class="setting-description">Set your local timezone</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="form-select" id="settingTimezone">
+                                            <option value="UTC">UTC</option>
+                                            <option value="America/New_York">America/New_York (EST)</option>
+                                            <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                                            <option value="Europe/London">Europe/London (GMT)</option>
+                                            <option value="Europe/Paris">Europe/Paris (CET)</option>
+                                            <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                                            <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+                                            <option value="Asia/Manila">Asia/Manila (PHT)</option>
+                                            <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Date Format</div>
+                                        <div class="setting-description">How dates are displayed</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="form-select" id="settingDateFormat">
+                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                            <option value="DD.MM.YYYY">DD.MM.YYYY</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Number Format</div>
+                                        <div class="setting-description">Number and currency display</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="form-select" id="settingNumberFormat">
+                                            <option value="en-US">1,234.56 (US)</option>
+                                            <option value="de-DE">1.234,56 (EU)</option>
+                                            <option value="fr-FR">1 234,56 (FR)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifications Section -->
+                        <div class="settings-section">
+                            <div class="settings-section-header">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 16a2 2 0 0 0 1.985-1.75c.017-.137-.097-.25-.235-.25h-3.5c-.138 0-.252.113-.235.25A2 2 0 0 0 8 16ZM3 5a5 5 0 0 1 10 0v2.947c0 .05.015.098.042.139l1.703 2.555A1.519 1.519 0 0 1 13.482 13H2.518a1.516 1.516 0 0 1-1.263-2.36l1.703-2.554A.255.255 0 0 0 3 7.947Zm5-3.5A3.5 3.5 0 0 0 4.5 5v2.947c0 .346-.102.683-.294.97l-1.703 2.556a.017.017 0 0 0-.003.01l.001.006c0 .002.002.004.004.006l.006.004.007.001h10.964l.007-.001.006-.004.004-.006.001-.007a.017.017 0 0 0-.003-.01l-1.703-2.554a1.745 1.745 0 0 1-.294-.97V5A3.5 3.5 0 0 0 8 1.5Z"></path>
+                                </svg>
+                                <h3>Notifications</h3>
+                            </div>
+                            <div class="settings-section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Email Notifications</div>
+                                        <div class="setting-description">Receive important updates via email</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="settingEmailNotifications">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Browser Notifications</div>
+                                        <div class="setting-description">Get real-time alerts in your browser</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="settingBrowserNotifications">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Section -->
+                        <div class="settings-section security">
+                            <div class="settings-section-header">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M4 4a4 4 0 0 1 8 0v2h.25c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 12.25 15h-8.5A1.75 1.75 0 0 1 2 13.25v-5.5C2 6.784 2.784 6 3.75 6H4Zm8.25 3.5h-8.5a.25.25 0 0 0-.25.25v5.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25ZM10.5 6V4a2.5 2.5 0 1 0-5 0v2Z"></path>
+                                </svg>
+                                <h3>Security</h3>
+                            </div>
+                            <div class="settings-section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Change Password</div>
+                                        <div class="setting-description">Update your account password</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <button class="btn btn-secondary" id="btnChangePassword">Change</button>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Two-Factor Authentication</div>
+                                        <div class="setting-description">
+                                            <span id="otpStatus">Add extra security to your account</span>
+                                        </div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <button class="btn btn-secondary" id="btnToggleOtp">Enable 2FA</button>
+                                    </div>
+                                </div>
+                                <div class="setting-row" id="backupCodesRow" style="display: none;">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Backup Codes</div>
+                                        <div class="setting-description">Regenerate recovery codes</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <button class="btn btn-secondary" id="btnRegenerateBackupCodes">Regenerate</button>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Session Timeout</div>
+                                        <div class="setting-description">Auto-logout after inactivity</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="form-select" id="settingSessionTimeout">
+                                            <option value="15">15 minutes</option>
+                                            <option value="30">30 minutes</option>
+                                            <option value="60">1 hour</option>
+                                            <option value="120">2 hours</option>
+                                            <option value="480">8 hours</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="modalChangePassword">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Change Password</h2>
+                <button class="modal-close" id="closeChangePasswordModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formChangePassword">
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-input" id="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-input" id="newPassword" required minlength="8">
+                        <span class="form-hint">At least 8 characters with uppercase, lowercase, number, and special character</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-input" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelChangePassword">Cancel</button>
+                <button type="submit" form="formChangePassword" class="btn btn-primary">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enable OTP Modal -->
+    <div class="modal-overlay" id="modalEnableOtp">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Enable Two-Factor Authentication</h2>
+                <button class="modal-close" id="closeEnableOtpModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="otp-setup-container">
+                    <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                    <div class="otp-qr-placeholder" id="otpQrContainer">
+                        <span style="color: var(--text-tertiary);">Loading...</span>
+                    </div>
+                    <p>Or enter this code manually:</p>
+                    <div class="otp-secret" id="otpSecretDisplay">-</div>
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label class="form-label">Enter the 6-digit code from your app</label>
+                        <input type="text" class="form-input" id="otpVerifyCode" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+                    </div>
+                </div>
+                <div id="backupCodesDisplay" style="display: none; margin-top: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Backup Codes</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Save these codes in a safe place. Each can only be used once.</p>
+                    <div class="backup-codes-grid" id="backupCodesList"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelEnableOtp">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnVerifyOtp">Verify & Enable</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disable OTP Modal -->
+    <div class="modal-overlay" id="modalDisableOtp">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Disable Two-Factor Authentication</h2>
+                <button class="modal-close" id="closeDisableOtpModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--status-warning);">Warning: Disabling 2FA will make your account less secure.</p>
+                <div class="form-group">
+                    <label class="form-label">Enter your password to confirm</label>
+                    <input type="password" class="form-input" id="disableOtpPassword">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelDisableOtp">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDisableOtp">Disable 2FA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Codes Modal -->
+    <div class="modal-overlay" id="modalBackupCodes">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Regenerate Backup Codes</h2>
+                <button class="modal-close" id="closeBackupCodesModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Enter your password to generate new backup codes. This will invalidate all existing codes.</p>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="regenerateBackupPassword">
+                </div>
+                <div id="newBackupCodesDisplay" style="display: none; margin-top: 1rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Your New Backup Codes</h4>
+                    <div class="backup-codes-grid" id="newBackupCodesList"></div>
+                    <p style="font-size: 0.85rem; color: var(--status-warning); margin-top: 0.5rem;">Save these codes now! They won't be shown again.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelBackupCodes">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmRegenerateBackup">Regenerate</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/settings.js"></script>
+</body>
+
+</html>

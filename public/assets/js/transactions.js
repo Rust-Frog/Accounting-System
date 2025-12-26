@@ -479,6 +479,9 @@ class TransactionsManager {
     }
 
     async editTransaction(id) {
+        // Close detail modal first if open
+        this.closeDetailModal();
+
         try {
             const result = await api.getTransaction(id, this.selectedCompanyId);
             const txn = result?.data;
@@ -703,8 +706,22 @@ class TransactionsManager {
     renderTransactionDetail(txn) {
         const date = new Date(txn.date || txn.created_at).toLocaleDateString();
         const status = txn.status || 'draft';
-        const totalDebit = (txn.lines || []).reduce((sum, l) => sum + (l.debit || 0), 0);
-        const totalCredit = (txn.lines || []).reduce((sum, l) => sum + (l.credit || 0), 0);
+        
+        // Calculate totals - handle both backend format (amount_cents, line_type) and frontend format (debit, credit)
+        let totalDebit = 0;
+        let totalCredit = 0;
+        (txn.lines || []).forEach(line => {
+            if (line.line_type) {
+                // Backend format
+                const amount = (line.amount_cents || 0) / 100;
+                if (line.line_type === 'debit') totalDebit += amount;
+                else totalCredit += amount;
+            } else {
+                // Frontend format
+                totalDebit += (line.debit || 0);
+                totalCredit += (line.credit || 0);
+            }
+        });
 
         // Pre-escape values for security
         // Backend provides total_amount in dollars - just use it
@@ -772,13 +789,27 @@ class TransactionsManager {
                         </tr>
                     </thead>
                     <tbody>
-                        ${(txn.lines || []).map(line => `
+                        ${(txn.lines || []).map(line => {
+                            // Handle both backend format (amount_cents, line_type) and frontend format (debit, credit)
+                            let debitAmount = 0;
+                            let creditAmount = 0;
+                            if (line.line_type) {
+                                // Backend format
+                                const amount = (line.amount_cents || 0) / 100;
+                                if (line.line_type === 'debit') debitAmount = amount;
+                                else creditAmount = amount;
+                            } else {
+                                // Frontend format
+                                debitAmount = line.debit || 0;
+                                creditAmount = line.credit || 0;
+                            }
+                            return `
                             <tr>
                                 <td>${this.escapeHtml(this.getAccountDisplayName(line.account_id))}</td>
-                                <td class="amount debit">${line.debit > 0 ? this.escapeHtml(this.formatCurrency(line.debit)) : ''}</td>
-                                <td class="amount credit">${line.credit > 0 ? this.escapeHtml(this.formatCurrency(line.credit)) : ''}</td>
+                                <td class="amount debit">${debitAmount > 0 ? this.escapeHtml(this.formatCurrency(debitAmount)) : ''}</td>
+                                <td class="amount credit">${creditAmount > 0 ? this.escapeHtml(this.formatCurrency(creditAmount)) : ''}</td>
                             </tr>
-                        `).join('')}
+                        `;}).join('')}
                         <tr class="totals-row">
                             <td><strong>Total</strong></td>
                             <td class="amount debit"><strong>${safeTotalDebit}</strong></td>
@@ -851,29 +882,66 @@ class TransactionsManager {
     // ========== Transaction Actions ==========
 
     async deleteTransaction(id) {
-        if (!confirm('Are you sure you want to delete this draft transaction?')) {
-            return;
+        // Fetch transaction if not already loaded
+        if (!this.currentDetailTxn || this.currentDetailTxn.id !== id) {
+            try {
+                const result = await api.getTransaction(id, this.selectedCompanyId);
+                this.currentDetailTxn = result?.data;
+            } catch (error) {
+                alert(`Failed to load transaction: ${error.message}`);
+                return;
+            }
         }
-
-        try {
-            await api.deleteTransaction(id, this.selectedCompanyId);
-            this.closeDetailModal();
-            this.loadTransactions();
-        } catch (error) {
-            alert(`Failed to delete transaction: ${error.message}`);
-        }
+        
+        this.showConfirmModal({
+            title: 'Delete Draft Transaction',
+            actionType: 'delete',
+            showInput: false,
+            inputRequired: false,
+            buttonText: 'Delete',
+            buttonClass: 'btn-danger',
+            onConfirm: async () => {
+                try {
+                    this.elements.btnConfirmAction.disabled = true;
+                    this.elements.btnConfirmAction.textContent = 'Deleting...';
+                    
+                    await api.deleteTransaction(id, this.selectedCompanyId);
+                    this.closeConfirmModal();
+                    this.closeDetailModal();
+                    this.loadTransactions();
+                } catch (error) {
+                    alert(`Failed to delete transaction: ${error.message}`);
+                    this.elements.btnConfirmAction.disabled = false;
+                    this.elements.btnConfirmAction.textContent = 'Delete';
+                }
+            }
+        });
     }
 
-    rejectTransaction(id) {
+    async rejectTransaction(id) {
+        // Fetch transaction if not already loaded
+        if (!this.currentDetailTxn || this.currentDetailTxn.id !== id) {
+            try {
+                const result = await api.getTransaction(id, this.selectedCompanyId);
+                this.currentDetailTxn = result?.data;
+            } catch (error) {
+                alert(`Failed to load transaction: ${error.message}`);
+                return;
+            }
+        }
+        
         this.showConfirmModal({
             title: 'Reject Transaction',
-            message: `Are you sure you want to reject transaction ${id.substring(0, 12)}...?`,
+            actionType: 'reject',
             showInput: true,
             inputRequired: true,
             buttonText: 'Reject',
             buttonClass: 'btn-danger',
             onConfirm: async (reason) => {
                 try {
+                    this.elements.btnConfirmAction.disabled = true;
+                    this.elements.btnConfirmAction.textContent = 'Rejecting...';
+                    
                     // Find approval ID for this transaction
                     const approvals = await api.getPendingApprovals(1, 100, this.selectedCompanyId);
                     const approval = approvals?.data?.find(a => a.entity_id === id);
@@ -889,21 +957,37 @@ class TransactionsManager {
                     this.loadTransactions();
                 } catch (error) {
                     alert(`Failed to reject transaction: ${error.message}`);
+                    this.elements.btnConfirmAction.disabled = false;
+                    this.elements.btnConfirmAction.textContent = 'Reject';
                 }
             }
         });
     }
 
-    approveTransaction(id) {
+    async approveTransaction(id) {
+        // Fetch transaction if not already loaded
+        if (!this.currentDetailTxn || this.currentDetailTxn.id !== id) {
+            try {
+                const result = await api.getTransaction(id, this.selectedCompanyId);
+                this.currentDetailTxn = result?.data;
+            } catch (error) {
+                alert(`Failed to load transaction: ${error.message}`);
+                return;
+            }
+        }
+        
         this.showConfirmModal({
             title: 'Approve Transaction',
-            message: `Are you sure you want to approve transaction ${id.substring(0, 12)}...?`,
+            actionType: 'approve',
             showInput: true,
             inputRequired: false,
             buttonText: 'Approve',
             buttonClass: 'btn-success',
             onConfirm: async (reason) => {
                 try {
+                    this.elements.btnConfirmAction.disabled = true;
+                    this.elements.btnConfirmAction.textContent = 'Approving...';
+                    
                     // Find approval ID for this transaction
                     const approvals = await api.getPendingApprovals(1, 100, this.selectedCompanyId);
                     const approval = approvals?.data?.find(a => a.entity_id === id);
@@ -919,6 +1003,8 @@ class TransactionsManager {
                     this.loadTransactions();
                 } catch (error) {
                     alert(`Failed to approve transaction: ${error.message}`);
+                    this.elements.btnConfirmAction.disabled = false;
+                    this.elements.btnConfirmAction.textContent = 'Approve';
                 }
             }
         });
@@ -937,16 +1023,32 @@ class TransactionsManager {
             this.elements.confirmAmount.textContent = this.formatCurrency(txn.total_amount || 0);
             this.elements.confirmDescription.textContent = txn.description || '-';
 
-            // Generate impact preview
-            const isApprove = options.buttonClass === 'btn-success';
+            // Generate impact preview based on action type
+            const actionType = options.actionType || 'approve';
             const lines = txn.lines || [];
 
             let accountsHtml = '';
             lines.forEach(line => {
-                const impactType = line.debit > 0 ? 'increase' : 'decrease';
-                const impactLabel = line.debit > 0 ? 'DEBIT' : 'CREDIT';
-                const amount = line.debit > 0 ? line.debit : line.credit;
-                // Use account_id to resolve name if account_name is a UUID or missing
+                // Handle both backend format (amount_cents, line_type) and frontend format (debit, credit)
+                let lineType, amount;
+                if (line.line_type) {
+                    // Backend format
+                    lineType = line.line_type;
+                    amount = (line.amount_cents || 0) / 100;
+                } else {
+                    // Frontend format
+                    lineType = line.debit > 0 ? 'debit' : 'credit';
+                    amount = line.debit > 0 ? line.debit : line.credit;
+                }
+                
+                // For void, show reversed entries
+                let displayType = lineType;
+                if (actionType === 'void') {
+                    displayType = lineType === 'debit' ? 'credit' : 'debit';
+                }
+                
+                const impactType = displayType === 'debit' ? 'increase' : 'decrease';
+                const impactLabel = displayType === 'debit' ? 'DEBIT' : 'CREDIT';
                 const accountName = this.getAccountDisplayName(line.account_id || line.account_name);
 
                 accountsHtml += `
@@ -959,11 +1061,25 @@ class TransactionsManager {
             });
             this.elements.impactAccounts.innerHTML = accountsHtml;
 
-            // Result message
-            if (isApprove) {
-                this.elements.impactResult.innerHTML = '✓ Upon approval, this transaction will be moved to <strong>Approved</strong> status and ready for posting.';
-            } else {
-                this.elements.impactResult.innerHTML = '✗ Upon rejection, this transaction will be marked as <strong>Rejected</strong> and no entries will be recorded.';
+            // Result message based on action type
+            switch (actionType) {
+                case 'delete':
+                    this.elements.impactResult.innerHTML = '🗑️ This draft transaction will be <strong>permanently deleted</strong>. This action cannot be undone.';
+                    break;
+                case 'post':
+                    this.elements.impactResult.innerHTML = '✓ This transaction will be <strong>posted to the ledger</strong>. Account balances will be updated and a journal entry will be created.';
+                    break;
+                case 'void':
+                    this.elements.impactResult.innerHTML = '↩️ This transaction will be <strong>voided</strong>. Reversing entries (shown above) will be created to undo the original posting.';
+                    break;
+                case 'approve':
+                    this.elements.impactResult.innerHTML = '✓ Upon approval, this transaction will be moved to <strong>Approved</strong> status and ready for posting.';
+                    break;
+                case 'reject':
+                    this.elements.impactResult.innerHTML = '✗ Upon rejection, this transaction will be marked as <strong>Rejected</strong> and no entries will be recorded.';
+                    break;
+                default:
+                    this.elements.impactResult.innerHTML = '';
             }
         }
 
@@ -973,6 +1089,7 @@ class TransactionsManager {
 
         this.elements.btnConfirmAction.textContent = options.buttonText;
         this.elements.btnConfirmAction.className = `btn ${options.buttonClass}`;
+        this.elements.btnConfirmAction.disabled = false;
 
         this.elements.confirmModal.classList.add('active');
     }
@@ -980,6 +1097,8 @@ class TransactionsManager {
     closeConfirmModal() {
         this.elements.confirmModal.classList.remove('active');
         this.confirmCallback = null;
+        // Reset button state
+        this.elements.btnConfirmAction.disabled = false;
     }
 
     handleConfirmAction() {
@@ -997,31 +1116,77 @@ class TransactionsManager {
     }
 
     async postTransaction(id) {
-        if (!confirm('Are you sure you want to post this transaction? This action cannot be undone.')) {
-            return;
+        // Fetch transaction if not already loaded
+        if (!this.currentDetailTxn || this.currentDetailTxn.id !== id) {
+            try {
+                const result = await api.getTransaction(id, this.selectedCompanyId);
+                this.currentDetailTxn = result?.data;
+            } catch (error) {
+                alert(`Failed to load transaction: ${error.message}`);
+                return;
+            }
         }
-
-        try {
-            await api.postTransaction(id, this.selectedCompanyId);
-            this.closeDetailModal();
-            this.loadTransactions();
-        } catch (error) {
-            alert(`Failed to post transaction: ${error.message}`);
-        }
+        
+        this.showConfirmModal({
+            title: 'Post Transaction',
+            actionType: 'post',
+            showInput: false,
+            inputRequired: false,
+            buttonText: 'Post Transaction',
+            buttonClass: 'btn-success',
+            onConfirm: async () => {
+                try {
+                    this.elements.btnConfirmAction.disabled = true;
+                    this.elements.btnConfirmAction.textContent = 'Posting...';
+                    
+                    await api.postTransaction(id, this.selectedCompanyId);
+                    this.closeConfirmModal();
+                    this.closeDetailModal();
+                    this.loadTransactions();
+                } catch (error) {
+                    alert(`Failed to post transaction: ${error.message}`);
+                    this.elements.btnConfirmAction.disabled = false;
+                    this.elements.btnConfirmAction.textContent = 'Post Transaction';
+                }
+            }
+        });
     }
 
     async voidTransaction(id) {
-        if (!confirm('Are you sure you want to void this transaction? This will create reversing entries.')) {
-            return;
+        // Fetch transaction if not already loaded
+        if (!this.currentDetailTxn || this.currentDetailTxn.id !== id) {
+            try {
+                const result = await api.getTransaction(id, this.selectedCompanyId);
+                this.currentDetailTxn = result?.data;
+            } catch (error) {
+                alert(`Failed to load transaction: ${error.message}`);
+                return;
+            }
         }
-
-        try {
-            await api.voidTransaction(id, this.selectedCompanyId);
-            this.closeDetailModal();
-            this.loadTransactions();
-        } catch (error) {
-            alert(`Failed to void transaction: ${error.message}`);
-        }
+        
+        this.showConfirmModal({
+            title: 'Void Transaction',
+            actionType: 'void',
+            showInput: true,
+            inputRequired: true,
+            buttonText: 'Void Transaction',
+            buttonClass: 'btn-danger',
+            onConfirm: async (reason) => {
+                try {
+                    this.elements.btnConfirmAction.disabled = true;
+                    this.elements.btnConfirmAction.textContent = 'Voiding...';
+                    
+                    await api.voidTransaction(id, this.selectedCompanyId, reason);
+                    this.closeConfirmModal();
+                    this.closeDetailModal();
+                    this.loadTransactions();
+                } catch (error) {
+                    alert(`Failed to void transaction: ${error.message}`);
+                    this.elements.btnConfirmAction.disabled = false;
+                    this.elements.btnConfirmAction.textContent = 'Void Transaction';
+                }
+            }
+        });
     }
 
     // ========== Utilities ==========

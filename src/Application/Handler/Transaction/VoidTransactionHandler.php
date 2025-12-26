@@ -26,6 +26,7 @@ final readonly class VoidTransactionHandler implements HandlerInterface
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository,
         private \Domain\Ledger\Repository\JournalEntryRepositoryInterface $journalEntryRepository,
+        private \Domain\ChartOfAccounts\Repository\AccountRepositoryInterface $accountRepository,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -78,6 +79,25 @@ final readonly class VoidTransactionHandler implements HandlerInterface
         );
 
         $this->journalEntryRepository->save($journalEntry);
+        // --------------------------------
+
+        // --- REVERSE ACCOUNT BALANCES ---
+        foreach ($transaction->lines() as $line) {
+            $account = $this->accountRepository->findById($line->accountId());
+            if ($account === null) {
+                continue;
+            }
+
+            $amount = $line->amount();
+            // Reverse: if original was debit, apply credit (and vice versa)
+            if ($line->lineType()->value === 'debit') {
+                $account->applyCredit($amount);
+            } else {
+                $account->applyDebit($amount);
+            }
+
+            $this->accountRepository->save($account);
+        }
         // --------------------------------
 
         // Dispatch events

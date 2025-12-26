@@ -33,6 +33,34 @@ final class JournalEntry
     ) {
     }
 
+    /**
+     * Reconstitute a JournalEntry from persisted data.
+     * Used for hydration from database without recomputing hashes.
+     */
+    public static function reconstitute(
+        string $id,
+        CompanyId $companyId,
+        TransactionId $transactionId,
+        string $entryType,
+        array $bookings,
+        DateTimeImmutable $occurredAt,
+        ContentHash $contentHash,
+        ?ContentHash $previousHash,
+        ?ChainLink $chainLink
+    ): self {
+        return new self(
+            $id,
+            $companyId,
+            $transactionId,
+            $entryType,
+            $bookings,
+            $occurredAt,
+            $contentHash,
+            $previousHash,
+            $chainLink
+        );
+    }
+
     public static function create(
         CompanyId $companyId,
         TransactionId $transactionId,

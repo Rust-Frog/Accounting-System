@@ -8,6 +8,7 @@ use Application\Command\Admin\SetupAdminCommand;
 use Domain\Identity\Entity\User;
 use Domain\Identity\Repository\UserRepositoryInterface;
 use Domain\Identity\ValueObject\Password;
+use Domain\Identity\ValueObject\RecoveryCode;
 use Domain\Identity\ValueObject\Role;
 use Domain\Identity\ValueObject\Username;
 use Domain\Shared\ValueObject\Email;
@@ -48,13 +49,16 @@ final class SetupAdminHandler
         
         // 5. Genesis Approval
         $user->approveGenesis();
-        
+
+        // 6. Generate Recovery Codes
+        $recoveryCodes = RecoveryCode::generateSet();
+
         $this->userRepository->save($user);
 
         return [
             'id' => $user->id()->toString(),
             'username' => $user->username(),
-            'recovery_codes' => [] // TODO: Generate recovery codes
+            'recovery_codes' => array_map(fn(RecoveryCode $code) => $code->code(), $recoveryCodes),
         ];
     }
 }

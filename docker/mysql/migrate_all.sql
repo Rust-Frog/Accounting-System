@@ -56,3 +56,37 @@ UNION ALL SELECT '- users.otp_secret column exists'
 UNION ALL SELECT '- approvals.proof_json column exists'
 UNION ALL SELECT '- journal_entries table exists';
 
+-- 4. Add hash columns to activity_logs for audit chain
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = 'activity_logs'
+                   AND COLUMN_NAME = 'content_hash');
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE activity_logs ADD COLUMN content_hash CHAR(64) NULL AFTER correlation_id',
+    'SELECT "content_hash column already exists in activity_logs"');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = 'activity_logs'
+                   AND COLUMN_NAME = 'previous_hash');
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE activity_logs ADD COLUMN previous_hash CHAR(64) NULL AFTER content_hash',
+    'SELECT "previous_hash column already exists in activity_logs"');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = 'activity_logs'
+                   AND COLUMN_NAME = 'chain_hash');
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE activity_logs ADD COLUMN chain_hash CHAR(64) NULL AFTER previous_hash',
+    'SELECT "chain_hash column already exists in activity_logs"');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+

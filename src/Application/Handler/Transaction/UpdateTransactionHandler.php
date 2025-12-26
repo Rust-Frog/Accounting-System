@@ -122,15 +122,16 @@ final readonly class UpdateTransactionHandler implements HandlerInterface
         $lines = [];
         $i = 0;
         foreach ($transaction->lines() as $line) {
+            $account = $this->accountRepository->findById($line->accountId());
             $lines[] = new TransactionLineDto(
                 id: (string)$i,
                 accountId: $line->accountId()->toString(),
-                accountCode: 'Unknown',
-                accountName: 'Unknown',
+                accountCode: $account !== null ? (string)$account->code()->toInt() : 'Unknown',
+                accountName: $account?->name() ?? 'Unknown Account',
                 lineType: $line->lineType()->value,
                 amountCents: $line->amount()->cents(),
                 lineOrder: $i++,
-                description: $line->description()
+                description: $line->description() ?? ''
             );
         }
 

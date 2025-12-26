@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Api\Middleware;
 
 use Api\Response\JsonResponse;
+use Domain\Audit\Service\AuditChainServiceInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -14,6 +15,11 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class RoleEnforcementMiddleware
 {
+    public function __construct(
+        private readonly ?AuditChainServiceInterface $auditService = null
+    ) {
+    }
+
     /**
      * Routes that ONLY admins can access.
      * @var array<string>
@@ -136,14 +142,27 @@ final class RoleEnforcementMiddleware
         string $role,
         string $reason
     ): void {
-        // TODO: Integrate with AuditChainService when implemented
-        error_log(sprintf(
+        $message = sprintf(
             '[SECURITY] Access denied: user=%s role=%s route=%s reason=%s time=%s',
             $userId,
             $role,
             $routeKey,
             $reason,
             date('Y-m-d H:i:s')
-        ));
+        );
+
+        // Log to audit chain for security tracking
+        if ($this->auditService !== null) {
+            $this->auditService->logSecurityEvent('access_denied', [
+                'user_id' => $userId,
+                'role' => $role,
+                'route' => $routeKey,
+                'reason' => $reason,
+                'timestamp' => (new \DateTimeImmutable())->format('c'),
+            ]);
+        }
+
+        // Keep error_log as fallback for development
+        error_log($message);
     }
 }

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     last_login_at DATETIME NULL,
     last_login_ip VARCHAR(45) NULL,
+    otp_secret VARCHAR(255) NULL DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -103,7 +104,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     parent_account_id CHAR(36) NULL,
     balance_cents BIGINT NOT NULL DEFAULT 0,
-    currency CHAR(3) NOT NULL DEFAULT 'PHP',
+    currency CHAR(3) NOT NULL DEFAULT 'USD',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -189,6 +190,7 @@ CREATE TABLE IF NOT EXISTS approvals (
     approval_type VARCHAR(50) NOT NULL,
     reason TEXT NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    proof_json JSON NULL DEFAULT NULL,
     amount_cents BIGINT NOT NULL DEFAULT 0,
     priority INT NOT NULL DEFAULT 0,
     
@@ -268,6 +270,27 @@ CREATE TABLE IF NOT EXISTS balance_changes (
         REFERENCES transaction_lines(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS journal_entries (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    company_id CHAR(36) NOT NULL,
+    transaction_id CHAR(36) NOT NULL,
+    entry_type VARCHAR(20) NOT NULL COMMENT 'POSTING or REVERSAL',
+    bookings_json JSON NOT NULL,
+    occurred_at DATETIME(6) NOT NULL,
+    content_hash CHAR(64) NOT NULL,
+    previous_hash CHAR(64) NULL,
+    chain_hash CHAR(64) NULL,
+
+    INDEX idx_journal_company_occurred (company_id, occurred_at),
+    INDEX idx_journal_transaction (transaction_id),
+    UNIQUE INDEX idx_journal_previous_hash (previous_hash),
+
+    CONSTRAINT fk_journal_entries_company FOREIGN KEY (company_id)
+        REFERENCES companies(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_journal_entries_transaction FOREIGN KEY (transaction_id)
+        REFERENCES transactions(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================
 -- Audit Domain (Append-Only)
 -- ============================================
@@ -339,6 +362,44 @@ CREATE TABLE IF NOT EXISTS reports (
         REFERENCES companies(id) ON DELETE RESTRICT,
     CONSTRAINT fk_reports_generated_by FOREIGN KEY (generated_by) 
         REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- User Settings (Per-User Preferences)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL UNIQUE,
+    
+    -- UI Preferences
+    theme VARCHAR(20) NOT NULL DEFAULT 'light',
+    locale VARCHAR(10) NOT NULL DEFAULT 'en-US',
+    timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
+    date_format VARCHAR(20) NOT NULL DEFAULT 'YYYY-MM-DD',
+    number_format VARCHAR(20) NOT NULL DEFAULT 'en-US',
+    
+    -- Notification Preferences
+    email_notifications TINYINT(1) NOT NULL DEFAULT 1,
+    browser_notifications TINYINT(1) NOT NULL DEFAULT 1,
+    
+    -- Security Preferences
+    session_timeout_minutes INT NOT NULL DEFAULT 30,
+    
+    -- Recovery
+    backup_codes_hash TEXT NULL,
+    backup_codes_generated_at DATETIME NULL,
+    
+    -- Additional settings as JSON
+    extra_settings_json JSON NULL,
+    
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_user_settings_user (user_id),
+    
+    CONSTRAINT fk_user_settings_user FOREIGN KEY (user_id) 
+        REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================

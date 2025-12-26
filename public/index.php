@@ -115,7 +115,7 @@ $router->addMiddleware(new AuthenticationMiddleware(
     ]
 ));
 $router->addMiddleware(new \Api\Middleware\RateLimitMiddleware($redis));
-$router->addMiddleware(new \Api\Middleware\RoleEnforcementMiddleware());
+$router->addMiddleware($container->get(\Api\Middleware\RoleEnforcementMiddleware::class));
 $router->addMiddleware(new \Api\Middleware\CompanyScopingMiddleware());
 $router->addMiddleware($container->get(\Api\Middleware\SetupMiddleware::class));
 
@@ -193,6 +193,80 @@ $journalController = new \Api\Controller\JournalController(
 $router->get('/api/v1/companies/{companyId}/journal', [$journalController, 'list']);
 $router->get('/api/v1/companies/{companyId}/journal/{id}', [$journalController, 'get']);
 
+// Ledger routes
+$ledgerController = new \Api\Controller\LedgerController(
+    $container->get(AccountRepositoryInterface::class),
+    $container->get(TransactionRepositoryInterface::class),
+    $container->get(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class)
+);
+$router->get('/api/v1/companies/{companyId}/ledger', [$ledgerController, 'show']);
+$router->get('/api/v1/companies/{companyId}/ledger/summary', [$ledgerController, 'summary']);
+
+// Trial Balance routes
+$trialBalanceController = new \Api\Controller\TrialBalanceController(
+    $container->get(\Application\Handler\Reporting\GenerateTrialBalanceHandler::class)
+);
+$router->get('/api/v1/companies/{companyId}/trial-balance', [$trialBalanceController, 'generate']);
+
+// Income Statement routes
+$incomeStatementController = new \Api\Controller\IncomeStatementController(
+    $container->get(\Application\Handler\Reporting\GenerateIncomeStatementHandler::class)
+);
+$router->get('/api/v1/companies/{companyId}/income-statement', [$incomeStatementController, 'generate']);
+
+// Period Close routes
+$periodCloseController = new \Api\Controller\PeriodCloseController(
+    $container->get(\Domain\Approval\Repository\ApprovalRepositoryInterface::class)
+);
+$router->post('/api/v1/companies/{companyId}/period-close', [$periodCloseController, 'requestClose']);
+$router->get('/api/v1/companies/{companyId}/period-close', [$periodCloseController, 'list']);
+
+// Balance Sheet routes
+$balanceSheetController = new \Api\Controller\BalanceSheetController(
+    $container->get(\Application\Handler\Reporting\GenerateBalanceSheetHandler::class)
+);
+$router->get('/api/v1/companies/{companyId}/balance-sheet', [$balanceSheetController, 'generate']);
+
+// User Management routes (admin only)
+$userController = new \Api\Controller\UserController(
+    $container->get(UserRepositoryInterface::class),
+    $container->get(\Application\Handler\Identity\ApproveUserHandler::class),
+    $container->get(\Application\Handler\Identity\DeclineUserHandler::class),
+    $container->get(\Application\Handler\Identity\DeactivateUserHandler::class),
+    $container->get(\Application\Handler\Identity\ActivateUserHandler::class)
+);
+$router->get('/api/v1/users', [$userController, 'list']);
+$router->post('/api/v1/users', [$userController, 'create']);
+$router->get('/api/v1/users/{id}', [$userController, 'get']);
+$router->post('/api/v1/users/{id}/approve', [$userController, 'approve']);
+$router->post('/api/v1/users/{id}/decline', [$userController, 'decline']);
+$router->post('/api/v1/users/{id}/deactivate', [$userController, 'deactivate']);
+$router->post('/api/v1/users/{id}/activate', [$userController, 'activate']);
+
+// Audit Log routes (read-only)
+$auditLogController = new \Api\Controller\AuditLogController(
+    $container->get(\Domain\Audit\Repository\ActivityLogRepositoryInterface::class)
+);
+$router->get('/api/v1/companies/{companyId}/audit-logs', [$auditLogController, 'list']);
+$router->get('/api/v1/companies/{companyId}/audit-logs/stats', [$auditLogController, 'stats']);
+$router->get('/api/v1/companies/{companyId}/audit-logs/{id}', [$auditLogController, 'get']);
+
+// Settings routes (current user)
+$settingsController = new \Api\Controller\SettingsController(
+    $container->get(\Application\Handler\Settings\UpdateSettingsHandler::class),
+    $container->get(\Application\Handler\Settings\SecuritySettingsHandler::class),
+    $container->get(UserRepositoryInterface::class)
+);
+$router->get('/api/v1/settings', [$settingsController, 'get']);
+$router->put('/api/v1/settings/theme', [$settingsController, 'updateTheme']);
+$router->put('/api/v1/settings/localization', [$settingsController, 'updateLocalization']);
+$router->put('/api/v1/settings/notifications', [$settingsController, 'updateNotifications']);
+$router->put('/api/v1/settings/session', [$settingsController, 'updateSessionTimeout']);
+$router->post('/api/v1/settings/password', [$settingsController, 'changePassword']);
+$router->post('/api/v1/settings/otp/enable', [$settingsController, 'enableOtp']);
+$router->post('/api/v1/settings/otp/verify', [$settingsController, 'verifyOtp']);
+$router->post('/api/v1/settings/otp/disable', [$settingsController, 'disableOtp']);
+$router->post('/api/v1/settings/backup-codes/regenerate', [$settingsController, 'regenerateBackupCodes']);
 
 // Dispatch request
 $request = ServerRequest::fromGlobals();

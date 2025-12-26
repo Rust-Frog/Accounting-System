@@ -33,30 +33,23 @@ final class AuthenticationMiddleware
     {
         // Skip authentication for excluded paths
         $path = $request->getUri()->getPath();
-        error_log("DEBUG Auth: path=$path");
-        
+
         if ($this->isExcluded($path)) {
-            error_log("DEBUG Auth: path excluded");
             return $next($request);
         }
 
         // Extract token from Authorization header
         $token = $this->extractToken($request);
         if ($token === null) {
-            error_log("DEBUG Auth: no token found");
             return JsonResponse::error('Authentication required', 401);
         }
 
-        error_log("DEBUG Auth: token prefix=" . substr($token, 0, 20) . " isJwt=" . ($this->isJwt($token) ? 'true' : 'false'));
-
         // Try JWT validation first if service is available
         if ($this->jwtService !== null && $this->isJwt($token)) {
-            error_log("DEBUG Auth: trying JWT auth");
             return $this->authenticateWithJwt($request, $next, $token);
         }
 
         // Fall back to session-based authentication
-        error_log("DEBUG Auth: trying session auth");
         return $this->authenticateWithSession($request, $next, $token);
     }
 

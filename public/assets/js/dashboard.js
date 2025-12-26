@@ -239,15 +239,15 @@ class DashboardManager {
 
         // Quick action buttons
         this.elements.btnAddCompany?.addEventListener('click', () => {
-            this.showNotImplemented('Add Company');
+            window.location.href = '/companies.html';
         });
 
         this.elements.btnAddUser?.addEventListener('click', () => {
-            this.showNotImplemented('Add User');
+            window.location.href = '/users.html';
         });
 
         this.elements.btnGenerateReport?.addEventListener('click', () => {
-            this.showNotImplemented('Generate Report');
+            window.location.href = '/trial-balance.html';
         });
     }
 

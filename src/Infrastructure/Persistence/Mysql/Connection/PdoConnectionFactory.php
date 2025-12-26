@@ -43,14 +43,25 @@ final class PdoConnectionFactory
 
     /**
      * Internal factory for PDO instance.
+     *
+     * @throws \RuntimeException if required environment variables are missing
      */
     private static function makePdo(): PDO
     {
         $host = getenv('DB_HOST') ?: 'mysql';
         $port = getenv('DB_PORT') ?: '3306';
-        $database = getenv('DB_DATABASE') ?: 'accounting';
-        $username = getenv('DB_USERNAME') ?: 'root';
-        $password = getenv('DB_PASSWORD') ?: 'secret';
+        $database = getenv('DB_DATABASE') ?: 'accounting_system';
+        $username = getenv('DB_USERNAME');
+        $password = getenv('DB_PASSWORD');
+
+        // Fail fast if credentials are not configured
+        if ($username === false || $username === '') {
+            throw new \RuntimeException('DB_USERNAME environment variable is required');
+        }
+
+        if ($password === false) {
+            throw new \RuntimeException('DB_PASSWORD environment variable is required');
+        }
 
         $dsn = sprintf(
             'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
@@ -58,7 +69,6 @@ final class PdoConnectionFactory
             $port,
             $database
         );
-
 
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

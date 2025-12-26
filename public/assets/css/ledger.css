@@ -1,0 +1,355 @@
+/**
+ * General Ledger Page Styles
+ * Page-specific styles only - common components are in components.css
+ */
+
+/* ========== Entry Count ========== */
+.entry-count {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* ========== Filter Bar Enhancements ========== */
+.filter-bar .form-input {
+    width: 160px;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-tertiary, #1a1a1f);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-primary, #ffffff);
+    font-size: 0.875rem;
+    font-family: inherit;
+    color-scheme: dark;
+}
+
+.filter-bar .form-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+}
+
+/* ========== Account Summary Card ========== */
+.account-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.account-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.account-code {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-md);
+}
+
+.account-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.account-type {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.type-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+}
+
+.type-badge.type-asset {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.type-badge.type-liability {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.type-badge.type-equity {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.type-badge.type-revenue {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.type-badge.type-expense {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.normal-balance {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.summary-balances {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.balance-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+.balance-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.balance-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.balance-value.debit {
+    color: #3b82f6;
+}
+
+.balance-value.credit {
+    color: #22c55e;
+}
+
+/* ========== Ledger Table ========== */
+.ledger-table {
+    table-layout: fixed;
+    min-width: 800px;
+}
+
+.ledger-table .col-date {
+    width: 12%;
+}
+
+.ledger-table .col-reference {
+    width: 15%;
+}
+
+.ledger-table .col-description {
+    width: 33%;
+}
+
+.ledger-table .col-debit {
+    width: 13%;
+    text-align: right;
+}
+
+.ledger-table .col-credit {
+    width: 13%;
+    text-align: right;
+}
+
+.ledger-table .col-balance {
+    width: 14%;
+    text-align: right;
+}
+
+.ledger-table tbody td.amount {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+}
+
+.ledger-table tbody td.col-debit {
+    color: #3b82f6;
+}
+
+.ledger-table tbody td.col-credit {
+    color: #22c55e;
+}
+
+.ledger-table tbody td.col-balance {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ledger-table tbody td.col-balance.negative {
+    color: #ef4444;
+}
+
+/* ========== Reversal Rows ========== */
+.ledger-table tbody tr.reversal-row {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.ledger-table tbody tr.reversal-row td.col-description {
+    color: #ef4444;
+}
+
+/* ========== Totals Row ========== */
+.ledger-table tfoot .totals-row {
+    background: var(--surface-secondary);
+    border-top: 2px solid var(--border-primary);
+}
+
+.ledger-table tfoot .totals-row td {
+    padding: 1rem 0.75rem;
+    font-family: 'Fira Code', monospace;
+}
+
+.ledger-table tfoot .totals-row .col-debit {
+    color: #3b82f6;
+}
+
+.ledger-table tfoot .totals-row .col-credit {
+    color: #22c55e;
+}
+
+/* ========== Reference Code ========== */
+.ledger-table code {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    background: var(--surface-tertiary);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+}
+
+/* ========== Empty/Loading States ========== */
+.empty-row td,
+.loading-row td,
+.error-row td {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-message,
+.loading-spinner,
+.error-message {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.loading-spinner::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-primary);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error-message {
+    color: #ef4444;
+}
+
+/* ========== Empty State ========== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    min-height: 300px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.empty-state .empty-icon {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    max-width: 400px;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .account-summary-card {
+        padding: 1rem;
+    }
+
+    .summary-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .account-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .summary-balances {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filter-bar {
+        flex-wrap: wrap;
+    }
+
+    .filter-bar .form-input {
+        width: 100%;
+    }
+}

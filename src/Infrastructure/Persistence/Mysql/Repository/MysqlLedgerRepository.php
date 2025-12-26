@@ -67,14 +67,41 @@ class MysqlLedgerRepository extends AbstractMysqlRepository implements LedgerRep
 
     public function getAllBalances(CompanyId $companyId): array
     {
-        // TODO: Implement proper listing using CompanyId
-        return [];
+        $sql = "SELECT ab.* FROM account_balances ab
+                INNER JOIN accounts a ON ab.account_id = a.id
+                WHERE a.company_id = :company_id
+                ORDER BY ab.period_end DESC";
+
+        $stmt = $this->connection->prepare($sql);
+        $stmt->execute(['company_id' => $companyId->toString()]);
+
+        $balances = [];
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $balances[] = $this->hydrateAccountBalance($row);
+        }
+
+        return $balances;
     }
 
     public function getBalancesByType(CompanyId $companyId, AccountType $type): array
     {
-        // TODO: Implement proper filtering
-        return [];
+        $sql = "SELECT ab.* FROM account_balances ab
+                INNER JOIN accounts a ON ab.account_id = a.id
+                WHERE a.company_id = :company_id AND a.type = :type
+                ORDER BY ab.period_end DESC";
+
+        $stmt = $this->connection->prepare($sql);
+        $stmt->execute([
+            'company_id' => $companyId->toString(),
+            'type' => $type->value,
+        ]);
+
+        $balances = [];
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $balances[] = $this->hydrateAccountBalance($row);
+        }
+
+        return $balances;
     }
 
     public function getBalanceCents(CompanyId $companyId, AccountId $accountId): int
@@ -111,21 +138,22 @@ class MysqlLedgerRepository extends AbstractMysqlRepository implements LedgerRep
      */
     private function hydrateAccountBalance(array $row): AccountBalance
     {
-         $accountSql = "SELECT currency, type FROM accounts WHERE id = :id";
+         $accountSql = "SELECT currency, type, company_id FROM accounts WHERE id = :id";
          $stmt = $this->connection->prepare($accountSql);
          $stmt->execute(['id' => $row['account_id']]);
          $accRow = $stmt->fetch(\PDO::FETCH_ASSOC);
          
          $currencyCode = $accRow['currency'] ?? 'USD';
          $typeStr = $accRow['type'] ?? 'ASSET';
-         
+         $companyIdStr = $accRow['company_id'] ?? $row['company_id'] ?? '00000000-0000-0000-0000-000000000000';
+
          $currency = \Domain\Shared\ValueObject\Currency::from($currencyCode);
          $accountType = \Domain\ChartOfAccounts\ValueObject\AccountType::from($typeStr);
          
          return AccountBalance::reconstruct(
             \Domain\Ledger\ValueObject\AccountBalanceId::fromString($row['id']),
             \Domain\ChartOfAccounts\ValueObject\AccountId::fromString($row['account_id']),
-            \Domain\Company\ValueObject\CompanyId::fromString('00000000-0000-0000-0000-000000000000'), // Missing column in schema, assumed placeholder
+            \Domain\Company\ValueObject\CompanyId::fromString($companyIdStr),
             $accountType,
             $accountType->normalBalance(),
             $currency,

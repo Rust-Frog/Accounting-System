@@ -21,6 +21,11 @@ services:
       - DB_DATABASE=accounting_system
       - DB_USERNAME=accounting_user
       - DB_PASSWORD=accounting_pass
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=dev-secret-key-change-in-production-min-32-chars
+      - JWT_EXPIRATION=3600
+      - JWT_ISSUER=accounting-api
     networks:
       - accounting-network
     depends_on:

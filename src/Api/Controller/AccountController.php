@@ -102,6 +102,7 @@ final class AccountController
     {
         try {
             $account = $this->getAccount($request);
+            $body = $request->getParsedBody();
 
             // Update name if provided
             if (isset($body['name']) && !empty($body['name'])) {
@@ -203,7 +204,7 @@ final class AccountController
             'transaction_date' => $transaction->transactionDate()->format('Y-m-d'),
             'description' => $transaction->description(),
             'status' => $transaction->status()->value,
-            'amount' => $transaction->totalAmount()->cents() / 100,
+            'amount' => $transaction->totalDebits()->cents() / 100,
         ];
     }
     private function getCompanyId(ServerRequestInterface $request): CompanyId

@@ -117,56 +117,32 @@ final class MysqlJournalEntryRepository extends AbstractMysqlRepository implemen
     private function hydrate(array $row): JournalEntry
     {
         $previousHash = $row['previous_hash'] 
-            ? ContentHash::fromContent($row['previous_hash']) // Assuming plain string storage
+            ? ContentHash::fromContent($row['previous_hash'])
             : null;
 
         $contentHash = ContentHash::fromContent($row['content_hash']);
-        
-        // Reconstruct chain link explicitly if needed, but JournalEntry constructor handles it via internal properties usually.
-        // However, our JournalEntry constructor is private and create() computes hashes. 
-        // We need a way to hydrate existing entries.
-        // Ideally we should use reflection or exposed hydration method.
-        // For now, let's assume we can reconstruct it via reflection or a dedicated hydrator.
-        // Since create() re-computes, we can't use it for hydration without verifying.
-        // Let's rely on a strictly controlled hydration mechanism.
-        // Refactoring to add 'hydrate' static method or similar to JournalEntry is needed. 
-        
-        // TEMPORARY: Using reflection to bypass constructor for hydration
-        $reflection = new \ReflectionClass(JournalEntry::class);
-        $constructor = $reflection->getConstructor();
-        $constructor->setAccessible(true);
-        
-        $object = $reflection->newInstanceWithoutConstructor();
-        
-        // Set properties
-        $this->setProperty($reflection, $object, 'id', $row['id']);
-        $this->setProperty($reflection, $object, 'companyId', CompanyId::fromString($row['company_id']));
-        $this->setProperty($reflection, $object, 'transactionId', TransactionId::fromString($row['transaction_id']));
-        $this->setProperty($reflection, $object, 'entryType', $row['entry_type']);
-        $this->setProperty($reflection, $object, 'bookings', json_decode($row['bookings_json'], true));
-        $this->setProperty($reflection, $object, 'occurredAt', new DateTimeImmutable($row['occurred_at']));
-        $this->setProperty($reflection, $object, 'contentHash', $contentHash);
-        $this->setProperty($reflection, $object, 'previousHash', $previousHash);
-        
-        // ChainLink reconstruction
+        $occurredAt = new DateTimeImmutable($row['occurred_at']);
+
+        // Reconstruct chain link if previous hash exists
+        $chainLink = null;
         if ($previousHash && !empty($row['chain_hash'])) {
-             $chainLink = new ChainLink(
-                 $previousHash,
-                 $contentHash,
-                 new DateTimeImmutable($row['occurred_at'])
-             );
-             $this->setProperty($reflection, $object, 'chainLink', $chainLink);
-        } else {
-             $this->setProperty($reflection, $object, 'chainLink', null); 
+            $chainLink = new ChainLink(
+                $previousHash,
+                $contentHash,
+                $occurredAt
+            );
         }
 
-        return $object;
-    }
-
-    private function setProperty(\ReflectionClass $reflection, object $object, string $name, mixed $value): void
-    {
-        $property = $reflection->getProperty($name);
-        $property->setAccessible(true);
-        $property->setValue($object, $value);
+        return JournalEntry::reconstitute(
+            id: $row['id'],
+            companyId: CompanyId::fromString($row['company_id']),
+            transactionId: TransactionId::fromString($row['transaction_id']),
+            entryType: $row['entry_type'],
+            bookings: json_decode($row['bookings_json'], true),
+            occurredAt: $occurredAt,
+            contentHash: $contentHash,
+            previousHash: $previousHash,
+            chainLink: $chainLink
+        );
     }
 }

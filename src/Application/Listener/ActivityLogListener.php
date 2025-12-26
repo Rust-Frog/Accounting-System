@@ -9,6 +9,7 @@ use Domain\Audit\ValueObject\ActivityType;
 use Domain\Audit\ValueObject\Actor;
 use Domain\Audit\ValueObject\RequestContext;
 use Domain\Company\ValueObject\CompanyId;
+use Domain\Identity\Repository\UserRepositoryInterface;
 use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\Event\DomainEvent;
 use Domain\Transaction\Event\TransactionCreated;
@@ -22,8 +23,22 @@ use Domain\Transaction\Event\TransactionVoided;
 final class ActivityLogListener
 {
     public function __construct(
-        private readonly ActivityLogService $activityLogService
+        private readonly ActivityLogService $activityLogService,
+        private readonly UserRepositoryInterface $userRepository
     ) {
+    }
+
+    /**
+     * Get the display name for a user ID.
+     */
+    private function getUserDisplayName(string $userId): string
+    {
+        try {
+            $user = $this->userRepository->findById(UserId::fromString($userId));
+            return $user?->username() ?? 'Unknown';
+        } catch (\Throwable) {
+            return 'Unknown';
+        }
     }
 
     public function __invoke(DomainEvent $event): void
@@ -50,10 +65,11 @@ final class ActivityLogListener
 
         if ($event instanceof TransactionCreated) {
             $eventData = $event->toArray();
+            $displayName = $this->getUserDisplayName($eventData['created_by']);
             $this->activityLogService->logActivity(
                 new \Domain\Audit\Service\LogActivityRequest(
                     companyId: $eventData['company_id'],
-                    actor: Actor::user(UserId::fromString($eventData['created_by']), 'Unknown'),
+                    actor: Actor::user(UserId::fromString($eventData['created_by']), $displayName),
                     activityType: ActivityType::TRANSACTION_CREATED,
                     entityInfo: [
                         'type' => 'transaction',
@@ -70,15 +86,58 @@ final class ActivityLogListener
 
         if ($event instanceof TransactionUpdated) {
             $eventData = $event->toArray();
+            $displayName = $this->getUserDisplayName($eventData['updated_by']);
             $this->activityLogService->logActivity(
                 new \Domain\Audit\Service\LogActivityRequest(
                     companyId: $eventData['company_id'],
-                    actor: Actor::user(UserId::fromString($eventData['updated_by']), 'Unknown'),
+                    actor: Actor::user(UserId::fromString($eventData['updated_by']), $displayName),
                     activityType: ActivityType::TRANSACTION_EDITED,
                     entityInfo: [
                         'type' => 'transaction',
                         'id' => $eventData['transaction_id'],
                         'action' => 'updated'
+                    ],
+                    stateInfo: [
+                        'new' => $eventData
+                    ],
+                    context: $context
+                )
+            );
+        }
+
+        if ($event instanceof TransactionPosted) {
+            $eventData = $event->toArray();
+            $displayName = $this->getUserDisplayName($eventData['posted_by']);
+            $this->activityLogService->logActivity(
+                new \Domain\Audit\Service\LogActivityRequest(
+                    companyId: $eventData['company_id'],
+                    actor: Actor::user(UserId::fromString($eventData['posted_by']), $displayName),
+                    activityType: ActivityType::TRANSACTION_POSTED,
+                    entityInfo: [
+                        'type' => 'transaction',
+                        'id' => $eventData['transaction_id'],
+                        'action' => 'posted'
+                    ],
+                    stateInfo: [
+                        'new' => $eventData
+                    ],
+                    context: $context
+                )
+            );
+        }
+
+        if ($event instanceof TransactionVoided) {
+            $eventData = $event->toArray();
+            $displayName = $this->getUserDisplayName($eventData['voided_by']);
+            $this->activityLogService->logActivity(
+                new \Domain\Audit\Service\LogActivityRequest(
+                    companyId: $eventData['company_id'],
+                    actor: Actor::user(UserId::fromString($eventData['voided_by']), $displayName),
+                    activityType: ActivityType::TRANSACTION_VOIDED,
+                    entityInfo: [
+                        'type' => 'transaction',
+                        'id' => $eventData['transaction_id'],
+                        'action' => 'voided'
                     ],
                     stateInfo: [
                         'new' => $eventData

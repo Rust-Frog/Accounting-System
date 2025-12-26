@@ -19,6 +19,41 @@
     color: #f85149;
 }
 
+.status-approved {
+    background: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+}
+
+.status-declined {
+    background: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+}
+
+.status-inactive {
+    background: rgba(139, 148, 158, 0.15);
+    color: #8b949e;
+}
+
+/* Role Badges */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.role-admin {
+    background: rgba(136, 46, 224, 0.15);
+    color: #a371f7;
+}
+
+.role-tenant {
+    background: rgba(56, 139, 253, 0.15);
+    color: #58a6ff;
+}
+
 /* Form Section Divider */
 .form-section {
     margin: 1.5rem 0 1rem;
@@ -51,6 +86,11 @@
     max-width: 560px;
 }
 
+/* Small Modal Size */
+.modal-sm {
+    max-width: 400px;
+}
+
 /* Currency Badge */
 .currency-badge {
     display: inline-flex;
@@ -68,4 +108,100 @@
 .company-name {
     font-weight: 600;
     color: var(--text-primary);
+}
+
+/* User Name Cell */
+.user-name-cell {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+/* Icon Button Variants */
+.btn-icon.btn-success {
+    color: #3fb950;
+}
+
+.btn-icon.btn-success:hover {
+    background: rgba(46, 160, 67, 0.15);
+}
+
+.btn-icon.btn-danger {
+    color: #f85149;
+}
+
+.btn-icon.btn-danger:hover {
+    background: rgba(248, 81, 73, 0.15);
+}
+
+.btn-icon.btn-warning {
+    color: #d29922;
+}
+
+.btn-icon.btn-warning:hover {
+    background: rgba(187, 128, 9, 0.15);
+}
+
+/* Button Variants */
+.btn-success {
+    background: var(--success);
+    color: var(--bg-primary);
+}
+
+.btn-success:hover {
+    background: #2ea043;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: var(--text-primary);
+}
+
+.btn-danger:hover {
+    background: #da3633;
+}
+
+.btn-warning {
+    background: var(--warning);
+    color: var(--bg-primary);
+}
+
+.btn-warning:hover {
+    background: #bb8009;
+}
+
+/* Detail Grid */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-item label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-item span {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+/* Text Muted */
+.text-muted {
+    color: var(--text-muted);
 }

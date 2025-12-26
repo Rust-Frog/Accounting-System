@@ -43,7 +43,7 @@ final class AccountHydrator
             $reflection,
             $account,
             'balance',
-            Money::fromCents((int) $row['balance_cents'], Currency::from($row['currency']))
+            Money::fromSignedCents((int) $row['balance_cents'], Currency::from($row['currency']))
         );
         $this->setProperty($reflection, $account, 'domainEvents', []);
 

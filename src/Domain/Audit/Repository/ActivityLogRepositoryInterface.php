@@ -57,5 +57,10 @@ interface ActivityLogRepositoryInterface
         string $sortOrder = 'DESC'
     ): array;
 
+    /**
+     * Count total logs for a company.
+     */
+    public function countByCompany(CompanyId $companyId): int;
+
     // NOTE: No update or delete methods - audit logs are immutable
 }

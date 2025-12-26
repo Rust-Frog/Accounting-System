@@ -11,6 +11,7 @@
     let totalPages = 1;
     let currentCompanyId = null;
     let currentTypeFilter = '';
+    let accountsMap = {}; // Map of account ID to account info
 
     // DOM Elements
     const elements = {
@@ -80,6 +81,7 @@
             currentCompanyId = targetId;
             if (currentCompanyId) {
                 elements.filterCompany.value = currentCompanyId;
+                await loadAccounts(); // Load accounts for name resolution
             }
 
             if (currentCompanyId) {
@@ -93,6 +95,35 @@
             elements.filterCompany.innerHTML = '<option value="">Error loading</option>';
             showNoCompanyState();
         }
+    }
+
+    // Load accounts for name resolution
+    async function loadAccounts() {
+        if (!currentCompanyId) return;
+        
+        try {
+            const response = await api.get(`/companies/${currentCompanyId}/accounts`);
+            const accounts = response.data || [];
+            
+            // Build lookup map
+            accountsMap = {};
+            accounts.forEach(acc => {
+                accountsMap[acc.id] = acc;
+            });
+        } catch (error) {
+            console.error('Failed to load accounts:', error);
+            accountsMap = {};
+        }
+    }
+
+    // Get account display name from ID
+    function getAccountDisplayName(accountId) {
+        const account = accountsMap[accountId];
+        if (account) {
+            return `${account.code} - ${account.name}`;
+        }
+        // Fallback to showing truncated ID
+        return accountId ? `${accountId.substring(0, 8)}...` : 'Unknown';
     }
 
     // Load journal entries
@@ -238,13 +269,26 @@
             return '<p style="color: var(--text-secondary);">No booking data available</p>';
         }
 
-        const rows = bookings.map(b => `
+        const rows = bookings.map(b => {
+            // Handle different field naming conventions from backend
+            const accountId = b.account_id || b.accountId || 'Unknown';
+            const lineType = b.type || b.line_type || b.lineType || '';
+            // Amount is stored in cents in the database
+            const amountCents = b.amount || b.amountCents || 0;
+            const amount = amountCents / 100;
+            
+            const isDebit = lineType === 'debit';
+            const isCredit = lineType === 'credit';
+            const accountName = getAccountDisplayName(accountId);
+            
+            return `
             <tr>
-                <td class="account-name">${b.account_id || b.accountId || 'Unknown'}</td>
-                <td class="amount-debit">${b.line_type === 'debit' || b.lineType === 'debit' ? formatCurrency(b.amount || b.amountCents / 100) : ''}</td>
-                <td class="amount-credit">${b.line_type === 'credit' || b.lineType === 'credit' ? formatCurrency(b.amount || b.amountCents / 100) : ''}</td>
+                <td class="account-name">${accountName}</td>
+                <td class="amount-debit">${isDebit ? formatCurrency(amount) : ''}</td>
+                <td class="amount-credit">${isCredit ? formatCurrency(amount) : ''}</td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
 
         return `
             <table class="bookings-table">
@@ -420,10 +464,11 @@
 
     // Event listeners
     function setupEventListeners() {
-        elements.filterCompany.addEventListener('change', (e) => {
+        elements.filterCompany.addEventListener('change', async (e) => {
             currentCompanyId = e.target.value;
             localStorage.setItem('company_id', currentCompanyId);
             currentPage = 1;
+            await loadAccounts(); // Reload accounts for new company
             loadJournalEntries();
         });
 

@@ -27,6 +27,8 @@ use Infrastructure\Persistence\Mysql\Repository\MysqlLedgerRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlReportRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlTransactionRepository;
 use Infrastructure\Persistence\Mysql\Repository\MysqlUserRepository;
+use Infrastructure\Persistence\Mysql\Repository\MysqlUserSettingsRepository;
+use Domain\Identity\Repository\UserSettingsRepositoryInterface;
 use Infrastructure\Persistence\Mysql\Connection\PdoConnectionFactory;
 use Infrastructure\Service\BcryptPasswordHashingService;
 use Infrastructure\Service\InMemoryEventDispatcher;
@@ -61,12 +63,20 @@ final class ContainerBuilder
         $container->singleton(PDO::class, function () {
             $host = $_ENV['DB_HOST'] ?? 'mysql';
             $port = $_ENV['DB_PORT'] ?? '3306';
-            $database = $_ENV['DB_DATABASE'] ?? 'accounting';
-            $username = $_ENV['DB_USERNAME'] ?? 'accounting_user';
-            $password = $_ENV['DB_PASSWORD'] ?? 'accounting_pass';
+            $database = $_ENV['DB_DATABASE'] ?? 'accounting_system';
+            $username = $_ENV['DB_USERNAME'] ?? null;
+            $password = $_ENV['DB_PASSWORD'] ?? null;
+
+            // Fail fast if credentials are not configured
+            if (empty($username)) {
+                throw new \RuntimeException('DB_USERNAME environment variable is required');
+            }
+            if ($password === null) {
+                throw new \RuntimeException('DB_PASSWORD environment variable is required');
+            }
 
             $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
-            
+
             return new PDO($dsn, $username, $password, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -81,7 +91,7 @@ final class ContainerBuilder
 
         // Redis Client
         $container->singleton(\Predis\ClientInterface::class, function () {
-            $host = $_ENV['REDIS_HOST'] ?? 'accounting-redis-dev';
+            $host = $_ENV['REDIS_HOST'] ?? 'redis';
             $port = $_ENV['REDIS_PORT'] ?? 6379;
             return new \Predis\Client([
                 'scheme' => 'tcp',
@@ -132,6 +142,10 @@ final class ContainerBuilder
         $container->singleton(\Domain\Ledger\Repository\BalanceChangeRepositoryInterface::class, fn(ContainerInterface $c) =>
             new \Infrastructure\Persistence\Mysql\Repository\MysqlBalanceChangeRepository($c->get(PDO::class))
         );
+
+        $container->singleton(UserSettingsRepositoryInterface::class, fn(ContainerInterface $c) =>
+            new MysqlUserSettingsRepository($c->get(PDO::class))
+        );
     }
 
     private static function registerServices(Container $container): void
@@ -158,9 +172,14 @@ final class ContainerBuilder
 
         // JWT Service
         $container->singleton(JwtService::class, function () {
-            $secretKey = $_ENV['JWT_SECRET'] ?? 'default-secret-change-in-production';
+            $secretKey = $_ENV['JWT_SECRET'] ?? null;
             $expiration = (int) ($_ENV['JWT_EXPIRATION'] ?? 3600);
             $issuer = $_ENV['JWT_ISSUER'] ?? 'accounting-api';
+
+            // Fail fast if JWT secret is not configured
+            if (empty($secretKey)) {
+                throw new \RuntimeException('JWT_SECRET environment variable is required (use a strong random string)');
+            }
 
             return new JwtService($secretKey, $expiration, $issuer);
         });
@@ -183,7 +202,8 @@ final class ContainerBuilder
 
         $container->singleton(\Application\Listener\ActivityLogListener::class, fn(ContainerInterface $c) =>
             new \Application\Listener\ActivityLogListener(
-                $c->get(\Domain\Audit\Service\ActivityLogService::class)
+                $c->get(\Domain\Audit\Service\ActivityLogService::class),
+                $c->get(\Domain\Identity\Repository\UserRepositoryInterface::class)
             )
         );
     }
@@ -211,6 +231,12 @@ final class ContainerBuilder
                 $c->get(UserRepositoryInterface::class)
             )
         );
+
+        $container->singleton(\Api\Middleware\RoleEnforcementMiddleware::class, fn(ContainerInterface $c) =>
+            new \Api\Middleware\RoleEnforcementMiddleware(
+                $c->get(\Domain\Audit\Service\AuditChainServiceInterface::class)
+            )
+        );
     }
 
     private static function registerHandlers(Container $container): void
@@ -236,6 +262,7 @@ final class ContainerBuilder
                 $c->get(TransactionRepositoryInterface::class),
                 $c->get(ApprovalRepositoryInterface::class),
                 $c->get(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class),
+                $c->get(AccountRepositoryInterface::class),
                 $c->get(EventDispatcherInterface::class)
             )
         );
@@ -244,6 +271,7 @@ final class ContainerBuilder
             new VoidTransactionHandler(
                 $c->get(TransactionRepositoryInterface::class),
                 $c->get(\Domain\Ledger\Repository\JournalEntryRepositoryInterface::class),
+                $c->get(AccountRepositoryInterface::class),
                 $c->get(EventDispatcherInterface::class)
             )
         );
@@ -267,6 +295,91 @@ final class ContainerBuilder
                 $c->get(\Domain\Ledger\Repository\BalanceChangeRepositoryInterface::class),
                 $c->get(AccountRepositoryInterface::class),
                 $c->get(ReportRepositoryInterface::class)
+            )
+        );
+
+        // Trial Balance Generator Service
+        $container->singleton(\Domain\Reporting\Service\TrialBalanceGeneratorInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Reporting\Service\TrialBalanceGenerator(
+                $c->get(AccountRepositoryInterface::class)
+            )
+        );
+
+        // Trial Balance Handler
+        $container->singleton(\Application\Handler\Reporting\GenerateTrialBalanceHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Reporting\GenerateTrialBalanceHandler(
+                $c->get(\Domain\Reporting\Service\TrialBalanceGeneratorInterface::class)
+            )
+        );
+
+        // Income Statement Generator & Handler
+        $container->singleton(\Domain\Reporting\Service\IncomeStatementGeneratorInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Reporting\Service\IncomeStatementGenerator(
+                $c->get(AccountRepositoryInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Handler\Reporting\GenerateIncomeStatementHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Reporting\GenerateIncomeStatementHandler(
+                $c->get(\Domain\Reporting\Service\IncomeStatementGeneratorInterface::class)
+            )
+        );
+
+        // Balance Sheet Generator & Handler
+        $container->singleton(\Domain\Reporting\Service\BalanceSheetGeneratorInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Reporting\Service\BalanceSheetGenerator(
+                $c->get(AccountRepositoryInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Handler\Reporting\GenerateBalanceSheetHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Reporting\GenerateBalanceSheetHandler(
+                $c->get(\Domain\Reporting\Service\BalanceSheetGeneratorInterface::class)
+            )
+        );
+
+        // User Management Handlers
+        $container->singleton(\Application\Handler\Identity\ApproveUserHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Identity\ApproveUserHandler(
+                $c->get(UserRepositoryInterface::class),
+                $c->get(EventDispatcherInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Handler\Identity\DeclineUserHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Identity\DeclineUserHandler(
+                $c->get(UserRepositoryInterface::class),
+                $c->get(EventDispatcherInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Handler\Identity\DeactivateUserHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Identity\DeactivateUserHandler(
+                $c->get(UserRepositoryInterface::class),
+                $c->get(EventDispatcherInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Handler\Identity\ActivateUserHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Identity\ActivateUserHandler(
+                $c->get(UserRepositoryInterface::class),
+                $c->get(EventDispatcherInterface::class)
+            )
+        );
+
+        // Settings Handlers
+        $container->singleton(\Application\Handler\Settings\UpdateSettingsHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Settings\UpdateSettingsHandler(
+                $c->get(UserSettingsRepositoryInterface::class),
+                $c->get(UserRepositoryInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Handler\Settings\SecuritySettingsHandler::class, fn(ContainerInterface $c) =>
+            new \Application\Handler\Settings\SecuritySettingsHandler(
+                $c->get(UserRepositoryInterface::class),
+                $c->get(UserSettingsRepositoryInterface::class),
+                $c->get(\Infrastructure\Service\TotpService::class)
             )
         );
     }

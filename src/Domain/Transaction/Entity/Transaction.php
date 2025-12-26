@@ -46,6 +46,49 @@ final class Transaction
     ) {
     }
 
+    /**
+     * Reconstitute a Transaction from persisted data.
+     * Used for hydration from database without triggering domain events.
+     *
+     * @param array<TransactionLine> $lines
+     */
+    public static function reconstitute(
+        TransactionId $id,
+        CompanyId $companyId,
+        DateTimeImmutable $transactionDate,
+        string $description,
+        UserId $createdBy,
+        DateTimeImmutable $createdAt,
+        TransactionStatus $status,
+        ?string $referenceNumber,
+        ?DateTimeImmutable $postedAt = null,
+        ?UserId $postedBy = null,
+        ?DateTimeImmutable $voidedAt = null,
+        ?UserId $voidedBy = null,
+        ?string $voidReason = null,
+        array $lines = []
+    ): self {
+        $transaction = new self(
+            id: $id,
+            companyId: $companyId,
+            transactionDate: $transactionDate,
+            description: $description,
+            createdBy: $createdBy,
+            createdAt: $createdAt,
+            status: $status,
+            referenceNumber: $referenceNumber,
+        );
+
+        $transaction->postedAt = $postedAt;
+        $transaction->postedBy = $postedBy;
+        $transaction->voidedAt = $voidedAt;
+        $transaction->voidedBy = $voidedBy;
+        $transaction->voidReason = $voidReason;
+        $transaction->lines = $lines;
+
+        return $transaction;
+    }
+
     public static function create(
         CompanyId $companyId,
         DateTimeImmutable $transactionDate,
@@ -266,7 +309,7 @@ final class Transaction
             }
         }
 
-        return Money::fromCents($total, Currency::PHP);
+        return Money::fromCents($total, $this->getCurrency());
     }
 
     public function totalCredits(): Money
@@ -278,7 +321,20 @@ final class Transaction
             }
         }
 
-        return Money::fromCents($total, Currency::PHP);
+        return Money::fromCents($total, $this->getCurrency());
+    }
+
+    /**
+     * Get the currency for this transaction from its lines.
+     * Defaults to USD if no lines exist.
+     */
+    private function getCurrency(): Currency
+    {
+        if (empty($this->lines)) {
+            return Currency::USD;
+        }
+
+        return $this->lines[0]->amount()->currency();
     }
 
     public function isBalanced(): bool
