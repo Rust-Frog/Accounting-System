@@ -46,6 +46,7 @@ show_help() {
     echo "  migrate    Run database migrations"
     echo "  seed       Seed database"
     echo "  fresh      Fresh database (drop & recreate)"
+    echo "  cleanup-db Remove all data, keep schema"
     echo "  clean      Remove all containers and volumes"
     echo ""
     echo "Environments:"
@@ -147,11 +148,15 @@ case "$1" in
         ;;
     
     fresh)
-        print_info "Fresh database setup..."
-        docker-compose -f "$COMPOSE_FILE" exec app php migrate fresh
-        print_info "Seeding database..."
-        docker-compose -f "$COMPOSE_FILE" exec app php seed
+        print_info "Fresh database setup (drop all tables and recreate schema)..."
+        docker-compose -f "$COMPOSE_FILE" exec -T mysql mysql -u accounting_user -paccounting_pass accounting_system < docker/mysql/00-fresh-schema.sql
         print_success "Database fresh setup completed!"
+        ;;
+
+    cleanup-db)
+        print_info "Cleaning up database (removing all data, keeping schema)..."
+        docker-compose -f "$COMPOSE_FILE" exec -T mysql mysql -u accounting_user -paccounting_pass accounting_system < docker/mysql/cleanup.sql
+        print_success "Database cleanup completed! All data removed, schema intact."
         ;;
     
     clean)

@@ -158,6 +158,10 @@ $router->get('/api/v1/dashboard/recent-approvals', [$dashboardController, 'recen
 $router->get('/api/v1/companies', [$companyController, 'list']);
 $router->post('/api/v1/companies', [$companyController, 'create']);
 $router->get('/api/v1/companies/{id}', [$companyController, 'get']);
+$router->post('/api/v1/companies/{id}/activate', [$companyController, 'activate']);
+$router->post('/api/v1/companies/{id}/suspend', [$companyController, 'suspend']);
+$router->post('/api/v1/companies/{id}/reactivate', [$companyController, 'reactivate']);
+$router->post('/api/v1/companies/{id}/deactivate', [$companyController, 'deactivate']);
 
 // Account routes
 $router->get('/api/v1/companies/{companyId}/accounts', [$accountController, 'list']);

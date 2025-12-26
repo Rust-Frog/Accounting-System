@@ -163,6 +163,7 @@
                             <option value="active">Active</option>
                             <option value="pending">Pending</option>
                             <option value="suspended">Suspended</option>
+                            <option value="deactivated">Deactivated</option>
                         </select>
                     </div>
                     <button class="btn btn-secondary" id="btnRefresh">Refresh</button>
@@ -296,6 +297,52 @@
                     <button type="submit" class="btn btn-primary" id="btnSubmit">Create Company</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Company Details Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2 id="detailsModalTitle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Company Details
+                </h2>
+                <button class="modal-close" id="btnCloseDetails">&times;</button>
+            </div>
+            <div class="modal-body" id="detailsContent">
+                <div class="loading-spinner">Loading...</div>
+            </div>
+            <div class="modal-footer" id="detailsFooter">
+                <button type="button" class="btn btn-secondary" id="btnCloseDetailsFooter">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle">Confirm Action</h2>
+                <button class="modal-close" id="btnCloseConfirm">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+                <div class="form-group" id="reasonGroup" style="display: none;">
+                    <label for="actionReason">Reason</label>
+                    <textarea class="form-input" id="actionReason" rows="3" placeholder="Enter reason..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelConfirm">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmAction">Confirm</button>
+            </div>
         </div>
     </div>
 

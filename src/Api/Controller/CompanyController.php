@@ -10,6 +10,7 @@ use Domain\Company\Repository\CompanyRepositoryInterface;
 use Domain\Company\ValueObject\Address;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Company\ValueObject\TaxIdentifier;
+use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\ValueObject\Currency;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -111,10 +112,135 @@ final class CompanyController
     }
 
     /**
+     * POST /api/v1/companies/{id}/activate
+     */
+    public function activate(ServerRequestInterface $request): ResponseInterface
+    {
+        $id = $request->getAttribute('id');
+        if ($id === null) {
+            return JsonResponse::error('Company ID required', 400);
+        }
+
+        try {
+            $company = $this->companyRepository->findById(
+                CompanyId::fromString($id)
+            );
+
+            if ($company === null) {
+                return JsonResponse::error('Company not found', 404);
+            }
+
+            // Get the user ID from the request (set by auth middleware)
+            $userId = $request->getAttribute('user_id');
+            $company->activate(UserId::fromString($userId));
+            $this->companyRepository->save($company);
+
+            return JsonResponse::success($this->formatCompany($company));
+        } catch (\Throwable $e) {
+            return JsonResponse::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/companies/{id}/suspend
+     */
+    public function suspend(ServerRequestInterface $request): ResponseInterface
+    {
+        $id = $request->getAttribute('id');
+        if ($id === null) {
+            return JsonResponse::error('Company ID required', 400);
+        }
+
+        try {
+            $company = $this->companyRepository->findById(
+                CompanyId::fromString($id)
+            );
+
+            if ($company === null) {
+                return JsonResponse::error('Company not found', 404);
+            }
+
+            $body = $request->getParsedBody();
+            $reason = $body['reason'] ?? 'No reason provided';
+
+            $userId = $request->getAttribute('user_id');
+            $company->suspend(UserId::fromString($userId), $reason);
+            $this->companyRepository->save($company);
+
+            return JsonResponse::success($this->formatCompany($company));
+        } catch (\Throwable $e) {
+            return JsonResponse::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/companies/{id}/reactivate
+     */
+    public function reactivate(ServerRequestInterface $request): ResponseInterface
+    {
+        $id = $request->getAttribute('id');
+        if ($id === null) {
+            return JsonResponse::error('Company ID required', 400);
+        }
+
+        try {
+            $company = $this->companyRepository->findById(
+                CompanyId::fromString($id)
+            );
+
+            if ($company === null) {
+                return JsonResponse::error('Company not found', 404);
+            }
+
+            $userId = $request->getAttribute('user_id');
+            $company->reactivate(UserId::fromString($userId));
+            $this->companyRepository->save($company);
+
+            return JsonResponse::success($this->formatCompany($company));
+        } catch (\Throwable $e) {
+            return JsonResponse::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/companies/{id}/deactivate
+     */
+    public function deactivate(ServerRequestInterface $request): ResponseInterface
+    {
+        $id = $request->getAttribute('id');
+        if ($id === null) {
+            return JsonResponse::error('Company ID required', 400);
+        }
+
+        try {
+            $company = $this->companyRepository->findById(
+                CompanyId::fromString($id)
+            );
+
+            if ($company === null) {
+                return JsonResponse::error('Company not found', 404);
+            }
+
+            $body = $request->getParsedBody();
+            $reason = $body['reason'] ?? 'No reason provided';
+
+            $userId = $request->getAttribute('user_id');
+            $company->deactivate(UserId::fromString($userId), $reason);
+            $this->companyRepository->save($company);
+
+            return JsonResponse::success($this->formatCompany($company));
+        } catch (\Throwable $e) {
+            return JsonResponse::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
      * Format company for API response.
      */
     private function formatCompany(Company $company): array
     {
+        $address = $company->address();
+
         return [
             'id' => $company->id()->toString(),
             'name' => $company->companyName(),
@@ -122,7 +248,15 @@ final class CompanyController
             'tax_id' => $company->taxId()->toString(),
             'currency' => $company->currency()->value,
             'status' => $company->status()->value,
+            'address' => [
+                'street' => $address->street(),
+                'city' => $address->city(),
+                'state' => $address->state(),
+                'postal_code' => $address->postalCode(),
+                'country' => $address->country(),
+            ],
             'created_at' => $company->createdAt()->format('Y-m-d\TH:i:s\Z'),
+            'updated_at' => $company->updatedAt()->format('Y-m-d\TH:i:s\Z'),
         ];
     }
 }

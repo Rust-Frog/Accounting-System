@@ -1,12 +1,41 @@
--- Accounting System Database Schema
--- Version: 1.0
--- Created: 2025-12-18
+-- ============================================
+-- Accounting System - Complete Database Schema
+-- Version: 2.0
+--
+-- This is a consolidated schema that:
+-- 1. Drops all existing tables (clean slate)
+-- 2. Creates all required tables
+--
+-- No seed data included - schema only.
+-- ============================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ============================================
+-- DROP ALL TABLES (Clean Slate)
+-- ============================================
+DROP TABLE IF EXISTS user_settings;
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS activity_logs;
+DROP TABLE IF EXISTS balance_changes;
+DROP TABLE IF EXISTS account_balances;
+DROP TABLE IF EXISTS journal_entries;
+DROP TABLE IF EXISTS approvals;
+DROP TABLE IF EXISTS transaction_lines;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS company_settings;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS companies;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================
 -- Identity Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id CHAR(36) PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -22,14 +51,14 @@ CREATE TABLE IF NOT EXISTS users (
     otp_secret VARCHAR(255) NULL DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     INDEX idx_users_username (username),
     INDEX idx_users_email (email),
     INDEX idx_users_company (company_id),
     INDEX idx_users_status (registration_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS sessions (
+CREATE TABLE sessions (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
@@ -37,12 +66,12 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_agent VARCHAR(500) NULL,
     expires_at DATETIME NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+
     INDEX idx_sessions_user (user_id),
     INDEX idx_sessions_token (token),
     INDEX idx_sessions_expires (expires_at),
-    
-    CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) 
+
+    CONSTRAINT fk_sessions_user FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -50,34 +79,33 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- Company Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS companies (
+CREATE TABLE companies (
     id CHAR(36) PRIMARY KEY,
     company_name VARCHAR(255) NOT NULL,
     legal_name VARCHAR(255) NOT NULL,
     tax_id VARCHAR(50) NOT NULL UNIQUE,
-    
-    -- Address fields (denormalized for simplicity)
+
     address_street VARCHAR(255) NOT NULL,
     address_city VARCHAR(100) NOT NULL,
     address_state VARCHAR(100) NULL,
     address_postal_code VARCHAR(20) NULL,
     address_country VARCHAR(100) NOT NULL,
-    
+
     currency CHAR(3) NOT NULL DEFAULT 'USD',
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     INDEX idx_companies_tax_id (tax_id),
     INDEX idx_companies_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Add foreign key for users -> companies after companies table exists
-ALTER TABLE users 
-    ADD CONSTRAINT fk_users_company FOREIGN KEY (company_id) 
+-- Add foreign key for users -> companies
+ALTER TABLE users
+    ADD CONSTRAINT fk_users_company FOREIGN KEY (company_id)
     REFERENCES companies(id) ON DELETE SET NULL;
 
-CREATE TABLE IF NOT EXISTS company_settings (
+CREATE TABLE company_settings (
     id CHAR(36) PRIMARY KEY,
     company_id CHAR(36) NOT NULL UNIQUE,
     fiscal_year_start_month TINYINT NOT NULL DEFAULT 1,
@@ -85,8 +113,8 @@ CREATE TABLE IF NOT EXISTS company_settings (
     settings_json JSON NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    CONSTRAINT fk_company_settings_company FOREIGN KEY (company_id) 
+
+    CONSTRAINT fk_company_settings_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -94,7 +122,7 @@ CREATE TABLE IF NOT EXISTS company_settings (
 -- Chart of Accounts Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS accounts (
+CREATE TABLE accounts (
     id CHAR(36) PRIMARY KEY,
     company_id CHAR(36) NOT NULL,
     code INT NOT NULL,
@@ -107,16 +135,16 @@ CREATE TABLE IF NOT EXISTS accounts (
     currency CHAR(3) NOT NULL DEFAULT 'USD',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     UNIQUE KEY uk_accounts_company_code (company_id, code),
     INDEX idx_accounts_company (company_id),
     INDEX idx_accounts_parent (parent_account_id),
     INDEX idx_accounts_active (is_active),
     INDEX idx_accounts_code (code),
-    
-    CONSTRAINT fk_accounts_company FOREIGN KEY (company_id) 
+
+    CONSTRAINT fk_accounts_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_accounts_parent FOREIGN KEY (parent_account_id) 
+    CONSTRAINT fk_accounts_parent FOREIGN KEY (parent_account_id)
         REFERENCES accounts(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -124,57 +152,57 @@ CREATE TABLE IF NOT EXISTS accounts (
 -- Transaction Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS transactions (
+CREATE TABLE transactions (
     id CHAR(36) PRIMARY KEY,
     company_id CHAR(36) NOT NULL,
     transaction_date DATE NOT NULL,
     description VARCHAR(500) NOT NULL,
     reference_number VARCHAR(100) NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'draft',
-    
+
     created_by CHAR(36) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+
     posted_by CHAR(36) NULL,
     posted_at DATETIME NULL,
-    
+
     voided_by CHAR(36) NULL,
     voided_at DATETIME NULL,
     void_reason VARCHAR(500) NULL,
-    
+
     INDEX idx_transactions_company (company_id),
     INDEX idx_transactions_date (transaction_date),
     INDEX idx_transactions_status (status),
     INDEX idx_transactions_created_by (created_by),
     INDEX idx_transactions_company_date (company_id, transaction_date),
-    
-    CONSTRAINT fk_transactions_company FOREIGN KEY (company_id) 
+
+    CONSTRAINT fk_transactions_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_transactions_created_by FOREIGN KEY (created_by) 
+    CONSTRAINT fk_transactions_created_by FOREIGN KEY (created_by)
         REFERENCES users(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_transactions_posted_by FOREIGN KEY (posted_by) 
+    CONSTRAINT fk_transactions_posted_by FOREIGN KEY (posted_by)
         REFERENCES users(id) ON DELETE SET NULL,
-    CONSTRAINT fk_transactions_voided_by FOREIGN KEY (voided_by) 
+    CONSTRAINT fk_transactions_voided_by FOREIGN KEY (voided_by)
         REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS transaction_lines (
+CREATE TABLE transaction_lines (
     id CHAR(36) PRIMARY KEY,
     transaction_id CHAR(36) NOT NULL,
     account_id CHAR(36) NOT NULL,
-    line_type VARCHAR(10) NOT NULL, -- 'debit' or 'credit'
+    line_type VARCHAR(10) NOT NULL,
     amount_cents BIGINT NOT NULL,
     currency CHAR(3) NOT NULL DEFAULT 'USD',
     description VARCHAR(255) NULL,
     line_order INT NOT NULL DEFAULT 0,
-    
+
     INDEX idx_transaction_lines_transaction (transaction_id),
     INDEX idx_transaction_lines_account (account_id),
     INDEX idx_transaction_lines_type (line_type),
-    
-    CONSTRAINT fk_transaction_lines_transaction FOREIGN KEY (transaction_id) 
+
+    CONSTRAINT fk_transaction_lines_transaction FOREIGN KEY (transaction_id)
         REFERENCES transactions(id) ON DELETE CASCADE,
-    CONSTRAINT fk_transaction_lines_account FOREIGN KEY (account_id) 
+    CONSTRAINT fk_transaction_lines_account FOREIGN KEY (account_id)
         REFERENCES accounts(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -182,7 +210,7 @@ CREATE TABLE IF NOT EXISTS transaction_lines (
 -- Approval Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS approvals (
+CREATE TABLE approvals (
     id CHAR(36) PRIMARY KEY,
     company_id CHAR(36) NOT NULL,
     entity_type VARCHAR(50) NOT NULL,
@@ -193,16 +221,16 @@ CREATE TABLE IF NOT EXISTS approvals (
     proof_json JSON NULL DEFAULT NULL,
     amount_cents BIGINT NOT NULL DEFAULT 0,
     priority INT NOT NULL DEFAULT 0,
-    
+
     requested_by CHAR(36) NOT NULL,
     requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+
     reviewed_by CHAR(36) NULL,
     reviewed_at DATETIME NULL,
     review_notes TEXT NULL,
-    
+
     expires_at DATETIME NULL,
-    
+
     INDEX idx_approvals_company (company_id),
     INDEX idx_approvals_entity (entity_type, entity_id),
     INDEX idx_approvals_status (status),
@@ -210,12 +238,12 @@ CREATE TABLE IF NOT EXISTS approvals (
     INDEX idx_approvals_reviewed_by (reviewed_by),
     INDEX idx_approvals_expires (expires_at),
     INDEX idx_approvals_priority (priority),
-    
-    CONSTRAINT fk_approvals_company FOREIGN KEY (company_id) 
+
+    CONSTRAINT fk_approvals_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_approvals_requested_by FOREIGN KEY (requested_by) 
+    CONSTRAINT fk_approvals_requested_by FOREIGN KEY (requested_by)
         REFERENCES users(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_approvals_reviewed_by FOREIGN KEY (reviewed_by) 
+    CONSTRAINT fk_approvals_reviewed_by FOREIGN KEY (reviewed_by)
         REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -223,54 +251,54 @@ CREATE TABLE IF NOT EXISTS approvals (
 -- Ledger Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS account_balances (
+CREATE TABLE account_balances (
     id CHAR(36) PRIMARY KEY,
     account_id CHAR(36) NOT NULL,
     company_id CHAR(36) NOT NULL,
     period_start DATE NOT NULL,
     period_end DATE NOT NULL,
-    
+
     opening_balance_cents BIGINT NOT NULL DEFAULT 0,
     current_balance_cents BIGINT NOT NULL DEFAULT 0,
     currency CHAR(3) NOT NULL DEFAULT 'USD',
-    
+
     total_debits_cents BIGINT NOT NULL DEFAULT 0,
     total_credits_cents BIGINT NOT NULL DEFAULT 0,
     transaction_count INT NOT NULL DEFAULT 0,
-    
+
     last_transaction_at DATETIME NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     UNIQUE KEY uk_account_balances_account_period (account_id, period_start, period_end),
     INDEX idx_account_balances_company (company_id),
     INDEX idx_account_balances_period (period_start, period_end),
-    
-    CONSTRAINT fk_account_balances_account FOREIGN KEY (account_id) 
+
+    CONSTRAINT fk_account_balances_account FOREIGN KEY (account_id)
         REFERENCES accounts(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_account_balances_company FOREIGN KEY (company_id) 
+    CONSTRAINT fk_account_balances_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS balance_changes (
+CREATE TABLE balance_changes (
     id CHAR(36) PRIMARY KEY,
     account_balance_id CHAR(36) NOT NULL,
     transaction_line_id CHAR(36) NOT NULL,
-    change_type VARCHAR(20) NOT NULL, -- 'debit' or 'credit'
+    change_type VARCHAR(20) NOT NULL,
     amount_cents BIGINT NOT NULL,
     running_balance_cents BIGINT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+
     INDEX idx_balance_changes_account_balance (account_balance_id),
     INDEX idx_balance_changes_transaction_line (transaction_line_id),
-    
-    CONSTRAINT fk_balance_changes_account_balance FOREIGN KEY (account_balance_id) 
+
+    CONSTRAINT fk_balance_changes_account_balance FOREIGN KEY (account_balance_id)
         REFERENCES account_balances(id) ON DELETE CASCADE,
-    CONSTRAINT fk_balance_changes_transaction_line FOREIGN KEY (transaction_line_id) 
+    CONSTRAINT fk_balance_changes_transaction_line FOREIGN KEY (transaction_line_id)
         REFERENCES transaction_lines(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS journal_entries (
+CREATE TABLE journal_entries (
     id CHAR(36) NOT NULL PRIMARY KEY,
     company_id CHAR(36) NOT NULL,
     transaction_id CHAR(36) NOT NULL,
@@ -295,34 +323,31 @@ CREATE TABLE IF NOT EXISTS journal_entries (
 -- Audit Domain (Append-Only)
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS activity_logs (
+CREATE TABLE activity_logs (
     id CHAR(36) PRIMARY KEY,
     company_id CHAR(36) NOT NULL,
-    
-    -- Actor information
+
     actor_user_id CHAR(36) NULL,
     actor_username VARCHAR(50) NULL,
     actor_ip_address VARCHAR(45) NULL,
     actor_user_agent VARCHAR(500) NULL,
-    
-    -- Activity details
+
     activity_type VARCHAR(100) NOT NULL,
     severity VARCHAR(20) NOT NULL DEFAULT 'info',
-    
-    -- Entity being acted upon
+
     entity_type VARCHAR(50) NOT NULL,
     entity_id CHAR(36) NOT NULL,
-    
-    -- Change details (JSON for flexibility)
+
     changes_json JSON NULL,
-    
-    -- Request context
+
     request_id CHAR(36) NULL,
     correlation_id CHAR(36) NULL,
-    
+    content_hash CHAR(64) NULL,
+    previous_hash CHAR(64) NULL,
+    chain_hash CHAR(64) NULL,
+
     occurred_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    -- NOTE: No UPDATE or DELETE allowed - append-only table
+
     INDEX idx_activity_logs_company (company_id),
     INDEX idx_activity_logs_actor (actor_user_id),
     INDEX idx_activity_logs_entity (entity_type, entity_id),
@@ -330,80 +355,71 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     INDEX idx_activity_logs_severity (severity),
     INDEX idx_activity_logs_occurred (occurred_at),
     INDEX idx_activity_logs_company_date (company_id, occurred_at),
-    
-    CONSTRAINT fk_activity_logs_company FOREIGN KEY (company_id) 
+
+    CONSTRAINT fk_activity_logs_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE RESTRICT
-    -- NOTE: No FK to users - audit logs must persist even if user is deleted
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
 -- Reporting Domain
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS reports (
+CREATE TABLE reports (
     id CHAR(36) PRIMARY KEY,
     company_id CHAR(36) NOT NULL,
     report_type VARCHAR(50) NOT NULL,
     period_type VARCHAR(20) NOT NULL,
     period_start DATE NOT NULL,
     period_end DATE NOT NULL,
-    
+
     generated_by CHAR(36) NOT NULL,
     generated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Report data stored as JSON
+
     data_json JSON NOT NULL,
-    
+
     INDEX idx_reports_company (company_id),
     INDEX idx_reports_type (report_type),
     INDEX idx_reports_period (period_start, period_end),
-    
-    CONSTRAINT fk_reports_company FOREIGN KEY (company_id) 
+
+    CONSTRAINT fk_reports_company FOREIGN KEY (company_id)
         REFERENCES companies(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_reports_generated_by FOREIGN KEY (generated_by) 
+    CONSTRAINT fk_reports_generated_by FOREIGN KEY (generated_by)
         REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
--- User Settings (Per-User Preferences)
+-- User Settings
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS user_settings (
+CREATE TABLE user_settings (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL UNIQUE,
-    
-    -- UI Preferences
+
     theme VARCHAR(20) NOT NULL DEFAULT 'light',
     locale VARCHAR(10) NOT NULL DEFAULT 'en-US',
     timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
     date_format VARCHAR(20) NOT NULL DEFAULT 'YYYY-MM-DD',
     number_format VARCHAR(20) NOT NULL DEFAULT 'en-US',
-    
-    -- Notification Preferences
+
     email_notifications TINYINT(1) NOT NULL DEFAULT 1,
     browser_notifications TINYINT(1) NOT NULL DEFAULT 1,
-    
-    -- Security Preferences
+
     session_timeout_minutes INT NOT NULL DEFAULT 30,
-    
-    -- Recovery
+
     backup_codes_hash TEXT NULL,
     backup_codes_generated_at DATETIME NULL,
-    
-    -- Additional settings as JSON
+
     extra_settings_json JSON NULL,
-    
+
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     INDEX idx_user_settings_user (user_id),
-    
-    CONSTRAINT fk_user_settings_user FOREIGN KEY (user_id) 
+
+    CONSTRAINT fk_user_settings_user FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
--- Initial Data (Optional)
+-- Schema Complete
 -- ============================================
-
--- You can add seed data here if needed for development

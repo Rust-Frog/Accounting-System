@@ -92,6 +92,16 @@ final class Company
         $this->updatedAt = new DateTimeImmutable();
     }
 
+    public function deactivate(UserId $deactivatedBy, string $reason): void
+    {
+        if (!$this->status->canBeDeactivated()) {
+            throw new BusinessRuleException('Only active or suspended companies can be deactivated');
+        }
+
+        $this->status = CompanyStatus::DEACTIVATED;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     public function updateName(string $companyName, string $legalName): void
     {
         $this->companyName = $companyName;
