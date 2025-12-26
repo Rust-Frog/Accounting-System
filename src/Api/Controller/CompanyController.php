@@ -21,7 +21,8 @@ use Psr\Http\Message\ServerRequestInterface;
 final class CompanyController
 {
     public function __construct(
-        private readonly CompanyRepositoryInterface $companyRepository
+        private readonly CompanyRepositoryInterface $companyRepository,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
     ) {
     }
 
@@ -105,6 +106,19 @@ final class CompanyController
 
             $this->companyRepository->save($company);
 
+            // Log company creation
+            $this->activityService?->log(
+                activityType: 'company.created',
+                entityType: 'company',
+                entityId: $company->id()->toString(),
+                description: "Company {$company->companyName()} created",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id') ?? ''),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info',
+                metadata: ['currency' => $currency->value]
+            );
+
             return JsonResponse::created($this->formatCompany($company));
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 400);
@@ -134,6 +148,18 @@ final class CompanyController
             $userId = $request->getAttribute('user_id');
             $company->activate(UserId::fromString($userId));
             $this->companyRepository->save($company);
+
+            // Log company activation
+            $this->activityService?->log(
+                activityType: 'company.activated',
+                entityType: 'company',
+                entityId: $id,
+                description: "Company {$company->companyName()} activated",
+                actorUserId: UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info'
+            );
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
@@ -166,6 +192,19 @@ final class CompanyController
             $userId = $request->getAttribute('user_id');
             $company->suspend(UserId::fromString($userId), $reason);
             $this->companyRepository->save($company);
+
+            // Log company suspension
+            $this->activityService?->log(
+                activityType: 'company.suspended',
+                entityType: 'company',
+                entityId: $id,
+                description: "Company {$company->companyName()} suspended: {$reason}",
+                actorUserId: UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'warning',
+                metadata: ['reason' => $reason]
+            );
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
@@ -227,6 +266,19 @@ final class CompanyController
             $userId = $request->getAttribute('user_id');
             $company->deactivate(UserId::fromString($userId), $reason);
             $this->companyRepository->save($company);
+
+            // Log company void/deactivation
+            $this->activityService?->log(
+                activityType: 'company.voided',
+                entityType: 'company',
+                entityId: $id,
+                description: "Company {$company->companyName()} voided: {$reason}",
+                actorUserId: UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'critical',
+                metadata: ['reason' => $reason]
+            );
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {

@@ -206,6 +206,19 @@ final class ContainerBuilder
                 $c->get(\Domain\Identity\Repository\UserRepositoryInterface::class)
             )
         );
+
+        // System-wide Activity Service (Global Audit Trail)
+        $container->singleton(\Domain\Audit\Repository\SystemActivityRepositoryInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Persistence\MySQL\MySQLSystemActivityRepository(
+                $c->get(PDO::class)
+            )
+        );
+
+        $container->singleton(\Domain\Audit\Service\SystemActivityService::class, fn(ContainerInterface $c) =>
+            new \Domain\Audit\Service\SystemActivityService(
+                $c->get(\Domain\Audit\Repository\SystemActivityRepositoryInterface::class)
+            )
+        );
     }
 
     private static function registerAuthServices(Container $container): void

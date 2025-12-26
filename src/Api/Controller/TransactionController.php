@@ -36,6 +36,7 @@ final class TransactionController
         private readonly DeleteTransactionHandler $deleteHandler,
         private readonly PostTransactionHandler $postHandler,
         private readonly VoidTransactionHandler $voidHandler,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null,
     ) {
     }
 
@@ -126,6 +127,19 @@ final class TransactionController
         try {
             $command = $this->buildCreateCommand($companyId, $userId, $body);
             $dto = $this->createHandler->handle($command);
+
+            // Log transaction creation
+            $this->activityService?->log(
+                activityType: 'transaction.created',
+                entityType: 'transaction',
+                entityId: $dto->id,
+                description: "Transaction created: {$dto->description}",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info',
+                metadata: ['amount_cents' => $dto->totalDebitsCents ?? 0, 'company_id' => $companyId]
+            );
 
             return JsonResponse::created($dto->toArray());
         } catch (\Throwable $e) {
@@ -277,17 +291,35 @@ final class TransactionController
 
     public function post(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->handleTransactionAction(
+        $result = $this->handleTransactionAction(
             $request,
             fn($id, $userId) => $this->postHandler->handle(
                 new PostTransactionCommand($id, $userId)
             )
         );
+
+        // Log transaction posting if successful
+        if ($result->getStatusCode() === 200) {
+            $id = $request->getAttribute('id');
+            $userId = $request->getAttribute('user_id');
+            $this->activityService?->log(
+                activityType: 'transaction.posted',
+                entityType: 'transaction',
+                entityId: $id,
+                description: "Transaction posted to ledger",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info'
+            );
+        }
+
+        return $result;
     }
 
     public function void(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->handleTransactionAction(
+        $result = $this->handleTransactionAction(
             $request,
             function ($id, $userId, $request) {
                 $body = $request->getParsedBody();
@@ -300,6 +332,26 @@ final class TransactionController
                 );
             }
         );
+
+        // Log transaction voiding if successful
+        if ($result->getStatusCode() === 200) {
+            $id = $request->getAttribute('id');
+            $userId = $request->getAttribute('user_id');
+            $body = $request->getParsedBody();
+            $this->activityService?->log(
+                activityType: 'transaction.voided',
+                entityType: 'transaction',
+                entityId: $id,
+                description: "Transaction voided: " . ($body['reason'] ?? 'No reason'),
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'warning',
+                metadata: ['reason' => $body['reason'] ?? 'Voided via API']
+            );
+        }
+
+        return $result;
     }
 
     private function handleTransactionAction(ServerRequestInterface $request, callable $action): ResponseInterface

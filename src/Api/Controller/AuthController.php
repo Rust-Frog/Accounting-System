@@ -24,7 +24,8 @@ final class AuthController
     public function __construct(
         private readonly AuthenticationServiceInterface $authService,
         private readonly UserRepositoryInterface $userRepository,
-        private readonly \Infrastructure\Service\TotpService $totpService
+        private readonly \Infrastructure\Service\TotpService $totpService,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $systemActivityService = null
     ) {
     }
 
@@ -124,6 +125,24 @@ final class AuthController
                 $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown',
                 $request->getHeaderLine('User-Agent') ?: 'unknown'
             );
+
+            // Log successful login to system activities
+            if ($this->systemActivityService) {
+                $this->systemActivityService->log(
+                    activityType: 'user.login',
+                    entityType: 'user',
+                    entityId: $user->id()->toString(),
+                    description: "User {$user->username()} logged in",
+                    actorUserId: $user->id(),
+                    actorUsername: $user->username(),
+                    actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                    severity: 'info',
+                    metadata: [
+                        'user_agent' => $request->getHeaderLine('User-Agent'),
+                        'role' => $user->role()->value,
+                    ]
+                );
+            }
 
             return JsonResponse::success([
                 'token' => $session->token(),

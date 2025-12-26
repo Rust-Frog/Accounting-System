@@ -20,7 +20,8 @@ final class SettingsController
     public function __construct(
         private readonly UpdateSettingsHandler $settingsHandler,
         private readonly SecuritySettingsHandler $securityHandler,
-        private readonly UserRepositoryInterface $userRepository
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
     ) {
     }
 
@@ -174,6 +175,18 @@ final class SettingsController
                 $body['new_password']
             );
 
+            // Log password change
+            $this->activityService?->log(
+                activityType: 'security.password_changed',
+                entityType: 'user',
+                entityId: $userId->toString(),
+                description: 'Password changed',
+                actorUserId: $userId,
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'warning'
+            );
+
             return JsonResponse::success([
                 'message' => 'Password changed successfully',
             ]);
@@ -199,6 +212,7 @@ final class SettingsController
                 'message' => 'OTP enabled. Please save your backup codes securely.',
             ]);
         } catch (\Throwable $e) {
+            // Don't log failed attempts here - only success
             return JsonResponse::error($e->getMessage(), 400);
         }
     }
@@ -246,6 +260,18 @@ final class SettingsController
             }
 
             $this->securityHandler->disableOtp($userId, $body['password']);
+
+            // Log OTP disabled
+            $this->activityService?->log(
+                activityType: 'security.otp_disabled',
+                entityType: 'user',
+                entityId: $userId->toString(),
+                description: '2FA/OTP disabled',
+                actorUserId: $userId,
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'warning'
+            );
 
             return JsonResponse::success([
                 'message' => 'OTP disabled successfully',

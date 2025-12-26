@@ -1,0 +1,55 @@
+/**
+ * Audit Log Page Specific Styles
+ * Only truly unique styles for the audit/activity page
+ * Common patterns are now in /shared/css/pages.css
+ */
+
+/* Activity Type Cell */
+.activity-type-cell {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8125rem;
+}
+
+/* Actor Cell - extends .stacked-cell from pages.css */
+.actor-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.actor-name {
+    font-weight: 500;
+}
+
+.actor-ip {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-family: 'Fira Code', monospace;
+}
+
+/* Entity Cell - extends .stacked-cell from pages.css */
+.entity-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.entity-type {
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.entity-id {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-family: 'Fira Code', monospace;
+}
+
+/* Filter Bar Overrides */
+.filter-bar {
+    flex-wrap: wrap;
+}
+
+.filter-bar .filter-group {
+    min-width: 150px;
+}

@@ -50,7 +50,7 @@ final class Company
             taxId: $taxId,
             address: $address,
             currency: $currency,
-            status: CompanyStatus::PENDING,
+            status: CompanyStatus::ACTIVE,
             createdAt: $now,
             updatedAt: $now
         );

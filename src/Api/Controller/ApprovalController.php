@@ -19,7 +19,8 @@ use Psr\Http\Message\ServerRequestInterface;
 final class ApprovalController
 {
     public function __construct(
-        private readonly ApprovalRepositoryInterface $approvalRepository
+        private readonly ApprovalRepositoryInterface $approvalRepository,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
     ) {
     }
 
@@ -83,6 +84,19 @@ final class ApprovalController
 
             $this->approvalRepository->save($approval);
 
+            // Log approval
+            $this->activityService?->log(
+                activityType: 'approval.approved',
+                entityType: 'approval',
+                entityId: $id,
+                description: "Approval for {$approval->entityType()} approved",
+                actorUserId: UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info',
+                metadata: ['entity_id' => $approval->entityId()]
+            );
+
             return JsonResponse::success($this->formatApproval($approval));
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 400);
@@ -121,6 +135,19 @@ final class ApprovalController
             );
 
             $this->approvalRepository->save($approval);
+
+            // Log rejection
+            $this->activityService?->log(
+                activityType: 'approval.rejected',
+                entityType: 'approval',
+                entityId: $id,
+                description: "Approval for {$approval->entityType()} rejected",
+                actorUserId: UserId::fromString($userId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'warning',
+                metadata: ['reason' => $body['reason']]
+            );
 
             return JsonResponse::success($this->formatApproval($approval));
         } catch (\Throwable $e) {

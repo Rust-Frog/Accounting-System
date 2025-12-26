@@ -1,6 +1,7 @@
 /**
- * Audit Log Page JavaScript
+ * Activity History Page JavaScript
  * Handles audit log listing, filtering, and detail viewing
+ * Supports both System Activity (global) and Company Logs (per-company) views
  */
 
 (function () {
@@ -10,6 +11,7 @@
     let logs = [];
     let companies = [];
     let currentLog = null;
+    let currentTab = 'system'; // 'system' or 'company'
     let pagination = { total: 0, limit: 50, offset: 0, has_more: false };
 
     // DOM Elements
@@ -54,22 +56,53 @@
         changesSection: document.getElementById('changesSection'),
         detailChanges: document.getElementById('detailChanges'),
         detailHash: document.getElementById('detailHash'),
-        // Other
-        btnLogout: document.getElementById('btnLogout'),
-        userName: document.getElementById('userName'),
+        // Tabs
+        tabSystemActivity: document.getElementById('tabSystemActivity'),
+        tabCompanyLogs: document.getElementById('tabCompanyLogs'),
+        // Note: btnLogout and userName are now handled by sidebar.js
     };
 
     // Initialize
     async function init() {
-        await loadUserInfo();
+        // Note: User info is now handled by sidebar.js
         await loadCompanies();
         setupEventListeners();
         setDefaultDateFilters();
-        
-        // If company is already selected, load logs
+
+        // Default to System Activity tab
+        switchToSystemTab();
+    }
+
+    // Switch to System Activity tab
+    async function switchToSystemTab() {
+        currentTab = 'system';
+        elements.tabSystemActivity.classList.add('active');
+        elements.tabSystemActivity.style.background = 'var(--color-primary)';
+        elements.tabSystemActivity.style.color = 'white';
+        elements.tabCompanyLogs.classList.remove('active');
+        elements.tabCompanyLogs.style.background = 'transparent';
+        elements.tabCompanyLogs.style.color = 'var(--color-text-secondary)';
+        document.getElementById('companyFilterGroup').style.display = 'none';
+        hideSelectCompanyState();
+        pagination.offset = 0;
+        await loadSystemActivities();
+    }
+
+    // Switch to Company Logs tab
+    async function switchToCompanyTab() {
+        currentTab = 'company';
+        elements.tabCompanyLogs.classList.add('active');
+        elements.tabCompanyLogs.style.background = 'var(--color-primary)';
+        elements.tabCompanyLogs.style.color = 'white';
+        elements.tabSystemActivity.classList.remove('active');
+        elements.tabSystemActivity.style.background = 'transparent';
+        elements.tabSystemActivity.style.color = 'var(--color-text-secondary)';
+        document.getElementById('companyFilterGroup').style.display = 'flex';
+
         const savedCompanyId = api.getCompanyId();
         if (savedCompanyId && savedCompanyId !== '1') {
             elements.companySelect.value = savedCompanyId;
+            pagination.offset = 0;
             await loadAuditLogs();
             await loadStats();
         } else {
@@ -77,16 +110,101 @@
         }
     }
 
-    // Load current user info
-    async function loadUserInfo() {
+    // Load system-wide activities (global)
+    async function loadSystemActivities() {
+        showLoading();
         try {
-            const response = await api.get('/auth/me');
-            if (response.data) {
-                elements.userName.textContent = response.data.username || 'User';
+            const response = await api.getGlobalActivities(100);
+            // Handle null response (auth redirect)
+            if (!response) {
+                return;
             }
+            // Handle both {data: [...]} and {data: {items: [...]}} formats
+            const rawData = response.data;
+            logs = Array.isArray(rawData) ? rawData : (rawData?.items || rawData?.data || rawData?.activities || []);
+            if (!Array.isArray(logs)) logs = [];
+            pagination.total = logs.length;
+            pagination.has_more = false;
+            renderSystemActivities();
+            updatePagination();
+            // Calculate and show stats from loaded data
+            updateSystemStats(logs);
         } catch (error) {
-            console.error('Failed to load user info:', error);
+            console.error('Failed to load system activities:', error);
+            showError('Failed to load system activities: ' + error.message);
         }
+    }
+
+    // Calculate stats from system activities data
+    function updateSystemStats(activities) {
+        const total = activities.length;
+        let info = 0, warning = 0, security = 0;
+
+        activities.forEach(activity => {
+            const severity = (activity.severity || 'info').toLowerCase();
+            if (severity === 'info') info++;
+            else if (severity === 'warning') warning++;
+            else if (severity === 'critical' || severity === 'security') security++;
+        });
+
+        elements.statTotal.textContent = total;
+        elements.statInfo.textContent = info;
+        elements.statWarning.textContent = warning;
+        elements.statSecurity.textContent = security;
+        elements.statsGrid.style.display = 'grid';
+    }
+
+    // Render system activities table
+    function renderSystemActivities() {
+        if (logs.length === 0) {
+            showEmptyState();
+            updateLogCount(0);
+            return;
+        }
+
+        hideEmptyState();
+        hideSelectCompanyState();
+        updateLogCount(logs.length);
+
+        elements.auditBody.innerHTML = logs.map(log => `
+            <tr>
+                <td>
+                    <span class="timestamp">${formatDateTime(log.occurred_at)}</span>
+                </td>
+                <td>
+                    <div class="actor-cell">
+                        <span class="actor-name">${escapeHtml(log.actor_username || 'System')}</span>
+                        <span class="actor-ip">${escapeHtml(log.actor_ip_address || '-')}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="activity-type-cell">${escapeHtml(log.activity_type)}</span>
+                </td>
+                <td>
+                    <div class="entity-cell">
+                        <span class="entity-type">${escapeHtml(log.entity_type)}</span>
+                        <span class="entity-id">${escapeHtml(truncateId(log.entity_id))}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="category-badge">-</span>
+                </td>
+                <td>
+                    <span class="severity-badge ${log.severity}">${escapeHtml(log.severity)}</span>
+                </td>
+                <td>
+                    <span class="hash-value" title="${escapeHtml(log.chain_hash || '-')}">
+                        ${escapeHtml((log.chain_hash || '-').substring(0, 8))}...
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Note: loadUserInfo is now handled by sidebar.js
+    // Kept as stub for backward compatibility
+    async function loadUserInfo() {
+        // User info loading moved to sidebar.js
     }
 
     // Load companies
@@ -240,7 +358,7 @@
     }
 
     // View log detail
-    window.viewLogDetail = async function(logId) {
+    window.viewLogDetail = async function (logId) {
         try {
             const response = await api.getAuditLog(logId);
             currentLog = response.data;
@@ -306,6 +424,10 @@
 
     // Setup event listeners
     function setupEventListeners() {
+        // Tab switching
+        elements.tabSystemActivity.addEventListener('click', switchToSystemTab);
+        elements.tabCompanyLogs.addEventListener('click', switchToCompanyTab);
+
         // Company change
         elements.companySelect.addEventListener('change', async () => {
             const companyId = elements.companySelect.value;
@@ -353,13 +475,7 @@
         elements.btnCloseDetail.addEventListener('click', closeDetailModal);
         elements.detailModal.querySelector('.modal-backdrop').addEventListener('click', closeDetailModal);
 
-        // Logout
-        elements.btnLogout.addEventListener('click', () => {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_expires');
-            localStorage.removeItem('user_id');
-            window.location.href = '/login.html';
-        });
+        // Note: Logout is now handled by sidebar.js
     }
 
     // Helper functions
@@ -412,6 +528,10 @@
     }
 
     function formatDateTime(dateStr) {
+        // Use shared Utils if available, fallback to local implementation
+        if (window.Utils && Utils.formatDateTimeFull) {
+            return Utils.formatDateTimeFull(dateStr);
+        }
         if (!dateStr) return '-';
         const date = new Date(dateStr);
         return date.toLocaleString('en-US', {
@@ -435,6 +555,10 @@
     }
 
     function truncateId(id) {
+        // Use shared Utils if available
+        if (window.Utils && Utils.truncateId) {
+            return Utils.truncateId(id, 8);
+        }
         if (!id) return '-';
         if (id.length <= 12) return id;
         return id.substring(0, 8) + '...';
@@ -447,6 +571,10 @@
     }
 
     function escapeHtml(text) {
+        // Use shared Utils if available
+        if (window.Utils && Utils.escapeHtml) {
+            return Utils.escapeHtml(text);
+        }
         if (text === null || text === undefined) return '';
         const div = document.createElement('div');
         div.textContent = String(text);

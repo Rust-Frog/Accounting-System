@@ -115,6 +115,9 @@ final class MysqlCompanyRepository extends AbstractMysqlRepository implements Co
      */
     private function update(array $data): void
     {
+        // Remove created_at - it's not updateable and not in the SQL
+        unset($data['created_at']);
+
         $sql = <<<SQL
             UPDATE companies SET
                 company_name = :company_name,

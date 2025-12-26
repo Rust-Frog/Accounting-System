@@ -107,7 +107,7 @@
                 <td>${escapeHtml(company.legal_name)}</td>
                 <td><code>${escapeHtml(company.tax_id)}</code></td>
                 <td><span class="currency-badge">${company.currency}</span></td>
-                <td><span class="status-badge status-${company.status}">${capitalizeFirst(company.status)}</span></td>
+                <td><span class="status-badge status-${company.status}">${formatStatus(company.status)}</span></td>
                 <td>${formatDate(company.created_at)}</td>
                 <td>
                     <div class="action-buttons">
@@ -146,7 +146,7 @@
                 </button>
             `);
             actions.push(`
-                <button class="btn-icon btn-danger" title="Deactivate" data-action="deactivate" data-id="${company.id}">
+                <button class="btn-icon btn-danger" title="Void" data-action="deactivate" data-id="${company.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                         <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path>
                     </svg>
@@ -163,7 +163,7 @@
                 </button>
             `);
             actions.push(`
-                <button class="btn-icon btn-danger" title="Deactivate" data-action="deactivate" data-id="${company.id}">
+                <button class="btn-icon btn-danger" title="Void" data-action="deactivate" data-id="${company.id}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                         <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path>
                     </svg>
@@ -277,7 +277,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Status</span>
-                    <span class="detail-value"><span class="status-badge status-${company.status}">${capitalizeFirst(company.status)}</span></span>
+                    <span class="detail-value"><span class="status-badge status-${company.status}">${formatStatus(company.status)}</span></span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Address</span>
@@ -315,12 +315,12 @@
 
         if (company.status === 'active') {
             buttons.push('<button class="btn btn-warning" data-action="suspend">Suspend</button>');
-            buttons.push('<button class="btn btn-danger" data-action="deactivate">Deactivate</button>');
+            buttons.push('<button class="btn btn-danger" data-action="deactivate">Void</button>');
         }
 
         if (company.status === 'suspended') {
             buttons.push('<button class="btn btn-success" data-action="reactivate">Reactivate</button>');
-            buttons.push('<button class="btn btn-danger" data-action="deactivate">Deactivate</button>');
+            buttons.push('<button class="btn btn-danger" data-action="deactivate">Void</button>');
         }
 
         return buttons.join(' ');
@@ -356,14 +356,14 @@
             activate: 'Activate',
             suspend: 'Suspend',
             reactivate: 'Reactivate',
-            deactivate: 'Deactivate'
+            deactivate: 'Void Company'
         };
 
         const actionMessages = {
             activate: `Are you sure you want to activate "${escapeHtml(company.name)}"? This will allow the company to operate.`,
             suspend: `Are you sure you want to suspend "${escapeHtml(company.name)}"? This will temporarily disable the company.`,
             reactivate: `Are you sure you want to reactivate "${escapeHtml(company.name)}"? This will restore the company to active status.`,
-            deactivate: `Are you sure you want to permanently deactivate "${escapeHtml(company.name)}"? This action cannot be undone.`
+            deactivate: `Are you sure you want to permanently void "${escapeHtml(company.name)}"? This action cannot be undone.`
         };
 
         elements.confirmModalTitle.textContent = `${actionLabels[action]} Company`;
@@ -578,8 +578,11 @@
         });
     }
 
-    // Utility functions
+    // Utility functions - delegate to shared Utils when available
     function escapeHtml(str) {
+        if (window.Utils && Utils.escapeHtml) {
+            return Utils.escapeHtml(str);
+        }
         if (!str) return '';
         const div = document.createElement('div');
         div.textContent = str;
@@ -587,11 +590,30 @@
     }
 
     function capitalizeFirst(str) {
+        if (window.Utils && Utils.capitalizeFirst) {
+            return Utils.capitalizeFirst(str);
+        }
         if (!str) return '';
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
 
+    function formatStatus(status) {
+        if (window.Utils && Utils.formatCompanyStatus) {
+            return Utils.formatCompanyStatus(status);
+        }
+        const statusLabels = {
+            'pending': 'Pending',
+            'active': 'Active',
+            'suspended': 'Suspended',
+            'deactivated': 'Voided'
+        };
+        return statusLabels[status] || capitalizeFirst(status);
+    }
+
     function formatDate(dateStr) {
+        if (window.Utils && Utils.formatDate) {
+            return Utils.formatDate(dateStr);
+        }
         if (!dateStr) return '-';
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', {
@@ -602,6 +624,9 @@
     }
 
     function formatDateTime(dateStr) {
+        if (window.Utils && Utils.formatDateTime) {
+            return Utils.formatDateTime(dateStr);
+        }
         if (!dateStr) return '-';
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', {

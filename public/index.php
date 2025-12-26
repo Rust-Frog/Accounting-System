@@ -54,16 +54,19 @@ $redis = $container->get(\Predis\ClientInterface::class);
 $authController = new AuthController(
     $container->get(AuthenticationServiceInterface::class),
     $container->get(UserRepositoryInterface::class),
-    $container->get(\Infrastructure\Service\TotpService::class)
+    $container->get(\Infrastructure\Service\TotpService::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
 $companyController = new CompanyController(
-    $container->get(CompanyRepositoryInterface::class)
+    $container->get(CompanyRepositoryInterface::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
 $accountController = new AccountController(
     $container->get(AccountRepositoryInterface::class),
-    $container->get(TransactionRepositoryInterface::class)
+    $container->get(TransactionRepositoryInterface::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
 $transactionController = new TransactionController(
@@ -72,11 +75,13 @@ $transactionController = new TransactionController(
     $container->get(UpdateTransactionHandler::class),
     $container->get(DeleteTransactionHandler::class),
     $container->get(PostTransactionHandler::class),
-    $container->get(VoidTransactionHandler::class)
+    $container->get(VoidTransactionHandler::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
 $approvalController = new ApprovalController(
-    $container->get(ApprovalRepositoryInterface::class)
+    $container->get(ApprovalRepositoryInterface::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
 $reportController = new ReportController(
@@ -93,7 +98,8 @@ $setupController = new SetupController(
 $dashboardController = new \Api\Controller\DashboardController(
     $container->get(TransactionRepositoryInterface::class),
     $container->get(ApprovalRepositoryInterface::class),
-    $container->get(AccountRepositoryInterface::class)
+    $container->get(AccountRepositoryInterface::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
 // Create router
@@ -153,6 +159,7 @@ $router->post('/api/v1/setup/complete', [$setupController, 'complete']);
 // Dashboard routes (system-wide, no company scoping)
 $router->get('/api/v1/dashboard/stats', [$dashboardController, 'stats']);
 $router->get('/api/v1/dashboard/recent-approvals', [$dashboardController, 'recentApprovals']);
+$router->get('/api/v1/activities', [$dashboardController, 'recentActivities']);
 
 // Company routes
 $router->get('/api/v1/companies', [$companyController, 'list']);
@@ -237,7 +244,8 @@ $userController = new \Api\Controller\UserController(
     $container->get(\Application\Handler\Identity\ApproveUserHandler::class),
     $container->get(\Application\Handler\Identity\DeclineUserHandler::class),
     $container->get(\Application\Handler\Identity\DeactivateUserHandler::class),
-    $container->get(\Application\Handler\Identity\ActivateUserHandler::class)
+    $container->get(\Application\Handler\Identity\ActivateUserHandler::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 $router->get('/api/v1/users', [$userController, 'list']);
 $router->post('/api/v1/users', [$userController, 'create']);
@@ -259,7 +267,8 @@ $router->get('/api/v1/companies/{companyId}/audit-logs/{id}', [$auditLogControll
 $settingsController = new \Api\Controller\SettingsController(
     $container->get(\Application\Handler\Settings\UpdateSettingsHandler::class),
     $container->get(\Application\Handler\Settings\SecuritySettingsHandler::class),
-    $container->get(UserRepositoryInterface::class)
+    $container->get(UserRepositoryInterface::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 $router->get('/api/v1/settings', [$settingsController, 'get']);
 $router->put('/api/v1/settings/theme', [$settingsController, 'updateTheme']);

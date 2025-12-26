@@ -6,6 +6,7 @@ namespace Api\Controller;
 
 use Api\Response\JsonResponse;
 use Domain\Approval\Repository\ApprovalRepositoryInterface;
+use Domain\Audit\Service\SystemActivityService;
 use Domain\ChartOfAccounts\Repository\AccountRepositoryInterface;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -20,7 +21,8 @@ final class DashboardController
     public function __construct(
         private readonly TransactionRepositoryInterface $transactionRepository,
         private readonly ApprovalRepositoryInterface $approvalRepository,
-        private readonly AccountRepositoryInterface $accountRepository
+        private readonly AccountRepositoryInterface $accountRepository,
+        private readonly ?SystemActivityService $systemActivityService = null
     ) {
     }
 
@@ -72,6 +74,30 @@ final class DashboardController
             }, $approvals);
             
             return JsonResponse::success($data);
+        } catch (\Throwable $e) {
+            return JsonResponse::error($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * GET /api/v1/activities
+     * Returns recent system-wide activities for the dashboard.
+     */
+    public function recentActivities(ServerRequestInterface $request): ResponseInterface
+    {
+        try {
+            if ($this->systemActivityService === null) {
+                return JsonResponse::success(['items' => []]);
+            }
+
+            $queryParams = $request->getQueryParams();
+            $limit = min((int)($queryParams['limit'] ?? 4), 100);
+
+            $activities = $this->systemActivityService->getRecent($limit);
+
+            $items = array_map(fn($activity) => $activity->toArray(), $activities);
+
+            return JsonResponse::success(['items' => $items]);
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 500);
         }

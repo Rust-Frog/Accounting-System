@@ -22,7 +22,8 @@ final class AccountController
 {
     public function __construct(
         private readonly AccountRepositoryInterface $accountRepository,
-        private readonly TransactionRepositoryInterface $transactionRepository
+        private readonly TransactionRepositoryInterface $transactionRepository,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
     ) {
     }
 
@@ -89,6 +90,19 @@ final class AccountController
 
             $this->accountRepository->save($account);
 
+            // Log account creation
+            $this->activityService?->log(
+                activityType: 'account.created',
+                entityType: 'account',
+                entityId: $account->id()->toString(),
+                description: "Account {$account->code()->toInt()} - {$account->name()} created",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id') ?? ''),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info',
+                metadata: ['code' => $account->code()->toInt(), 'type' => $account->accountType()->value]
+            );
+
             return JsonResponse::created($this->formatAccount($account));
         } catch (\Throwable $e) {
             return JsonResponse::error($e->getMessage(), 400);
@@ -138,6 +152,19 @@ final class AccountController
             }
 
             $this->accountRepository->save($account);
+
+            // Log account toggle
+            $action = $account->isActive() ? 'activated' : 'deactivated';
+            $this->activityService?->log(
+                activityType: "account.{$action}",
+                entityType: 'account',
+                entityId: $account->id()->toString(),
+                description: "Account {$account->code()->toInt()} - {$account->name()} {$action}",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id') ?? ''),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info'
+            );
 
             return JsonResponse::success($this->formatAccount($account));
         } catch (\Throwable $e) {

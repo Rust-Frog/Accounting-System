@@ -28,6 +28,7 @@ final class UserController
         private readonly DeclineUserHandler $declineHandler,
         private readonly DeactivateUserHandler $deactivateHandler,
         private readonly ActivateUserHandler $activateHandler,
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null,
     ) {
     }
 
@@ -123,6 +124,19 @@ final class UserController
 
             $this->userRepository->save($user);
 
+            // Log user creation
+            $this->activityService?->log(
+                activityType: 'user.created',
+                entityType: 'user',
+                entityId: $user->id()->toString(),
+                description: "User {$user->username()} created by admin",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id') ?? ''),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info',
+                metadata: ['role' => $user->role()->value]
+            );
+
             return JsonResponse::created([
                 'id' => $user->id()->toString(),
                 'username' => $user->username(),
@@ -186,6 +200,18 @@ final class UserController
             $command = new ApproveUserCommand($userId, $approverId);
             $dto = $this->approveHandler->handle($command);
 
+            // Log user approval
+            $this->activityService?->log(
+                activityType: 'user.approved',
+                entityType: 'user',
+                entityId: $userId,
+                description: "User {$dto->username} approved",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($approverId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'info'
+            );
+
             return JsonResponse::success($dto->toArray());
         } catch (\Domain\Shared\Exception\EntityNotFoundException $e) {
             return JsonResponse::error($e->getMessage(), 404);
@@ -212,6 +238,18 @@ final class UserController
         try {
             $command = new DeclineUserCommand($userId, $declinerId);
             $dto = $this->declineHandler->handle($command);
+
+            // Log user decline
+            $this->activityService?->log(
+                activityType: 'user.declined',
+                entityType: 'user',
+                entityId: $userId,
+                description: "User {$dto->username} declined",
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($declinerId),
+                actorUsername: $request->getAttribute('username'),
+                actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
+                severity: 'warning'
+            );
 
             return JsonResponse::success($dto->toArray());
         } catch (\Domain\Shared\Exception\EntityNotFoundException $e) {
