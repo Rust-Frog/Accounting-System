@@ -133,6 +133,7 @@ $router->addMiddleware(new \Api\Middleware\SecurityHeadersMiddleware());
 $router->addMiddleware(new \Api\Middleware\InputSanitizationMiddleware());
 $router->addMiddleware(new AuthenticationMiddleware(
     $container->get(AuthenticationServiceInterface::class),
+    $container->get(\Domain\Identity\Repository\UserRepositoryInterface::class),
     $container->get(\Infrastructure\Service\JwtService::class),
     [
         '/',                        // Root info

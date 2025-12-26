@@ -41,7 +41,12 @@ final class AuthorizationGuard
         }
 
         $companyId = $request->getAttribute('companyId');
-        $userId = $request->getAttribute('user_id');
+        $user = $request->getAttribute('user');
+
+        // Admin bypass
+        if ($user !== null && $user->role()->value === 'admin') {
+            return true;
+        }
         
         if ($companyId === null) {
             $this->logAuthorizationFailure($request, $resourceType, $resourceId, 'No company context');
@@ -78,10 +83,15 @@ final class AuthorizationGuard
         }
 
         $companyId = $request->getAttribute('companyId');
-        $userId = $request->getAttribute('user_id');
+        $user = $request->getAttribute('user');
         
-        if ($companyId === null || $userId === null) {
+        if ($companyId === null || $user === null) {
             return false;
+        }
+
+        // Admin bypass
+        if ($user->role()->value === 'admin') {
+            return true;
         }
 
         $result = $this->ownershipVerifier->verifyUserCompany(

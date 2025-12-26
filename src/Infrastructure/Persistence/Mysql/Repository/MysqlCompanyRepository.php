@@ -95,6 +95,21 @@ final class MysqlCompanyRepository extends AbstractMysqlRepository implements Co
     }
 
     /**
+     * Find only active companies.
+     * @return array<Company>
+     */
+    public function findActiveCompanies(int $limit = 100, int $offset = 0): array
+    {
+        $rows = $this->fetchPaged(
+            "SELECT * FROM companies WHERE status = 'active' ORDER BY company_name ASC",
+            [],
+            new \Domain\Shared\ValueObject\Pagination($limit, $offset)
+        );
+
+        return array_map(fn(array $row) => $this->hydrator->hydrate($row), $rows);
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     private function insert(array $data): void

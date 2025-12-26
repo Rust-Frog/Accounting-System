@@ -11,9 +11,11 @@ use Application\Dto\Transaction\TransactionLineDto;
 use Application\Handler\HandlerInterface;
 use Domain\ChartOfAccounts\Repository\AccountRepositoryInterface;
 use Domain\ChartOfAccounts\ValueObject\AccountId;
+use Domain\Company\Repository\CompanyRepositoryInterface;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\Event\EventDispatcherInterface;
+use Domain\Shared\Exception\BusinessRuleException;
 use Domain\Shared\ValueObject\Currency;
 use Domain\Shared\ValueObject\Money;
 use Domain\Transaction\Entity\Transaction;
@@ -33,6 +35,7 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         private AccountRepositoryInterface $accountRepository,
         private EventDispatcherInterface $eventDispatcher,
         private ?TransactionNumberGeneratorInterface $transactionNumberGenerator = null,
+        private ?CompanyRepositoryInterface $companyRepository = null,
     ) {
     }
 
@@ -42,6 +45,20 @@ final readonly class CreateTransactionHandler implements HandlerInterface
 
         $companyId = CompanyId::fromString($command->companyId);
         $createdBy = UserId::fromString($command->createdBy);
+
+        // Validate company is active before allowing transaction creation
+        if ($this->companyRepository !== null) {
+            $company = $this->companyRepository->findById($companyId);
+            if ($company === null) {
+                throw new BusinessRuleException('Company not found');
+            }
+            if (!$company->status()->canOperate()) {
+                throw new BusinessRuleException(
+                    'Cannot create transactions for a company with status: ' . $company->status()->value
+                );
+            }
+        }
+
         // Handler was using ->date, Command has ->transactionDate
         $transactionDate = $command->transactionDate 
             ? new \DateTimeImmutable($command->transactionDate) 

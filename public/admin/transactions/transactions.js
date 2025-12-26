@@ -84,7 +84,7 @@ class TransactionsManager {
 
     async loadCompanies() {
         try {
-            const result = await api.getCompanies();
+            const result = await api.getActiveCompanies();
             this.companies = result?.data || [];
             this.renderCompanySelector();
 
@@ -706,7 +706,7 @@ class TransactionsManager {
     renderTransactionDetail(txn) {
         const date = new Date(txn.date || txn.created_at).toLocaleDateString();
         const status = txn.status || 'draft';
-        
+
         // Calculate totals - handle both backend format (amount_cents, line_type) and frontend format (debit, credit)
         let totalDebit = 0;
         let totalCredit = 0;
@@ -790,26 +790,27 @@ class TransactionsManager {
                     </thead>
                     <tbody>
                         ${(txn.lines || []).map(line => {
-                            // Handle both backend format (amount_cents, line_type) and frontend format (debit, credit)
-                            let debitAmount = 0;
-                            let creditAmount = 0;
-                            if (line.line_type) {
-                                // Backend format
-                                const amount = (line.amount_cents || 0) / 100;
-                                if (line.line_type === 'debit') debitAmount = amount;
-                                else creditAmount = amount;
-                            } else {
-                                // Frontend format
-                                debitAmount = line.debit || 0;
-                                creditAmount = line.credit || 0;
-                            }
-                            return `
+            // Handle both backend format (amount_cents, line_type) and frontend format (debit, credit)
+            let debitAmount = 0;
+            let creditAmount = 0;
+            if (line.line_type) {
+                // Backend format
+                const amount = (line.amount_cents || 0) / 100;
+                if (line.line_type === 'debit') debitAmount = amount;
+                else creditAmount = amount;
+            } else {
+                // Frontend format
+                debitAmount = line.debit || 0;
+                creditAmount = line.credit || 0;
+            }
+            return `
                             <tr>
                                 <td>${this.escapeHtml(this.getAccountDisplayName(line.account_id))}</td>
                                 <td class="amount debit">${debitAmount > 0 ? this.escapeHtml(this.formatCurrency(debitAmount)) : ''}</td>
                                 <td class="amount credit">${creditAmount > 0 ? this.escapeHtml(this.formatCurrency(creditAmount)) : ''}</td>
                             </tr>
-                        `;}).join('')}
+                        `;
+        }).join('')}
                         <tr class="totals-row">
                             <td><strong>Total</strong></td>
                             <td class="amount debit"><strong>${safeTotalDebit}</strong></td>
@@ -892,7 +893,7 @@ class TransactionsManager {
                 return;
             }
         }
-        
+
         this.showConfirmModal({
             title: 'Delete Draft Transaction',
             actionType: 'delete',
@@ -904,7 +905,7 @@ class TransactionsManager {
                 try {
                     this.elements.btnConfirmAction.disabled = true;
                     this.elements.btnConfirmAction.textContent = 'Deleting...';
-                    
+
                     await api.deleteTransaction(id, this.selectedCompanyId);
                     this.closeConfirmModal();
                     this.closeDetailModal();
@@ -929,7 +930,7 @@ class TransactionsManager {
                 return;
             }
         }
-        
+
         this.showConfirmModal({
             title: 'Reject Transaction',
             actionType: 'reject',
@@ -941,7 +942,7 @@ class TransactionsManager {
                 try {
                     this.elements.btnConfirmAction.disabled = true;
                     this.elements.btnConfirmAction.textContent = 'Rejecting...';
-                    
+
                     // Find approval ID for this transaction
                     const approvals = await api.getPendingApprovals(1, 100, this.selectedCompanyId);
                     const approval = approvals?.data?.find(a => a.entity_id === id);
@@ -975,7 +976,7 @@ class TransactionsManager {
                 return;
             }
         }
-        
+
         this.showConfirmModal({
             title: 'Approve Transaction',
             actionType: 'approve',
@@ -987,7 +988,7 @@ class TransactionsManager {
                 try {
                     this.elements.btnConfirmAction.disabled = true;
                     this.elements.btnConfirmAction.textContent = 'Approving...';
-                    
+
                     // Find approval ID for this transaction
                     const approvals = await api.getPendingApprovals(1, 100, this.selectedCompanyId);
                     const approval = approvals?.data?.find(a => a.entity_id === id);
@@ -1040,13 +1041,13 @@ class TransactionsManager {
                     lineType = line.debit > 0 ? 'debit' : 'credit';
                     amount = line.debit > 0 ? line.debit : line.credit;
                 }
-                
+
                 // For void, show reversed entries
                 let displayType = lineType;
                 if (actionType === 'void') {
                     displayType = lineType === 'debit' ? 'credit' : 'debit';
                 }
-                
+
                 const impactType = displayType === 'debit' ? 'increase' : 'decrease';
                 const impactLabel = displayType === 'debit' ? 'DEBIT' : 'CREDIT';
                 const accountName = this.getAccountDisplayName(line.account_id || line.account_name);
@@ -1126,7 +1127,7 @@ class TransactionsManager {
                 return;
             }
         }
-        
+
         this.showConfirmModal({
             title: 'Post Transaction',
             actionType: 'post',
@@ -1138,7 +1139,7 @@ class TransactionsManager {
                 try {
                     this.elements.btnConfirmAction.disabled = true;
                     this.elements.btnConfirmAction.textContent = 'Posting...';
-                    
+
                     await api.postTransaction(id, this.selectedCompanyId);
                     this.closeConfirmModal();
                     this.closeDetailModal();
@@ -1163,7 +1164,7 @@ class TransactionsManager {
                 return;
             }
         }
-        
+
         this.showConfirmModal({
             title: 'Void Transaction',
             actionType: 'void',
@@ -1175,7 +1176,7 @@ class TransactionsManager {
                 try {
                     this.elements.btnConfirmAction.disabled = true;
                     this.elements.btnConfirmAction.textContent = 'Voiding...';
-                    
+
                     await api.voidTransaction(id, this.selectedCompanyId, reason);
                     this.closeConfirmModal();
                     this.closeDetailModal();

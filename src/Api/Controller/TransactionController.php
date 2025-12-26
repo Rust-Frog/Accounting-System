@@ -151,7 +151,7 @@ final class TransactionController
                 entityId: $dto->id,
                 description: "Transaction created: {$dto->description}",
                 actorUserId: \Domain\Identity\ValueObject\UserId::fromString($userId),
-                actorUsername: $request->getAttribute('username'),
+                actorUsername: $request->getAttribute('username') ?? $request->getAttribute('user')?->username(),
                 actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
                 severity: 'info',
                 metadata: ['amount_cents' => $dto->totalDebitsCents ?? 0, 'company_id' => $companyId]

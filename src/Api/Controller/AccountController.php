@@ -129,8 +129,8 @@ final class AccountController
                 entityType: 'account',
                 entityId: $account->id()->toString(),
                 description: "Account {$account->code()->toInt()} - {$account->name()} created",
-                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id') ?? ''),
-                actorUsername: $request->getAttribute('username'),
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id')),
+                actorUsername: $request->getAttribute('username') ?? $request->getAttribute('user')?->username(),
                 actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
                 severity: 'info',
                 metadata: ['code' => $account->code()->toInt(), 'type' => $account->accountType()->value]
@@ -212,8 +212,8 @@ final class AccountController
                 entityType: 'account',
                 entityId: $account->id()->toString(),
                 description: "Account {$account->code()->toInt()} - {$account->name()} {$action}",
-                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id') ?? ''),
-                actorUsername: $request->getAttribute('username'),
+                actorUserId: \Domain\Identity\ValueObject\UserId::fromString($request->getAttribute('user_id')),
+                actorUsername: $request->getAttribute('username') ?? $request->getAttribute('user')?->username(),
                 actorIpAddress: $request->getServerParams()['REMOTE_ADDR'] ?? null,
                 severity: 'info'
             );

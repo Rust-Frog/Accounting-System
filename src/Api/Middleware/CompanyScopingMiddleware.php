@@ -40,7 +40,7 @@ final class CompanyScopingMiddleware
             }
         }
 
-        $request = $this->enrichRequest($request, $user);
+        $request = $this->enrichRequest($request, $user, $companyIdFromRoute);
 
         return $next($request);
     }
@@ -71,11 +71,17 @@ final class CompanyScopingMiddleware
         return null;
     }
 
-    private function enrichRequest(ServerRequestInterface $request, mixed $user): ServerRequestInterface
+    private function enrichRequest(ServerRequestInterface $request, mixed $user, ?string $routeCompanyId): ServerRequestInterface
     {
+        // Case 1: Use company ID from route if present (allows admins to view specific companies)
+        if ($routeCompanyId !== null) {
+            return $request->withAttribute('companyId', $routeCompanyId);
+        }
+
+        // Case 2: Fallback to user's assigned company ID
         if ($user !== null && $user->companyId() !== null) {
             return $request->withAttribute(
-                'company_id',
+                'companyId',
                 $user->companyId()->toString()
             );
         }

@@ -117,7 +117,7 @@ class AccountsManager {
 
     async loadCompanies() {
         try {
-            const result = await api.getCompanies();
+            const result = await api.getActiveCompanies();
             const companies = result?.data || [];
 
             this.elements.filterCompany.innerHTML = '';

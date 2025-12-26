@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Api\Middleware;
 
 use Api\Response\JsonResponse;
+use Domain\Identity\Repository\UserRepositoryInterface;
 use Domain\Identity\Service\AuthenticationServiceInterface;
 use Infrastructure\Service\JwtService;
 use Psr\Http\Message\ResponseInterface;
@@ -20,6 +21,7 @@ final class AuthenticationMiddleware
 
     public function __construct(
         private readonly AuthenticationServiceInterface $authService,
+        private readonly UserRepositoryInterface $userRepository,
         private readonly ?JwtService $jwtService = null,
         array $excludedPaths = []
     ) {
@@ -66,7 +68,13 @@ final class AuthenticationMiddleware
             return JsonResponse::error('Invalid or expired token', 401);
         }
 
-        // Add user ID to request (lightweight - no DB lookup)
+        // Add user ID to request (lightweight - no DB lookup initially, but now we fetch user for consistency)
+        $user = $this->userRepository->findById($userId);
+        if ($user === null) {
+             return JsonResponse::error('User associated with token not found', 401);
+        }
+
+        $request = $request->withAttribute('user', $user);
         $request = $request->withAttribute('user_id', $userId->toString());
         $request = $request->withAttribute('auth_type', 'jwt');
 

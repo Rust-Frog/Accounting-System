@@ -38,12 +38,20 @@ final class CompanyController
 
     /**
      * GET /api/v1/companies
-     * List all companies (for now, returns all active companies).
+     * List companies. By default returns all companies.
+     * Use ?active_only=true to return only active companies (for dropdowns).
      */
     public function list(ServerRequestInterface $request): ResponseInterface
     {
         try {
-            $companies = $this->companyRepository->findAll();
+            $queryParams = $request->getQueryParams();
+            $activeOnly = ($queryParams['active_only'] ?? 'false') === 'true';
+
+            if ($activeOnly) {
+                $companies = $this->companyRepository->findActiveCompanies();
+            } else {
+                $companies = $this->companyRepository->findAll();
+            }
             
             return JsonResponse::success(
                 array_map(fn($c) => $this->formatCompany($c), $companies)

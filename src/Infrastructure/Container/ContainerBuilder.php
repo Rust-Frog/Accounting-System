@@ -332,7 +332,8 @@ final class ContainerBuilder
                 $c->get(TransactionRepositoryInterface::class),
                 $c->get(AccountRepositoryInterface::class),
                 $c->get(EventDispatcherInterface::class),
-                $c->get(\Domain\Transaction\Service\TransactionNumberGeneratorInterface::class)
+                $c->get(\Domain\Transaction\Service\TransactionNumberGeneratorInterface::class),
+                $c->get(\Domain\Company\Repository\CompanyRepositoryInterface::class)
             )
         );
 

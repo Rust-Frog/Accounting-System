@@ -27,4 +27,10 @@ interface CompanyRepositoryInterface
      * @return array<Company>
      */
     public function findAll(int $limit = 100, int $offset = 0): array;
+
+    /**
+     * Find only active companies (excludes voided, suspended, pending).
+     * @return array<Company>
+     */
+    public function findActiveCompanies(int $limit = 100, int $offset = 0): array;
 }

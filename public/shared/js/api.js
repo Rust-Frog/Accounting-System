@@ -138,6 +138,10 @@ class ApiClient {
         return this.get('/companies');
     }
 
+    async getActiveCompanies() {
+        return this.get('/companies?active_only=true');
+    }
+
     async getCompany(id) {
         return this.get(`/companies/${id}`);
     }
