@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Command\Transaction\CreateTransactionCommand;
 use Application\Command\Transaction\DeleteTransactionCommand;
@@ -20,8 +22,11 @@ use Application\Handler\Transaction\VoidTransactionHandler;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
 use Domain\Transaction\ValueObject\TransactionId;
+use Api\Validation\TransactionValidation;
+use Api\Middleware\AuthorizationGuard;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PDO;
 
 /**
  * Transaction controller for journal entry management.
@@ -29,6 +34,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class TransactionController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly TransactionRepositoryInterface $transactionRepository,
         private readonly CreateTransactionHandler $createHandler,
@@ -36,7 +43,10 @@ final class TransactionController
         private readonly DeleteTransactionHandler $deleteHandler,
         private readonly PostTransactionHandler $postHandler,
         private readonly VoidTransactionHandler $voidHandler,
+        private readonly PDO $pdo,
         private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null,
+        private readonly ?TransactionValidation $validation = null,
+        private readonly ?AuthorizationGuard $authGuard = null,
     ) {
     }
 
@@ -77,7 +87,7 @@ final class TransactionController
 
             return JsonResponse::success(array_values($data));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -91,6 +101,11 @@ final class TransactionController
             return JsonResponse::error('Transaction ID required', 400);
         }
 
+        // Verify ownership before allowing access
+        if ($this->authGuard !== null && !$this->authGuard->verifyResourceOwnership($request, 'transaction', $id)) {
+            return JsonResponse::error('Access denied: Transaction not found or not authorized', 403);
+        }
+
         try {
             $transaction = $this->transactionRepository->findById(
                 TransactionId::fromString($id)
@@ -102,7 +117,7 @@ final class TransactionController
 
             return JsonResponse::success($this->formatTransactionSummary($transaction));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -124,6 +139,7 @@ final class TransactionController
             return $errorResponse;
         }
 
+        $this->pdo->beginTransaction();
         try {
             $command = $this->buildCreateCommand($companyId, $userId, $body);
             $dto = $this->createHandler->handle($command);
@@ -141,9 +157,11 @@ final class TransactionController
                 metadata: ['amount_cents' => $dto->totalDebitsCents ?? 0, 'company_id' => $companyId]
             );
 
+            $this->pdo->commit();
             return JsonResponse::created($dto->toArray());
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            $this->pdo->rollBack();
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -172,7 +190,7 @@ final class TransactionController
 
             return JsonResponse::success($dto->toArray());
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -200,7 +218,7 @@ final class TransactionController
 
             return JsonResponse::success(['message' => 'Transaction deleted successfully']);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -242,6 +260,20 @@ final class TransactionController
 
     private function validateCreateRequest(array $body): ?ResponseInterface
     {
+        // Use typed validation if available
+        if ($this->validation !== null) {
+            $result = $this->validation->validateCreate($body);
+            if ($result->isInvalid()) {
+                return JsonResponse::error(
+                    $result->firstError() ?? 'Validation failed',
+                    422,
+                    ['validation_errors' => $result->errors()]
+                );
+            }
+            return null;
+        }
+
+        // Fallback to basic validation
         if (empty($body['description'])) {
             return JsonResponse::error('Missing required field: description', 422);
         }
@@ -367,7 +399,7 @@ final class TransactionController
             $dto = $action($id, $userId, $request);
             return JsonResponse::success($dto->toArray());
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

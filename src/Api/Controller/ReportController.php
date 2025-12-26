@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Command\Reporting\GenerateReportCommand;
 use Application\Handler\Reporting\GenerateReportHandler;
@@ -18,6 +20,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class ReportController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly ReportRepositoryInterface $reportRepository,
         private readonly ?GenerateReportHandler $generateHandler = null
@@ -43,7 +47,7 @@ final class ReportController
 
             return JsonResponse::success($data);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -68,7 +72,7 @@ final class ReportController
 
             return JsonResponse::success($this->formatReport($report, true));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -106,9 +110,9 @@ final class ReportController
 
             return JsonResponse::success($result, 201);
         } catch (\InvalidArgumentException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

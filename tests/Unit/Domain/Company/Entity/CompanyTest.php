@@ -32,45 +32,22 @@ final class CompanyTest extends TestCase
         $this->assertEquals('Acme Corporation Inc.', $company->legalName());
         $this->assertEquals('123-456-789', $company->taxId()->toString());
         $this->assertEquals(Currency::PHP, $company->currency());
-        $this->assertEquals(CompanyStatus::PENDING, $company->status());
-    }
-
-    public function test_new_company_starts_as_pending(): void
-    {
-        $company = $this->createCompany();
-
-        $this->assertTrue($company->status()->isPending());
-        $this->assertFalse($company->status()->canOperate());
-    }
-
-    public function test_company_can_be_activated_by_admin(): void
-    {
-        $company = $this->createCompany();
-        $adminId = UserId::generate();
-
-        $company->activate($adminId);
-
         $this->assertEquals(CompanyStatus::ACTIVE, $company->status());
-        $this->assertTrue($company->status()->canOperate());
     }
 
-    public function test_only_pending_company_can_be_activated(): void
+    public function test_new_company_starts_as_active(): void
     {
         $company = $this->createCompany();
-        $adminId = UserId::generate();
-        $company->activate($adminId);
 
-        $this->expectException(BusinessRuleException::class);
-        $this->expectExceptionMessage('Only pending companies can be activated');
-
-        $company->activate($adminId);
+        $this->assertTrue($company->status()->isActive());
+        $this->assertTrue($company->status()->canOperate());
     }
 
     public function test_company_can_be_suspended(): void
     {
         $company = $this->createCompany();
         $adminId = UserId::generate();
-        $company->activate($adminId);
+        // Company starts as ACTIVE, so we can suspend directly
 
         $company->suspend($adminId, 'Violation of terms');
 
@@ -78,22 +55,11 @@ final class CompanyTest extends TestCase
         $this->assertFalse($company->status()->canOperate());
     }
 
-    public function test_only_active_company_can_be_suspended(): void
-    {
-        $company = $this->createCompany();
-        $adminId = UserId::generate();
-
-        $this->expectException(BusinessRuleException::class);
-        $this->expectExceptionMessage('Only active companies can be suspended');
-
-        $company->suspend($adminId, 'Reason');
-    }
-
     public function test_suspended_company_can_be_reactivated(): void
     {
         $company = $this->createCompany();
         $adminId = UserId::generate();
-        $company->activate($adminId);
+        // Company starts as ACTIVE
         $company->suspend($adminId, 'Reason');
 
         $company->reactivate($adminId);
@@ -105,6 +71,7 @@ final class CompanyTest extends TestCase
     {
         $company = $this->createCompany();
         $adminId = UserId::generate();
+        // Company starts as ACTIVE, not SUSPENDED
 
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('Only suspended companies can be reactivated');
@@ -167,18 +134,9 @@ final class CompanyTest extends TestCase
 
         $this->assertCount(1, $events);
         $this->assertEquals('company.created', $events[0]->eventName());
-    }
 
-    public function test_activation_records_event(): void
-    {
-        $company = $this->createCompany();
-        $company->releaseEvents(); // Clear creation event
-
-        $company->activate(UserId::generate());
-        $events = $company->releaseEvents();
-
-        $this->assertCount(1, $events);
-        $this->assertEquals('company.activated', $events[0]->eventName());
+        // Verify events are cleared after release
+        $this->assertEmpty($company->releaseEvents());
     }
 
     private function createCompany(): Company

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Command\Identity\ActivateUserCommand;
 use Application\Command\Identity\ApproveUserCommand;
@@ -22,6 +24,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class UserController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly ApproveUserHandler $approveHandler,
@@ -147,9 +151,9 @@ final class UserController
                 'company_id' => $user->companyId()?->toString(),
             ]);
         } catch (\Domain\Shared\Exception\InvalidArgumentException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -214,11 +218,11 @@ final class UserController
 
             return JsonResponse::success($dto->toArray());
         } catch (\Domain\Shared\Exception\EntityNotFoundException $e) {
-            return JsonResponse::error($e->getMessage(), 404);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Domain\Shared\Exception\BusinessRuleException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -253,11 +257,11 @@ final class UserController
 
             return JsonResponse::success($dto->toArray());
         } catch (\Domain\Shared\Exception\EntityNotFoundException $e) {
-            return JsonResponse::error($e->getMessage(), 404);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Domain\Shared\Exception\BusinessRuleException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -281,9 +285,9 @@ final class UserController
 
             return JsonResponse::success($dto->toArray());
         } catch (\Domain\Shared\Exception\EntityNotFoundException $e) {
-            return JsonResponse::error($e->getMessage(), 404);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -301,9 +305,9 @@ final class UserController
 
             return JsonResponse::success($dto->toArray());
         } catch (\Domain\Shared\Exception\EntityNotFoundException $e) {
-            return JsonResponse::error($e->getMessage(), 404);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 }

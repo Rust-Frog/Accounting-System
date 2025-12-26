@@ -26,5 +26,5 @@ interface CompanyRepositoryInterface
     /**
      * @return array<Company>
      */
-    public function findAll(): array;
+    public function findAll(int $limit = 100, int $offset = 0): array;
 }

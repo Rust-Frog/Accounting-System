@@ -49,22 +49,22 @@ final class CompanyRepositoryInterfaceTest extends TestCase
         $this->assertFalse($repository->existsByTaxId(TaxIdentifier::fromString('999-999-999')));
     }
 
-    public function test_interface_defines_find_pending_companies(): void
+    public function test_interface_defines_find_active_companies(): void
     {
         $repository = $this->createInMemoryRepository();
 
-        $pendingCompany = $this->createCompany();
+        // Both companies start as ACTIVE by default
+        $activeCompany1 = $this->createCompany();
+        $activeCompany2 = $this->createCompany('Active Corp', 'Active Corporation', '987-654-321');
 
-        $activeCompany = $this->createCompany('Active Corp', 'Active Corporation', '987-654-321');
-        $activeCompany->activate(UserId::generate());
+        $repository->save($activeCompany1);
+        $repository->save($activeCompany2);
 
-        $repository->save($pendingCompany);
-        $repository->save($activeCompany);
+        $allCompanies = $repository->findAll();
 
-        $pendingCompanies = $repository->findPendingCompanies();
-
-        $this->assertCount(1, $pendingCompanies);
-        $this->assertContains($pendingCompany, $pendingCompanies);
+        $this->assertCount(2, $allCompanies);
+        $this->assertTrue($activeCompany1->status()->isActive());
+        $this->assertTrue($activeCompany2->status()->isActive());
     }
 
     public function test_interface_defines_find_all(): void

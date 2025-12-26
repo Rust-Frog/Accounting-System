@@ -18,6 +18,7 @@ use Domain\Shared\ValueObject\Currency;
 use Domain\Shared\ValueObject\Money;
 use Domain\Transaction\Entity\Transaction;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
+use Domain\Transaction\Service\TransactionNumberGeneratorInterface;
 use Domain\Transaction\ValueObject\LineType;
 
 /**
@@ -31,6 +32,7 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         private TransactionRepositoryInterface $transactionRepository,
         private AccountRepositoryInterface $accountRepository,
         private EventDispatcherInterface $eventDispatcher,
+        private ?TransactionNumberGeneratorInterface $transactionNumberGenerator = null,
     ) {
     }
 
@@ -58,6 +60,12 @@ final readonly class CreateTransactionHandler implements HandlerInterface
 
         // Add lines
         $this->processTransactionLines($command, $transaction, $companyId, $currency);
+
+        // Generate transaction number (included in hash chain)
+        if ($this->transactionNumberGenerator !== null) {
+            $transactionNumber = $this->transactionNumberGenerator->generateNextNumber($companyId);
+            $transaction->setTransactionNumber($transactionNumber);
+        }
 
         // Persist
         $this->transactionRepository->save($transaction);
@@ -123,7 +131,7 @@ final readonly class CreateTransactionHandler implements HandlerInterface
 
         return new TransactionDto(
             id: $transaction->id()->toString(),
-            transactionNumber: $transaction->id()->toString(),
+            transactionNumber: $transaction->transactionNumber() ?? $transaction->id()->toString(),
             companyId: $transaction->companyId()->toString(),
             status: $transaction->status()->value,
             description: $transaction->description(),

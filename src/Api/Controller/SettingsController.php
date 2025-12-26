@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Handler\Settings\SecuritySettingsHandler;
 use Application\Handler\Settings\UpdateSettingsHandler;
@@ -17,6 +19,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class SettingsController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly UpdateSettingsHandler $settingsHandler,
         private readonly SecuritySettingsHandler $securityHandler,
@@ -50,7 +54,7 @@ final class SettingsController
                 'settings' => $settings->toArray(),
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -74,7 +78,7 @@ final class SettingsController
                 'settings' => $settings->toArray(),
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -100,7 +104,7 @@ final class SettingsController
                 'settings' => $settings->toArray(),
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -124,7 +128,7 @@ final class SettingsController
                 'settings' => $settings->toArray(),
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -151,7 +155,7 @@ final class SettingsController
                 'settings' => $settings->toArray(),
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -191,7 +195,7 @@ final class SettingsController
                 'message' => 'Password changed successfully',
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -213,7 +217,7 @@ final class SettingsController
             ]);
         } catch (\Throwable $e) {
             // Don't log failed attempts here - only success
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -241,7 +245,7 @@ final class SettingsController
                 'message' => 'OTP verified successfully',
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -277,7 +281,7 @@ final class SettingsController
                 'message' => 'OTP disabled successfully',
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -302,7 +306,7 @@ final class SettingsController
                 'message' => 'New backup codes generated. Please save them securely.',
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

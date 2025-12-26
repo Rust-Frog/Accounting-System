@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Handler\Admin\SetupAdminHandler;
 use Domain\Identity\Repository\UserRepositoryInterface;
@@ -13,6 +15,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final class SetupController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private UserRepositoryInterface $userRepository,
         private SetupAdminHandler $setupHandler,
@@ -61,9 +65,9 @@ final class SetupController
             $result = $this->setupHandler->handle($command);
             return JsonResponse::created($result);
         } catch (\InvalidArgumentException $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error('Setup failed: ' . $e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 }

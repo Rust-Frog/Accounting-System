@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
 use Api\Response\JsonResponse;
 use Domain\ChartOfAccounts\Entity\Account;
 use Domain\ChartOfAccounts\Repository\AccountRepositoryInterface;
@@ -12,17 +13,26 @@ use Domain\ChartOfAccounts\ValueObject\AccountId;
 use Domain\ChartOfAccounts\ValueObject\AccountType;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
+use Api\Validation\AccountValidation;
+use Api\Middleware\AuthorizationGuard;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PDO;
 
 /**
  * Account controller for Chart of Accounts management.
  */
 final class AccountController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly AccountRepositoryInterface $accountRepository,
         private readonly TransactionRepositoryInterface $transactionRepository,
+        private readonly \Domain\Company\Repository\CompanyRepositoryInterface $companyRepository,
+        private readonly PDO $pdo,
+        private readonly ?AccountValidation $validation = null,
+        private readonly ?AuthorizationGuard $authGuard = null,
         private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
     ) {
     }
@@ -40,7 +50,7 @@ final class AccountController
 
             return JsonResponse::success($data);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -49,12 +59,22 @@ final class AccountController
      */
     public function get(ServerRequestInterface $request): ResponseInterface
     {
+        $id = $request->getAttribute('id');
+        if ($id === null) {
+            return JsonResponse::error('Account ID required', 400);
+        }
+
+        // Verify ownership
+        if ($this->authGuard !== null && !$this->authGuard->verifyResourceOwnership($request, 'account', $id)) {
+            return JsonResponse::error('Access denied: Account not found or not authorized', 403);
+        }
+
         try {
             $account = $this->getAccount($request);
 
             return JsonResponse::success($this->formatAccount($account));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -66,19 +86,32 @@ final class AccountController
         try {
             $companyId = $this->getCompanyId($request);
         } catch (\Throwable $e) {
-             return JsonResponse::error($e->getMessage(), 400);
+             return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
 
         $body = $request->getParsedBody();
 
-        // Validate required fields
-        $required = ['code', 'name'];
-        foreach ($required as $field) {
-            if (empty($body[$field])) {
-                return JsonResponse::error("Missing required field: $field", 422);
+        // Use typed validation if available
+        if ($this->validation !== null) {
+            $result = $this->validation->validateCreate($body);
+            if ($result->isInvalid()) {
+                return JsonResponse::error(
+                    $result->firstError() ?? 'Validation failed',
+                    422,
+                    ['validation_errors' => $result->errors()]
+                );
+            }
+        } else {
+            // Fallback basic validation
+            $required = ['code', 'name'];
+            foreach ($required as $field) {
+                if (empty($body[$field])) {
+                    return JsonResponse::error("Missing required field: $field", 422);
+                }
             }
         }
 
+        $this->pdo->beginTransaction();
         try {
             $account = Account::create(
                 AccountCode::fromInt((int) $body['code']),
@@ -103,9 +136,11 @@ final class AccountController
                 metadata: ['code' => $account->code()->toInt(), 'type' => $account->accountType()->value]
             );
 
+            $this->pdo->commit();
             return JsonResponse::created($this->formatAccount($account));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            $this->pdo->rollBack();
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -114,9 +149,26 @@ final class AccountController
      */
     public function update(ServerRequestInterface $request): ResponseInterface
     {
+        $id = $request->getAttribute('id');
+        if ($this->authGuard !== null && !$this->authGuard->verifyResourceOwnership($request, 'account', $id)) {
+            return JsonResponse::error('Access denied: Account not found or not authorized', 403);
+        }
+
         try {
             $account = $this->getAccount($request);
             $body = $request->getParsedBody();
+
+            // Use typed validation if available
+            if ($this->validation !== null) {
+                $result = $this->validation->validateUpdate($body);
+                if ($result->isInvalid()) {
+                    return JsonResponse::error(
+                        $result->firstError() ?? 'Validation failed',
+                        422,
+                        ['validation_errors' => $result->errors()]
+                    );
+                }
+            }
 
             // Update name if provided
             if (isset($body['name']) && !empty($body['name'])) {
@@ -132,7 +184,7 @@ final class AccountController
 
             return JsonResponse::success($this->formatAccount($account));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -168,7 +220,7 @@ final class AccountController
 
             return JsonResponse::success($this->formatAccount($account));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -178,6 +230,11 @@ final class AccountController
      */
     public function transactions(ServerRequestInterface $request): ResponseInterface
     {
+        $id = $request->getAttribute('id');
+        if ($this->authGuard !== null && !$this->authGuard->verifyResourceOwnership($request, 'account', $id)) {
+            return JsonResponse::error('Access denied: Account not found or not authorized', 403);
+        }
+
         try {
             // Verify account exists
             $account = $this->getAccount($request);
@@ -194,7 +251,7 @@ final class AccountController
 
             return JsonResponse::success(array_values($data));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -236,11 +293,20 @@ final class AccountController
     }
     private function getCompanyId(ServerRequestInterface $request): CompanyId
     {
-        $companyId = $request->getAttribute('companyId');
-        if ($companyId === null) {
-            throw new \InvalidArgumentException('Company ID required');
+        $companyIdStr = $request->getAttribute('companyId');
+        if ($companyIdStr === null) {
+            throw new \Domain\Shared\Exception\InvalidArgumentException('Company ID required');
         }
-        return CompanyId::fromString($companyId);
+
+        $companyId = CompanyId::fromString($companyIdStr);
+        
+        // Verify company exists to prevent FK violations
+        $company = $this->companyRepository->findById($companyId);
+        if ($company === null) {
+            throw new \Domain\Shared\Exception\EntityNotFoundException("Company with ID {$companyIdStr} not found");
+        }
+
+        return $companyId;
     }
 
     private function getAccount(ServerRequestInterface $request): Account

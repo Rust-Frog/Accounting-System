@@ -12,7 +12,7 @@
     let companies = [];
     let currentLog = null;
     let currentTab = 'system'; // 'system' or 'company'
-    let pagination = { total: 0, limit: 50, offset: 0, has_more: false };
+    let pagination = { total: 0, limit: 7, offset: 0, has_more: false };
 
     // DOM Elements
     const elements = {
@@ -114,20 +114,24 @@
     async function loadSystemActivities() {
         showLoading();
         try {
-            const response = await api.getGlobalActivities(100);
+            const response = await api.getGlobalActivities(pagination.limit, pagination.offset);
             // Handle null response (auth redirect)
             if (!response) {
                 return;
             }
-            // Handle both {data: [...]} and {data: {items: [...]}} formats
+
             const rawData = response.data;
-            logs = Array.isArray(rawData) ? rawData : (rawData?.items || rawData?.data || rawData?.activities || []);
-            if (!Array.isArray(logs)) logs = [];
-            pagination.total = logs.length;
-            pagination.has_more = false;
+            logs = rawData?.items || [];
+            pagination = rawData?.pagination || {
+                total: logs.length,
+                limit: pagination.limit,
+                offset: pagination.offset,
+                has_more: false
+            };
+
             renderSystemActivities();
             updatePagination();
-            // Calculate and show stats from loaded data
+            // Calculate stats from a broader sample if possible, or just current page
             updateSystemStats(logs);
         } catch (error) {
             console.error('Failed to load system activities:', error);
@@ -459,14 +463,22 @@
         elements.btnPrevPage.addEventListener('click', async () => {
             if (pagination.offset > 0) {
                 pagination.offset = Math.max(0, pagination.offset - pagination.limit);
-                await loadAuditLogs();
+                if (currentTab === 'system') {
+                    await loadSystemActivities();
+                } else {
+                    await loadAuditLogs();
+                }
             }
         });
 
         elements.btnNextPage.addEventListener('click', async () => {
             if (pagination.has_more) {
                 pagination.offset += pagination.limit;
-                await loadAuditLogs();
+                if (currentTab === 'system') {
+                    await loadSystemActivities();
+                } else {
+                    await loadAuditLogs();
+                }
             }
         });
 

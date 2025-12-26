@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Command\Reporting\GenerateIncomeStatementCommand;
 use Application\Handler\Reporting\GenerateIncomeStatementHandler;
@@ -17,6 +19,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class IncomeStatementController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly GenerateIncomeStatementHandler $handler
     ) {
@@ -60,9 +64,9 @@ final class IncomeStatementController
 
             return JsonResponse::success($result);
         } catch (\InvalidArgumentException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

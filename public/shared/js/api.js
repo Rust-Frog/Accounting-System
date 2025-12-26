@@ -128,8 +128,8 @@ class ApiClient {
         return this.get('/dashboard/recent-approvals');
     }
 
-    async getGlobalActivities(limit = 4) {
-        return this.get(`/activities?limit=${limit}`);
+    async getGlobalActivities(limit = 10, offset = 0) {
+        return this.get(`/activities?limit=${limit}&offset=${offset}`);
     }
 
     // ========== Company APIs ==========

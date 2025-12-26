@@ -19,13 +19,17 @@ abstract class AbstractMysqlRepository
         $this->connection = $connection ?? PdoConnectionFactory::getConnection();
     }
 
+    private bool $weStartedTransaction = false;
+
     /**
      * Begin a database transaction.
      */
     protected function beginTransaction(): void
     {
         if (!$this->connection->inTransaction()) {
-            $this->connection->beginTransaction();
+            if ($this->connection->beginTransaction()) {
+                $this->weStartedTransaction = true;
+            }
         }
     }
 
@@ -34,8 +38,9 @@ abstract class AbstractMysqlRepository
      */
     protected function commit(): void
     {
-        if ($this->connection->inTransaction()) {
+        if ($this->weStartedTransaction && $this->connection->inTransaction()) {
             $this->connection->commit();
+            $this->weStartedTransaction = false;
         }
     }
 
@@ -44,8 +49,9 @@ abstract class AbstractMysqlRepository
      */
     protected function rollback(): void
     {
-        if ($this->connection->inTransaction()) {
+        if ($this->weStartedTransaction && $this->connection->inTransaction()) {
             $this->connection->rollBack();
+            $this->weStartedTransaction = false;
         }
     }
 

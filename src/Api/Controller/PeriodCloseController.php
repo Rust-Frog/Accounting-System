@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\Approval\Entity\Approval;
 use Domain\Approval\Repository\ApprovalRepositoryInterface;
@@ -22,6 +24,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class PeriodCloseController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly ApprovalRepositoryInterface $approvalRepository
     ) {
@@ -102,9 +106,9 @@ final class PeriodCloseController
                 ],
             ]);
         } catch (\InvalidArgumentException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

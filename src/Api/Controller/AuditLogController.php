@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\Audit\Repository\ActivityLogRepositoryInterface;
 use Domain\Company\ValueObject\CompanyId;
@@ -17,6 +19,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class AuditLogController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly ActivityLogRepositoryInterface $activityLogRepository,
     ) {
@@ -29,102 +33,126 @@ final class AuditLogController
     public function list(ServerRequestInterface $request): ResponseInterface
     {
         $companyId = $request->getAttribute('companyId');
-        
+
         if ($companyId === null) {
             return JsonResponse::error('Company ID is required', 400);
         }
 
         try {
-            $queryParams = $request->getQueryParams();
-            $limit = min((int) ($queryParams['limit'] ?? 100), 500);
-            $offset = (int) ($queryParams['offset'] ?? 0);
-            $sortOrder = strtoupper($queryParams['sort'] ?? 'DESC') === 'ASC' ? 'ASC' : 'DESC';
-
-            // Optional date filters
-            $fromDate = isset($queryParams['from_date']) 
-                ? new \DateTimeImmutable($queryParams['from_date']) 
-                : null;
-            $toDate = isset($queryParams['to_date']) 
-                ? new \DateTimeImmutable($queryParams['to_date'] . ' 23:59:59') 
-                : null;
-
-            // Optional filters
-            $activityType = $queryParams['activity_type'] ?? null;
-            $entityType = $queryParams['entity_type'] ?? null;
-            $severity = $queryParams['severity'] ?? null;
-
+            $filters = $this->parseListFilters($request->getQueryParams());
             $companyIdVo = CompanyId::fromString($companyId);
 
-            // Get logs based on filters
-            if ($fromDate !== null && $toDate !== null) {
-                $logs = $this->activityLogRepository->findByCompanyAndDateRange(
-                    $companyIdVo,
-                    $fromDate,
-                    $toDate
-                );
-                // Apply pagination manually for date range queries
-                $logs = array_slice($logs, $offset, $limit);
-            } else {
-                $logs = $this->activityLogRepository->findByCompany(
-                    $companyIdVo,
-                    $limit,
-                    $offset,
-                    $sortOrder
-                );
-            }
+            $logs = $this->fetchLogs($companyIdVo, $filters);
+            $logs = $this->applyInMemoryFilters($logs, $filters);
 
-            // Apply additional filters if provided
-            if ($activityType !== null) {
-                $logs = array_filter($logs, fn($log) => $log->activityType()->value === $activityType);
-            }
-            if ($entityType !== null) {
-                $logs = array_filter($logs, fn($log) => $log->entityType() === $entityType);
-            }
-            if ($severity !== null) {
-                $logs = array_filter($logs, fn($log) => $log->severity()->value === $severity);
-            }
-
-            // Get total count for pagination
             $totalCount = $this->activityLogRepository->countByCompany($companyIdVo);
-
-            $data = array_map(fn($log) => [
-                'id' => $log->id()->toString(),
-                'company_id' => $log->companyId()->toString(),
-                'actor' => [
-                    'user_id' => $log->actor()->userId(),
-                    'username' => $log->actor()->actorName(),
-                    'type' => $log->actor()->actorType(),
-                ],
-                'activity_type' => $log->activityType()->value,
-                'category' => $log->category(),
-                'severity' => $log->severity()->value,
-                'entity_type' => $log->entityType(),
-                'entity_id' => $log->entityId(),
-                'action' => $log->action(),
-                'changes' => array_map(fn($c) => $c->toArray(), $log->changes()),
-                'context' => [
-                    'ip_address' => $log->context()->ipAddress(),
-                    'user_agent' => $log->context()->userAgent(),
-                    'request_id' => $log->context()->requestId(),
-                ],
-                'occurred_at' => $log->occurredAt()->format('Y-m-d\TH:i:s\Z'),
-                'content_hash' => $log->contentHash()?->toString(),
-            ], array_values($logs));
+            $data = array_map([$this, 'formatLogSummary'], array_values($logs));
 
             return JsonResponse::success([
                 'logs' => $data,
                 'pagination' => [
                     'total' => $totalCount,
-                    'limit' => $limit,
-                    'offset' => $offset,
-                    'has_more' => ($offset + count($data)) < $totalCount,
+                    'limit' => $filters['limit'],
+                    'offset' => $filters['offset'],
+                    'has_more' => ($filters['offset'] + count($data)) < $totalCount,
                 ],
             ]);
         } catch (\InvalidArgumentException $e) {
-            return JsonResponse::error('Invalid parameter: ' . $e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), 400);
         } catch (\Throwable $e) {
-            return JsonResponse::error('Failed to fetch audit logs: ' . $e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
+    }
+
+    /**
+     * Parse and validate filter parameters from query string.
+     * @return array{limit: int, offset: int, sortOrder: string, fromDate: ?\DateTimeImmutable, toDate: ?\DateTimeImmutable, activityType: ?string, entityType: ?string, severity: ?string}
+     */
+    private function parseListFilters(array $queryParams): array
+    {
+        return [
+            'limit' => min((int) ($queryParams['limit'] ?? 100), 500),
+            'offset' => (int) ($queryParams['offset'] ?? 0),
+            'sortOrder' => strtoupper($queryParams['sort'] ?? 'DESC') === 'ASC' ? 'ASC' : 'DESC',
+            'fromDate' => isset($queryParams['from_date'])
+                ? new \DateTimeImmutable($queryParams['from_date'])
+                : null,
+            'toDate' => isset($queryParams['to_date'])
+                ? new \DateTimeImmutable($queryParams['to_date'] . ' 23:59:59')
+                : null,
+            'activityType' => $queryParams['activity_type'] ?? null,
+            'entityType' => $queryParams['entity_type'] ?? null,
+            'severity' => $queryParams['severity'] ?? null,
+        ];
+    }
+
+    /**
+     * Fetch logs from repository based on filters.
+     */
+    private function fetchLogs(CompanyId $companyId, array $filters): array
+    {
+        if ($filters['fromDate'] !== null && $filters['toDate'] !== null) {
+            $logs = $this->activityLogRepository->findByCompanyAndDateRange(
+                $companyId,
+                $filters['fromDate'],
+                $filters['toDate']
+            );
+            return array_slice($logs, $filters['offset'], $filters['limit']);
+        }
+
+        return $this->activityLogRepository->findByCompany(
+            $companyId,
+            $filters['limit'],
+            $filters['offset'],
+            $filters['sortOrder']
+        );
+    }
+
+    /**
+     * Apply in-memory filters that can't be pushed to database.
+     */
+    private function applyInMemoryFilters(array $logs, array $filters): array
+    {
+        if ($filters['activityType'] !== null) {
+            $logs = array_filter($logs, fn($log) => $log->activityType()->value === $filters['activityType']);
+        }
+        if ($filters['entityType'] !== null) {
+            $logs = array_filter($logs, fn($log) => $log->entityType() === $filters['entityType']);
+        }
+        if ($filters['severity'] !== null) {
+            $logs = array_filter($logs, fn($log) => $log->severity()->value === $filters['severity']);
+        }
+        return $logs;
+    }
+
+    /**
+     * Format a single log entry for list responses.
+     */
+    private function formatLogSummary(mixed $log): array
+    {
+        return [
+            'id' => $log->id()->toString(),
+            'company_id' => $log->companyId()->toString(),
+            'actor' => [
+                'user_id' => $log->actor()->userId(),
+                'username' => $log->actor()->actorName(),
+                'type' => $log->actor()->actorType(),
+            ],
+            'activity_type' => $log->activityType()->value,
+            'category' => $log->category(),
+            'severity' => $log->severity()->value,
+            'entity_type' => $log->entityType(),
+            'entity_id' => $log->entityId(),
+            'action' => $log->action(),
+            'changes' => array_map(fn($c) => $c->toArray(), $log->changes()),
+            'context' => [
+                'ip_address' => $log->context()->ipAddress(),
+                'user_agent' => $log->context()->userAgent(),
+                'request_id' => $log->context()->requestId(),
+            ],
+            'occurred_at' => $log->occurredAt()->format('Y-m-d\TH:i:s\Z'),
+            'content_hash' => $log->contentHash()?->toString(),
+        ];
     }
 
     /**
@@ -180,7 +208,7 @@ final class AuditLogController
                 'chain_hash' => $log->chainLink()?->computeHash()->toString(),
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error('Failed to fetch audit log: ' . $e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -224,7 +252,7 @@ final class AuditLogController
                 'by_activity_type' => $byActivityType,
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error('Failed to fetch audit stats: ' . $e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 }

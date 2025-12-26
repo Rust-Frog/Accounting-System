@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\Company\Entity\Company;
 use Domain\Company\Repository\CompanyRepositoryInterface;
@@ -12,17 +14,25 @@ use Domain\Company\ValueObject\CompanyId;
 use Domain\Company\ValueObject\TaxIdentifier;
 use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\ValueObject\Currency;
+use Api\Middleware\AuthorizationGuard;
+use Api\Validation\CompanyValidation;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PDO;
 
 /**
  * Company controller for company management.
  */
 final class CompanyController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly CompanyRepositoryInterface $companyRepository,
-        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null,
+        private readonly ?CompanyValidation $validation = null,
+        private readonly ?AuthorizationGuard $authGuard = null,
+        private readonly ?PDO $pdo = null
     ) {
     }
 
@@ -39,7 +49,7 @@ final class CompanyController
                 array_map(fn($c) => $this->formatCompany($c), $companies)
             );
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -53,6 +63,10 @@ final class CompanyController
             return JsonResponse::error('Company ID required', 400);
         }
 
+        if ($this->authGuard !== null && !$this->authGuard->verifyResourceOwnership($request, 'company', $id)) {
+            return JsonResponse::error('Access denied: Company not found or not authorized', 403);
+        }
+
         try {
             $company = $this->companyRepository->findById(
                 CompanyId::fromString($id)
@@ -64,7 +78,7 @@ final class CompanyController
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -121,7 +135,7 @@ final class CompanyController
 
             return JsonResponse::created($this->formatCompany($company));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -163,7 +177,7 @@ final class CompanyController
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -208,7 +222,7 @@ final class CompanyController
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -237,7 +251,7 @@ final class CompanyController
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -282,7 +296,7 @@ final class CompanyController
 
             return JsonResponse::success($this->formatCompany($company));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

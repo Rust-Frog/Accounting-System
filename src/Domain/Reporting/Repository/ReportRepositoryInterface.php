@@ -27,10 +27,14 @@ interface ReportRepositoryInterface
     /**
      * @return array<Report>
      */
-    public function findByCompany(CompanyId $companyId): array;
+    public function findByCompany(CompanyId $companyId, int $limit = 100, int $offset = 0): array;
 
     /**
      * @return array<Report>
      */
     public function findByCompanyAndType(CompanyId $companyId, string $reportType, int $limit = 10): array;
+    /**
+     * @return array<Report>
+     */
+     public function findAll(int $limit = 100, int $offset = 0): array;
 }

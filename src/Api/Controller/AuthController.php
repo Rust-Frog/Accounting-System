@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\Entity\User;
@@ -21,6 +23,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class AuthController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly AuthenticationServiceInterface $authService,
         private readonly UserRepositoryInterface $userRepository,
@@ -78,7 +82,7 @@ final class AuthController
                 'role' => $user->role()->value,
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

@@ -33,6 +33,7 @@ final class Transaction
     private ?DateTimeImmutable $voidedAt = null;
     private ?UserId $voidedBy = null;
     private ?string $voidReason = null;
+    private ?string $transactionNumber = null;
 
     private function __construct(
         private readonly TransactionId $id,
@@ -66,7 +67,8 @@ final class Transaction
         ?DateTimeImmutable $voidedAt = null,
         ?UserId $voidedBy = null,
         ?string $voidReason = null,
-        array $lines = []
+        array $lines = [],
+        ?string $transactionNumber = null
     ): self {
         $transaction = new self(
             id: $id,
@@ -85,6 +87,7 @@ final class Transaction
         $transaction->voidedBy = $voidedBy;
         $transaction->voidReason = $voidReason;
         $transaction->lines = $lines;
+        $transaction->transactionNumber = $transactionNumber;
 
         return $transaction;
     }
@@ -272,6 +275,19 @@ final class Transaction
         return $this->voidReason;
     }
 
+    public function transactionNumber(): ?string
+    {
+        return $this->transactionNumber;
+    }
+
+    public function setTransactionNumber(string $transactionNumber): void
+    {
+        if ($this->transactionNumber !== null) {
+            throw new BusinessRuleException('Transaction number cannot be changed once set');
+        }
+        $this->transactionNumber = $transactionNumber;
+    }
+
     /**
      * @return array<TransactionLine>
      */
@@ -385,6 +401,7 @@ final class Transaction
         return [
             'id' => $this->id->toString(),
             'company_id' => $this->companyId->toString(),
+            'transaction_number' => $this->transactionNumber,
             'transaction_date' => $this->transactionDate->format('Y-m-d'),
             'description' => $this->description,
             'reference_number' => $this->referenceNumber,

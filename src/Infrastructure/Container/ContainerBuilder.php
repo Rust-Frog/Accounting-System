@@ -34,6 +34,13 @@ use Infrastructure\Service\BcryptPasswordHashingService;
 use Infrastructure\Service\InMemoryEventDispatcher;
 use Infrastructure\Service\JwtService;
 use Infrastructure\Service\SessionAuthenticationService;
+use Infrastructure\Authorization\OwnershipVerifier;
+use Domain\Authorization\OwnershipVerifierInterface;
+use Api\Validation\TransactionValidation;
+use Api\Validation\CompanyValidation;
+use Api\Validation\UserValidation;
+use Api\Validation\AccountValidation;
+use Api\Middleware\AuthorizationGuard;
 use PDO;
 use Psr\Container\ContainerInterface;
 
@@ -153,6 +160,8 @@ final class ContainerBuilder
         self::registerCoreServices($container);
         self::registerAuditServices($container);
         self::registerAuthServices($container);
+        self::registerValidationServices($container);
+        self::registerAuthorizationServices($container);
     }
 
     private static function registerCoreServices(Container $container): void
@@ -183,6 +192,14 @@ final class ContainerBuilder
 
             return new JwtService($secretKey, $expiration, $issuer);
         });
+
+        // Transaction Number Generator
+        $container->singleton(
+            \Domain\Transaction\Service\TransactionNumberGeneratorInterface::class,
+            fn(ContainerInterface $c) => new \Infrastructure\Service\TransactionNumberGenerator(
+                $c->get(PDO::class)
+            )
+        );
     }
 
     private static function registerAuditServices(Container $container): void
@@ -252,13 +269,70 @@ final class ContainerBuilder
         );
     }
 
+    private static function registerValidationServices(Container $container): void
+    {
+        // Request Validator (base service)
+        $container->singleton(\Domain\Shared\Validation\RequestValidator::class, fn() =>
+            new \Domain\Shared\Validation\RequestValidator()
+        );
+
+        // Transaction Validation
+        $container->singleton(TransactionValidation::class, fn(ContainerInterface $c) =>
+            new TransactionValidation(
+                $c->get(\Domain\Shared\Validation\RequestValidator::class)
+            )
+        );
+
+        // Company Validation
+        $container->singleton(CompanyValidation::class, fn(ContainerInterface $c) =>
+            new CompanyValidation(
+                $c->get(\Domain\Shared\Validation\RequestValidator::class)
+            )
+        );
+
+        // User Validation
+        $container->singleton(UserValidation::class, fn(ContainerInterface $c) =>
+            new UserValidation(
+                $c->get(\Domain\Shared\Validation\RequestValidator::class)
+            )
+        );
+
+        // Account Validation
+        $container->singleton(AccountValidation::class, fn(ContainerInterface $c) =>
+            new AccountValidation(
+                $c->get(\Domain\Shared\Validation\RequestValidator::class)
+            )
+        );
+    }
+
+    private static function registerAuthorizationServices(Container $container): void
+    {
+        // Ownership Verifier
+        $container->singleton(OwnershipVerifierInterface::class, fn(ContainerInterface $c) =>
+            new OwnershipVerifier(
+                $c->get(TransactionRepositoryInterface::class),
+                $c->get(AccountRepositoryInterface::class),
+                $c->get(UserRepositoryInterface::class)
+            )
+        );
+
+        // Authorization Guard
+        $container->singleton(AuthorizationGuard::class, fn(ContainerInterface $c) =>
+            new AuthorizationGuard(
+                $c->get(OwnershipVerifierInterface::class),
+                $c->get(\Domain\Audit\Service\SystemActivityService::class)
+            )
+        );
+    }
+
     private static function registerHandlers(Container $container): void
     {
         $container->singleton(CreateTransactionHandler::class, fn(ContainerInterface $c) =>
             new CreateTransactionHandler(
                 $c->get(TransactionRepositoryInterface::class),
                 $c->get(AccountRepositoryInterface::class),
-                $c->get(EventDispatcherInterface::class)
+                $c->get(EventDispatcherInterface::class),
+                $c->get(\Domain\Transaction\Service\TransactionNumberGeneratorInterface::class)
             )
         );
 

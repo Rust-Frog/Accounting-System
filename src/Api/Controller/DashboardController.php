@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\Approval\Repository\ApprovalRepositoryInterface;
 use Domain\Audit\Service\SystemActivityService;
@@ -18,6 +20,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class DashboardController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly TransactionRepositoryInterface $transactionRepository,
         private readonly ApprovalRepositoryInterface $approvalRepository,
@@ -45,7 +49,7 @@ final class DashboardController
                 'active_sessions' => 1, // Can be expanded later
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -75,7 +79,7 @@ final class DashboardController
             
             return JsonResponse::success($data);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -91,15 +95,25 @@ final class DashboardController
             }
 
             $queryParams = $request->getQueryParams();
-            $limit = min((int)($queryParams['limit'] ?? 4), 100);
+            $limit = min((int)($queryParams['limit'] ?? 10), 100);
+            $offset = (int)($queryParams['offset'] ?? 0);
 
-            $activities = $this->systemActivityService->getRecent($limit);
+            $activities = $this->systemActivityService->getRecent($limit, $offset);
+            $totalCount = $this->systemActivityService->getTotalCount();
 
             $items = array_map(fn($activity) => $activity->toArray(), $activities);
 
-            return JsonResponse::success(['items' => $items]);
+            return JsonResponse::success([
+                'items' => $items,
+                'pagination' => [
+                    'total' => $totalCount,
+                    'limit' => $limit,
+                    'offset' => $offset,
+                    'has_more' => ($offset + count($items)) < $totalCount,
+                ]
+            ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 }

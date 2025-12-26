@@ -11,7 +11,10 @@ use Api\Controller\CompanyController;
 use Api\Controller\ReportController;
 use Api\Controller\SetupController;
 use Api\Controller\TransactionController;
+use Api\Controller\HealthController;
 use Api\Middleware\AuthenticationMiddleware;
+use Api\Middleware\ApiVersionMiddleware;
+use Api\Middleware\RequestLoggingMiddleware;
 use Api\Middleware\CorsMiddleware;
 use Api\Middleware\ErrorHandlerMiddleware;
 use Api\Request\ServerRequest;
@@ -60,12 +63,19 @@ $authController = new AuthController(
 
 $companyController = new CompanyController(
     $container->get(CompanyRepositoryInterface::class),
-    $container->get(\Domain\Audit\Service\SystemActivityService::class)
+    $container->get(\Domain\Audit\Service\SystemActivityService::class),
+    $container->get(\Api\Validation\CompanyValidation::class),
+    $container->get(\Api\Middleware\AuthorizationGuard::class),
+    $container->get(PDO::class)
 );
 
 $accountController = new AccountController(
     $container->get(AccountRepositoryInterface::class),
     $container->get(TransactionRepositoryInterface::class),
+    $container->get(CompanyRepositoryInterface::class),
+    $container->get(PDO::class),
+    $container->get(\Api\Validation\AccountValidation::class),
+    $container->get(\Api\Middleware\AuthorizationGuard::class),
     $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
@@ -76,7 +86,10 @@ $transactionController = new TransactionController(
     $container->get(DeleteTransactionHandler::class),
     $container->get(PostTransactionHandler::class),
     $container->get(VoidTransactionHandler::class),
-    $container->get(\Domain\Audit\Service\SystemActivityService::class)
+    $container->get(PDO::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class),
+    $container->get(\Api\Validation\TransactionValidation::class),
+    $container->get(\Api\Middleware\AuthorizationGuard::class)
 );
 
 $approvalController = new ApprovalController(
@@ -102,13 +115,21 @@ $dashboardController = new \Api\Controller\DashboardController(
     $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
+$healthController = new HealthController(
+    $container->get(PDO::class),
+    $container->get(\Predis\ClientInterface::class)
+);
+
 // Create router
 $router = new Router();
 
 // Add middleware
 $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
 $router->addMiddleware(new ErrorHandlerMiddleware($debug));
+$router->addMiddleware(new ApiVersionMiddleware());
+$router->addMiddleware(new RequestLoggingMiddleware($container->get(\Domain\Audit\Service\SystemActivityService::class)));
 $router->addMiddleware(new CorsMiddleware());
+$router->addMiddleware(new \Api\Middleware\SecurityHeadersMiddleware());
 $router->addMiddleware(new \Api\Middleware\InputSanitizationMiddleware());
 $router->addMiddleware(new AuthenticationMiddleware(
     $container->get(AuthenticationServiceInterface::class),
@@ -144,6 +165,10 @@ $router->get('/api/v1/', fn() => new \Api\Response\JsonResponse([
     'message' => 'Accounting System API v1',
     'version' => '1.0.0',
 ]));
+
+// Health routes
+$router->get('/health', [$healthController, 'check']);
+$router->get('/api/v1/health', [$healthController, 'check']);
 
 // Auth routes
 $router->post('/api/v1/auth/register', [$authController, 'register']);

@@ -1,6 +1,6 @@
 -- ============================================
 -- Accounting System - Safe Database Cleanup
--- Version: 1.0
+-- Version: 2.0
 --
 -- Safely removes all data while preserving schema.
 -- Tables are truncated in dependency order.
@@ -19,6 +19,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Reporting & Audit (leaf tables, no dependents)
 TRUNCATE TABLE reports;
 TRUNCATE TABLE activity_logs;
+TRUNCATE TABLE system_activities;
 
 -- User Settings
 TRUNCATE TABLE user_settings;
@@ -34,6 +35,7 @@ TRUNCATE TABLE approvals;
 -- Transaction Domain
 TRUNCATE TABLE transaction_lines;
 TRUNCATE TABLE transactions;
+TRUNCATE TABLE transaction_sequences;
 
 -- Chart of Accounts
 TRUNCATE TABLE accounts;
@@ -56,3 +58,4 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- All data has been removed.
 -- Schema remains intact.
 -- ============================================
+SELECT 'Cleanup complete - all data removed' AS status;

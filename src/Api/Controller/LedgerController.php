@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\ChartOfAccounts\Entity\Account;
 use Domain\ChartOfAccounts\Repository\AccountRepositoryInterface;
@@ -20,6 +22,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class LedgerController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly AccountRepositoryInterface $accountRepository,
         private readonly TransactionRepositoryInterface $transactionRepository,
@@ -173,7 +177,7 @@ final class LedgerController
 
             return JsonResponse::success($response);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -238,7 +242,7 @@ final class LedgerController
                 'totals' => $totals,
             ]);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 }

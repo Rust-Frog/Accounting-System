@@ -83,9 +83,13 @@ final class MysqlCompanyRepository extends AbstractMysqlRepository implements Co
     /**
      * @return array<Company>
      */
-    public function findAll(): array
+    public function findAll(int $limit = 100, int $offset = 0): array
     {
-        $rows = $this->fetchAll('SELECT * FROM companies ORDER BY company_name ASC');
+        $rows = $this->fetchPaged(
+            'SELECT * FROM companies ORDER BY company_name ASC',
+            [],
+            new \Domain\Shared\ValueObject\Pagination($limit, $offset)
+        );
 
         return array_map(fn(array $row) => $this->hydrator->hydrate($row), $rows);
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Application\Command\Reporting\GenerateBalanceSheetCommand;
 use Application\Handler\Reporting\GenerateBalanceSheetHandler;
@@ -18,6 +20,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class BalanceSheetController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly GenerateBalanceSheetHandler $handler
     ) {
@@ -55,9 +59,9 @@ final class BalanceSheetController
 
             return JsonResponse::success($result);
         } catch (\InvalidArgumentException $e) {
-            return JsonResponse::error($e->getMessage(), 422);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 

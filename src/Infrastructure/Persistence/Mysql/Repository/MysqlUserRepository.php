@@ -109,10 +109,12 @@ final class MysqlUserRepository extends AbstractMysqlRepository implements UserR
     /**
      * @return array<User>
      */
-    public function findAll(): array
+    public function findAll(int $limit = 100, int $offset = 0): array
     {
-        $rows = $this->fetchAll(
-            'SELECT * FROM users ORDER BY created_at DESC'
+        $rows = $this->fetchPaged(
+            'SELECT * FROM users ORDER BY created_at DESC',
+            [],
+            new \Domain\Shared\ValueObject\Pagination($limit, $offset)
         );
 
         return array_map(fn(array $row) => $this->hydrator->hydrate($row), $rows);

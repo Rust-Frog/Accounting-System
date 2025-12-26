@@ -61,14 +61,17 @@ final class SystemActivityService
         return $activity;
     }
 
-    /**
-     * Get recent activities for dashboard.
-     * 
-     * @return SystemActivity[]
-     */
-    public function getRecent(int $limit = 4): array
+    public function getRecent(int $limit = 4, int $offset = 0): array
     {
-        return $this->repository->findRecent($limit);
+        return $this->repository->findRecent($limit, $offset);
+    }
+
+    /**
+     * Get total count of system activities.
+     */
+    public function getTotalCount(): int
+    {
+        return $this->repository->count();
     }
 
     /**

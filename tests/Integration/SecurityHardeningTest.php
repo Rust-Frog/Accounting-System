@@ -41,9 +41,10 @@ final class SecurityHardeningTest extends BaseIntegrationTestCase
         $tRepo = new \Infrastructure\Persistence\Mysql\Repository\MysqlTransactionRepository($this->pdo);
         $aRepo = new \Infrastructure\Persistence\Mysql\Repository\MysqlApprovalRepository($this->pdo);
         $jRepo = new \Infrastructure\Persistence\Mysql\Repository\MysqlJournalEntryRepository($this->pdo);
+        $acctRepo = new \Infrastructure\Persistence\Mysql\Repository\MysqlAccountRepository($this->pdo);
         $dispatcher = $container->get(\Domain\Shared\Event\EventDispatcherInterface::class); // Events are fine
-        
-        $this->postHandler = new PostTransactionHandler($tRepo, $aRepo, $jRepo, $dispatcher);
+
+        $this->postHandler = new PostTransactionHandler($tRepo, $aRepo, $jRepo, $acctRepo, $dispatcher);
     }
 
     public function testTransactionPostingGeneratesApprovalProof(): void

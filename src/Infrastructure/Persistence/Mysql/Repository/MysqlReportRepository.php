@@ -71,18 +71,15 @@ class MysqlReportRepository extends AbstractMysqlRepository implements ReportRep
         return $this->hydrateReport($row);
     }
 
-    public function findByCompany(CompanyId $companyId): array
+    public function findByCompany(CompanyId $companyId, int $limit = 100, int $offset = 0): array
     {
-        $sql = "SELECT * FROM reports WHERE company_id = :company_id ORDER BY generated_at DESC";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->execute(['company_id' => $companyId->toString()]);
+        $rows = $this->fetchPaged(
+            'SELECT * FROM reports WHERE company_id = :company_id ORDER BY generated_at DESC',
+            ['company_id' => $companyId->toString()],
+            new \Domain\Shared\ValueObject\Pagination($limit, $offset)
+        );
         
-        $results = [];
-        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $results[] = $this->hydrateReport($row);
-        }
-        
-        return $results;
+        return array_map(fn(array $row) => $this->hydrateReport($row), $rows);
     }
 
     public function findByCompanyAndType(CompanyId $companyId, string $reportType, int $limit = 10): array
@@ -100,6 +97,17 @@ class MysqlReportRepository extends AbstractMysqlRepository implements ReportRep
         }
         
         return $results;
+    }
+
+    public function findAll(int $limit = 100, int $offset = 0): array
+    {
+        $rows = $this->fetchPaged(
+            'SELECT * FROM reports ORDER BY generated_at DESC',
+            [],
+            new \Domain\Shared\ValueObject\Pagination($limit, $offset)
+        );
+
+        return array_map(fn(array $row) => $this->hydrateReport($row), $rows);
     }
 
     /**

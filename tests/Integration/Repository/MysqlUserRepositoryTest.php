@@ -6,8 +6,10 @@ namespace Tests\Integration\Repository;
 
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\Entity\User;
+use Domain\Identity\ValueObject\Password;
 use Domain\Identity\ValueObject\Role;
 use Domain\Identity\ValueObject\UserId;
+use Domain\Identity\ValueObject\Username;
 use Domain\Shared\ValueObject\Email;
 use Infrastructure\Persistence\Mysql\Repository\MysqlUserRepository;
 use Tests\Integration\BaseIntegrationTestCase;
@@ -31,9 +33,9 @@ class MysqlUserRepositoryTest extends BaseIntegrationTestCase
         $this->createCompany($this->pdo, $companyId->toString());
 
         $user = User::register(
-            'testuser',
+            Username::fromString('testuser'),
             Email::fromString('test@example.com'),
-            'Password123!',
+            Password::fromString('Password123!'),
             Role::TENANT,
             $companyId
         );
@@ -55,9 +57,9 @@ class MysqlUserRepositoryTest extends BaseIntegrationTestCase
         $email = Email::fromString('findme@example.com');
         
         $user = User::register(
-            'findmeuser',
+            Username::fromString('findmeuser'),
             $email,
-            'Password123!',
+            Password::fromString('Password123!'),
             Role::TENANT,
             $companyId
         );

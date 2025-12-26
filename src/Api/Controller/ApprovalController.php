@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Api\Controller;
 
+use Api\Controller\Traits\SafeExceptionHandlerTrait;
+
 use Api\Response\JsonResponse;
 use Domain\Approval\Entity\Approval;
 use Domain\Approval\Repository\ApprovalRepositoryInterface;
@@ -18,6 +20,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class ApprovalController
 {
+    use SafeExceptionHandlerTrait;
+
     public function __construct(
         private readonly ApprovalRepositoryInterface $approvalRepository,
         private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
@@ -51,7 +55,7 @@ final class ApprovalController
 
             return JsonResponse::success($data);
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 500);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -99,7 +103,7 @@ final class ApprovalController
 
             return JsonResponse::success($this->formatApproval($approval));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
@@ -151,7 +155,7 @@ final class ApprovalController
 
             return JsonResponse::success($this->formatApproval($approval));
         } catch (\Throwable $e) {
-            return JsonResponse::error($e->getMessage(), 400);
+            return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
         }
     }
 
