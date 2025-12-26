@@ -4,17 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Accounting System - Transaction Management">
-    <title>TRANSACTIONS | Accounting System</title>
+    <meta name="description" content="Accounting System - Company Management">
+    <title>COMPANIES | Accounting System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/app.css">
-    <link rel="stylesheet" href="/assets/css/dashboard.css">
-    <link rel="stylesheet" href="/assets/css/components.css">
-    <link rel="stylesheet" href="/assets/css/transactions.css">
+    <link rel="stylesheet" href="/shared/css/app.css">
+    <link rel="stylesheet" href="/shared/css/layout.css">
+    <link rel="stylesheet" href="/shared/css/components.css">
+    <link rel="stylesheet" href="companies.css">
 </head>
 
 <body>
@@ -34,31 +34,31 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <span class="nav-section-title">Main</span>
-                    <a href="/dashboard.html" class="nav-item">
+                    <a href="/admin/dashboard/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM6.5 6.5v8h7.75a.25.25 0 0 0 .25-.25V6.5Zm8-1.5V1.75a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25V5Zm-8 0V1.5h-5v4Z"></path>
                         </svg>
                         <span class="nav-label">Dashboard</span>
                     </a>
-                    <a href="/transactions.html" class="nav-item active">
+                    <a href="/admin/transactions/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M5.22 14.78a.75.75 0 0 0 1.06-1.06L4.56 12h8.69a.75.75 0 0 0 0-1.5H4.56l1.72-1.72a.75.75 0 0 0-1.06-1.06l-3 3a.75.75 0 0 0 0 1.06l3 3Zm5.56-6.5a.75.75 0 1 1-1.06-1.06l1.72-1.72H2.75a.75.75 0 0 1 0-1.5h8.69L9.72 2.28a.75.75 0 0 1 1.06-1.06l3 3a.75.75 0 0 1 0 1.06l-3 3Z"></path>
                         </svg>
                         <span class="nav-label">Transactions</span>
                     </a>
-                    <a href="/accounts.html" class="nav-item">
+                    <a href="/admin/accounts/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm3.75-1.5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5ZM3 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path>
                         </svg>
                         <span class="nav-label">Chart of Accounts</span>
                     </a>
-                    <a href="/journal.html" class="nav-item">
+                    <a href="/admin/journal/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"></path>
                         </svg>
                         <span class="nav-label">Journal</span>
                     </a>
-                    <a href="/ledger.html" class="nav-item">
+                    <a href="/admin/ledger/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM1.5 6.5v7.75c0 .138.112.25.25.25H5v-8Zm5 8h7.75a.25.25 0 0 0 .25-.25V6.5h-8ZM5 5V1.5H1.75a.25.25 0 0 0-.25.25V5Zm1.5 0h8V1.75a.25.25 0 0 0-.25-.25H6.5Z"></path>
                         </svg>
@@ -68,19 +68,19 @@
 
                 <div class="nav-section">
                     <span class="nav-section-title">Reports</span>
-                    <a href="/trial-balance.html" class="nav-item">
+                    <a href="/admin/reports/trial-balance/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm9.78-2.22-4.5 4.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 1 1 1.06-1.06l1.47 1.47 3.97-3.97a.75.75 0 1 1 1.06 1.06Z"></path>
                         </svg>
                         <span class="nav-label">Trial Balance</span>
                     </a>
-                    <a href="/income-statement.html" class="nav-item">
+                    <a href="/admin/reports/income-statement/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"></path>
                         </svg>
                         <span class="nav-label">Income Statement</span>
                     </a>
-                    <a href="/balance-sheet.html" class="nav-item">
+                    <a href="/admin/reports/balance-sheet/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M3 3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm2-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5Zm1.25 2.5a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5Z"></path>
                         </svg>
@@ -90,25 +90,25 @@
 
                 <div class="nav-section">
                     <span class="nav-section-title">Administration</span>
-                    <a href="/users.html" class="nav-item">
+                    <a href="/admin/users/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0-.001 3.999A2 2 0 0 0 5.5 3.5Z"></path>
                         </svg>
                         <span class="nav-label">Users</span>
                     </a>
-                    <a href="/companies.html" class="nav-item">
+                    <a href="/admin/companies/" class="nav-item active">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"></path>
                         </svg>
                         <span class="nav-label">Companies</span>
                     </a>
-                    <a href="/audit-log.html" class="nav-item">
+                    <a href="/admin/audit/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0Zm.082 1.541a6.46 6.46 0 0 1 1.68.396 6.5 6.5 0 0 1 4.656 6.218 6.46 6.46 0 0 1-.191 1.55h-2.134c.074-.316.114-.646.118-.984v-.28a3.93 3.93 0 0 0-1.142-2.773.748.748 0 0 1 .067-1.123.75.75 0 0 1 .992.065A5.43 5.43 0 0 1 13.7 7.621v.28c0 .287-.025.57-.075.847h2.059a6.43 6.43 0 0 1-.251 1.198H1.57a6.42 6.42 0 0 1-.25-1.198h2.058a5.05 5.05 0 0 1-.075-.847v-.28c0-.364.036-.724.105-1.077a5.42 5.42 0 0 1 1.397-2.649.75.75 0 0 1 1.059.002.748.748 0 0 1-.002 1.058 3.93 3.93 0 0 0-.962 1.936A3.47 3.47 0 0 0 4.84 7.62v.28c.003.343.045.681.122 1.005H2.8a6.47 6.47 0 0 1-.192-1.542A6.466 6.466 0 0 1 8.082 1.54Z"></path>
                         </svg>
                         <span class="nav-label">Audit Log</span>
                     </a>
-                    <a href="/settings.html" class="nav-item">
+                    <a href="/admin/settings/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M8 0a8.2 8.2 0 0 1 .701.031C6.444.095 4.07.77 2.3 2.227c-.606.5-1.169 1.072-1.586 1.675C.313 4.539.066 5.261.009 5.986A8 8 0 1 0 8 0Zm-4.354 4.354a.5.5 0 0 1 .708 0L8 7.707l3.646-3.353a.5.5 0 1 1 .708.708L8.707 8.707l3.647 3.646a.5.5 0 0 1-.708.708L8 9.414l-3.646 3.647a.5.5 0 0 1-.708-.708L7.293 8.707 3.646 5.062a.5.5 0 0 1 0-.708Z"></path>
                         </svg>
@@ -142,85 +142,70 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <div class="page-title">
-                    <h1>Transactions</h1>
-                    <span class="badge badge-info" id="transactionCount">Loading...</span>
+                    <h1>Companies</h1>
+                    <span class="badge badge-info" id="companyCount">Loading...</span>
                 </div>
                 <div class="top-bar-actions">
-                    <button class="btn btn-primary" id="btnNewTransaction">
-                        + New Transaction
+                    <button class="btn btn-primary" id="btnNewCompany">
+                        + New Company
                     </button>
                 </div>
             </header>
 
-            <!-- Transaction Content -->
-            <div class="content-area">
+            <!-- Content Section -->
+            <div class="content-section">
                 <!-- Filter Bar -->
                 <div class="filter-bar">
                     <div class="filter-group">
-                        <label>Company:</label>
-                        <select id="filterCompany" class="form-select">
-                            <option value="">Loading companies...</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
                         <label>Status:</label>
-                        <select id="filterStatus" class="form-select">
+                        <select class="form-select" id="filterStatus">
                             <option value="">All</option>
-                            <option value="draft">Draft</option>
-                            <option value="pending">Pending Approval</option>
-                            <option value="approved">Approved</option>
-                            <option value="posted">Posted</option>
-                            <option value="voided">Voided</option>
+                            <option value="active">Active</option>
+                            <option value="pending">Pending</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="deactivated">Deactivated</option>
                         </select>
                     </div>
-                    <div class="filter-group" style="margin-left: auto;">
-                        <button class="btn btn-secondary" id="btnRefresh">Refresh</button>
-                    </div>
+                    <button class="btn btn-secondary" id="btnRefresh">Refresh</button>
                 </div>
 
-                <!-- Transactions Table -->
+                <!-- Companies Table -->
                 <div class="panel">
                     <div class="table-container">
-                        <table class="data-table" id="transactionsTable">
+                        <table class="data-table" id="companiesTable">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Amount</th>
+                                    <th>Name</th>
+                                    <th>Legal Name</th>
+                                    <th>Tax ID</th>
+                                    <th>Currency</th>
                                     <th>Status</th>
+                                    <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="transactionsBody">
-                                <tr class="loading-row">
-                                    <td colspan="6">
-                                        <div class="loading-spinner">Loading transactions...</div>
+                            <tbody id="companiesBody">
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="loading-spinner">Loading companies...</div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
-                    <div class="pagination" id="pagination">
-                        <button class="btn btn-sm" id="btnPrevPage" disabled>← Previous</button>
-                        <span class="page-info" id="pageInfo">Page 1</span>
-                        <button class="btn btn-sm" id="btnNextPage">Next →</button>
-                    </div>
                 </div>
 
                 <!-- Empty State -->
                 <div class="empty-state" id="emptyState" style="display: none;">
-                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="48"
-                        height="48" fill="currentColor">
+                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="64"
+                        height="64" fill="currentColor">
                         <path
-                            d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM6.5 6.5v8h7.75a.25.25 0 0 0 .25-.25V6.5Zm8-1.5V1.75a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25V5Z">
+                            d="M1.75 1h12.5c.966 0 1.75.784 1.75 1.75v4c0 .372-.116.717-.314 1 .198.283.314.628.314 1v4a1.75 1.75 0 0 1-1.75 1.75H1.75A1.75 1.75 0 0 1 0 12.75v-4c0-.372.116-.717.314-1a1.739 1.739 0 0 1-.314-1v-4C0 1.784.784 1 1.75 1ZM1.5 2.75v4c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-4a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25Zm.25 5.75a.25.25 0 0 0-.25.25v4c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-4a.25.25 0 0 0-.25-.25Z">
                         </path>
                     </svg>
-                    <h3>No Transactions Found</h3>
-                    <p>Create your first transaction to get started.</p>
-                    <button class="btn btn-primary" id="btnCreateFirst">Create Transaction</button>
+                    <h3>No Companies Found</h3>
+                    <p>Create your first company to get started.</p>
+                    <button class="btn btn-primary" id="btnCreateFirst">Create Company</button>
                 </div>
             </div>
 
@@ -231,116 +216,138 @@
         </main>
     </div>
 
-    <!-- New Transaction Modal -->
-    <div class="modal" id="transactionModal">
+    <!-- New Company Modal -->
+    <div class="modal" id="companyModal">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
+        <div class="modal-content modal-md">
             <div class="modal-header">
-                <h2 id="modalTitle">New Transaction</h2>
+                <h2 id="modalTitle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M2 12h20" />
+                    </svg>
+                    New Company
+                </h2>
                 <button class="modal-close" id="btnCloseModal">&times;</button>
             </div>
-            <form id="transactionForm">
+            <form id="companyForm">
                 <div class="modal-body">
+                    <!-- Required Fields -->
                     <div class="form-group">
-                        <label for="txnDate">Transaction Date</label>
-                        <input type="date" id="txnDate" name="date" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="txnDescription">Description</label>
-                        <input type="text" id="txnDescription" name="description" class="form-input"
-                            placeholder="Enter transaction description" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="txnReference">Reference Number</label>
-                        <input type="text" id="txnReference" name="reference" class="form-input"
-                            placeholder="Optional reference">
+                        <label for="companyName">Company Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="companyName" required
+                            placeholder="e.g., Acme Corporation">
                     </div>
 
-                    <!-- Transaction Lines -->
+                    <div class="form-group">
+                        <label for="legalName">Legal Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="legalName" required
+                            placeholder="e.g., Acme Corporation Inc.">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taxId">Tax ID <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="taxId" required placeholder="e.g., 12-3456789">
+                        </div>
+                        <div class="form-group">
+                            <label for="currency">Currency</label>
+                            <select class="form-select" id="currency">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="PHP">PHP - Philippine Peso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Address Section (Optional) -->
                     <div class="form-section">
-                        <div class="section-header">
-                            <h3>Transaction Lines</h3>
-                            <button type="button" class="btn btn-sm btn-secondary" id="btnAddLine">+ Add Line</button>
+                        <span class="form-section-title">Address (Optional)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="street">Street Address</label>
+                        <input type="text" class="form-input" id="street" placeholder="e.g., 123 Main Street">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" class="form-input" id="city" placeholder="e.g., New York">
                         </div>
-                        <div class="lines-container" id="linesContainer">
-                            <!-- Lines will be added dynamically -->
+                        <div class="form-group">
+                            <label for="state">State/Province</label>
+                            <input type="text" class="form-input" id="state" placeholder="e.g., NY">
                         </div>
-                        <div class="balance-check" id="balanceCheck">
-                            <span>Total Debits: <strong id="totalDebits">0.00</strong></span>
-                            <span>Total Credits: <strong id="totalCredits">0.00</strong></span>
-                            <span class="balance-status" id="balanceStatus">⚠️ Unbalanced</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="postalCode">Postal Code</label>
+                            <input type="text" class="form-input" id="postalCode" placeholder="e.g., 10001">
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <input type="text" class="form-input" id="country" value="US" placeholder="e.g., US">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btnCancelTransaction">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="btnSubmitTransaction" disabled>
-                        Create Transaction
-                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnCancelModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmit">Create Company</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Transaction Detail Modal -->
-    <div class="modal" id="detailModal">
+    <!-- Company Details Modal -->
+    <div class="modal" id="detailsModal">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
+        <div class="modal-content modal-md">
             <div class="modal-header">
-                <h2>Transaction Details</h2>
-                <button class="modal-close" id="btnCloseDetail">&times;</button>
+                <h2 id="detailsModalTitle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Company Details
+                </h2>
+                <button class="modal-close" id="btnCloseDetails">&times;</button>
             </div>
-            <div class="modal-body" id="detailContent">
-                <!-- Details loaded dynamically -->
+            <div class="modal-body" id="detailsContent">
+                <div class="loading-spinner">Loading...</div>
             </div>
-            <div class="modal-footer" id="detailActions">
-                <!-- Actions based on status -->
+            <div class="modal-footer" id="detailsFooter">
+                <button type="button" class="btn btn-secondary" id="btnCloseDetailsFooter">Close</button>
             </div>
         </div>
     </div>
 
     <!-- Confirmation Modal -->
-    <div class="confirm-modal" id="confirmModal">
+    <div class="modal" id="confirmModal">
         <div class="modal-backdrop"></div>
-        <div class="confirm-content">
-            <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
-
-            <!-- Transaction Summary -->
-            <div class="confirm-summary" id="confirmSummary">
-                <div class="summary-row">
-                    <span class="summary-label">Amount</span>
-                    <span class="summary-value" id="confirmAmount">$0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span class="summary-label">Description</span>
-                    <span class="summary-value" id="confirmDescription">-</span>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle">Confirm Action</h2>
+                <button class="modal-close" id="btnCloseConfirm">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+                <div class="form-group" id="reasonGroup" style="display: none;">
+                    <label for="actionReason">Reason</label>
+                    <textarea class="form-input" id="actionReason" rows="3" placeholder="Enter reason..."></textarea>
                 </div>
             </div>
-
-            <!-- Impact Preview -->
-            <div class="impact-preview" id="impactPreview">
-                <div class="impact-header">Impact Preview</div>
-                <div class="impact-accounts" id="impactAccounts">
-                    <!-- Accounts will be populated dynamically -->
-                </div>
-                <div class="impact-result" id="impactResult">
-                    <!-- Result message -->
-                </div>
-            </div>
-
-            <div class="confirm-input" id="confirmInputWrapper" style="display: none;">
-                <label for="confirmReason">Reason / Notes</label>
-                <textarea id="confirmReason" class="form-control" rows="2" placeholder="Enter reason..."></textarea>
-            </div>
-            <div class="confirm-actions">
-                <button class="btn btn-secondary" id="btnConfirmCancel">Cancel</button>
-                <button class="btn" id="btnConfirmAction">Confirm</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelConfirm">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmAction">Confirm</button>
             </div>
         </div>
     </div>
 
-    <script src="/assets/js/api.js"></script>
-    <script src="/assets/js/transactions.js"></script>
+    <script src="/shared/js/api.js"></script>
+    <script src="companies.js"></script>
 </body>
 
 </html>

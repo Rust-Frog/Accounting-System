@@ -120,7 +120,7 @@ class LoginManager {
         localStorage.setItem('user_id', sessionData.user_id);
 
         // Redirect to dashboard
-        window.location.href = '/dashboard.html';
+        window.location.href = '/admin/dashboard/';
     }
 
     showError(view, message) {

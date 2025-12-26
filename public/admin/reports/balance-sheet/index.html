@@ -4,17 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Accounting System - Income Statement">
-    <title>INCOME STATEMENT | Accounting System</title>
+    <meta name="description" content="Accounting System - Balance Sheet">
+    <title>BALANCE SHEET | Accounting System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/app.css">
-    <link rel="stylesheet" href="/assets/css/dashboard.css">
-    <link rel="stylesheet" href="/assets/css/components.css">
-    <link rel="stylesheet" href="/assets/css/income-statement.css">
+    <link rel="stylesheet" href="/shared/css/app.css">
+    <link rel="stylesheet" href="/shared/css/layout.css">
+    <link rel="stylesheet" href="/shared/css/components.css">
+    <link rel="stylesheet" href="balance-sheet.css">
 </head>
 
 <body>
@@ -34,7 +34,7 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <span class="nav-section-title">Main</span>
-                    <a href="/dashboard.html" class="nav-item">
+                    <a href="/admin/dashboard/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -43,7 +43,7 @@
                         </svg>
                         <span class="nav-label">Dashboard</span>
                     </a>
-                    <a href="/transactions.html" class="nav-item">
+                    <a href="/admin/transactions/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -52,7 +52,7 @@
                         </svg>
                         <span class="nav-label">Transactions</span>
                     </a>
-                    <a href="/accounts.html" class="nav-item">
+                    <a href="/admin/accounts/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -61,7 +61,7 @@
                         </svg>
                         <span class="nav-label">Chart of Accounts</span>
                     </a>
-                    <a href="/journal.html" class="nav-item">
+                    <a href="/admin/journal/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -70,7 +70,7 @@
                         </svg>
                         <span class="nav-label">Journal</span>
                     </a>
-                    <a href="/ledger.html" class="nav-item">
+                    <a href="/admin/ledger/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -83,7 +83,7 @@
 
                 <div class="nav-section">
                     <span class="nav-section-title">Reports</span>
-                    <a href="/trial-balance.html" class="nav-item">
+                    <a href="/admin/reports/trial-balance/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -92,7 +92,7 @@
                         </svg>
                         <span class="nav-label">Trial Balance</span>
                     </a>
-                    <a href="/income-statement.html" class="nav-item active">
+                    <a href="/admin/reports/income-statement/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -101,7 +101,7 @@
                         </svg>
                         <span class="nav-label">Income Statement</span>
                     </a>
-                    <a href="/balance-sheet.html" class="nav-item">
+                    <a href="/admin/reports/balance-sheet/" class="nav-item active">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -114,7 +114,7 @@
 
                 <div class="nav-section">
                     <span class="nav-section-title">Administration</span>
-                    <a href="/users.html" class="nav-item">
+                    <a href="/admin/users/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -123,7 +123,7 @@
                         </svg>
                         <span class="nav-label">Users</span>
                     </a>
-                    <a href="/companies.html" class="nav-item">
+                    <a href="/admin/companies/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -132,7 +132,7 @@
                         </svg>
                         <span class="nav-label">Companies</span>
                     </a>
-                    <a href="/audit-log.html" class="nav-item">
+                    <a href="/admin/audit/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -141,7 +141,7 @@
                         </svg>
                         <span class="nav-label">Audit Log</span>
                     </a>
-                    <a href="/settings.html" class="nav-item">
+                    <a href="/admin/settings/" class="nav-item">
                         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                             height="16" fill="currentColor">
                             <path
@@ -179,10 +179,11 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Header Bar -->
             <header class="content-header">
                 <div class="header-title">
-                    <h1>Income Statement</h1>
-                    <p class="subtitle">Profit & Loss Report</p>
+                    <h1>Balance Sheet</h1>
+                    <p class="subtitle">Assets, Liabilities & Equity</p>
                 </div>
                 <div class="header-actions">
                     <span class="generated-at" id="generatedAt"></span>
@@ -204,40 +205,26 @@
                         </svg>
                         Print
                     </button>
-                    <button class="btn btn-primary" id="btnClosePeriod" style="display: none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                            fill="currentColor">
-                            <path
-                                d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm3.78-9.72a.751.751 0 0 0-.018-1.042.751.751 0 0 0-1.042-.018L6.75 9.19 5.28 7.72a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042l2 2a.75.75 0 0 0 1.06 0Z">
-                            </path>
-                        </svg>
-                        Close Period
-                    </button>
                 </div>
             </header>
 
+            <!-- Page Content -->
             <div class="content-body">
                 <!-- Filter Bar -->
                 <div class="filter-bar">
                     <div class="filter-group">
                         <label class="filter-label">Company</label>
-                        <select id="filterCompany" class="form-select">
-                            <option value="">Loading...</option>
-                        </select>
+                        <select id="companySelect" class="form-select"></select>
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">From</label>
-                        <input type="date" id="filterStartDate" class="form-input">
+                        <label class="filter-label">As of Date</label>
+                        <input type="date" id="asOfDate" class="form-input">
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label">To</label>
-                        <input type="date" id="filterEndDate" class="form-input">
-                    </div>
-                    <button class="btn btn-primary" id="btnGenerate">
+                    <button class="btn btn-primary" id="generateBtn">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
                             fill="currentColor">
                             <path
-                                d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z">
+                                d="M3 3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm2-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5Zm1.25 2.5a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5Z">
                             </path>
                         </svg>
                         Generate
@@ -245,31 +232,163 @@
                 </div>
 
                 <!-- Summary Card -->
-                <div class="summary-card" id="summaryCard" style="display: none;">
+                <div class="summary-card">
                     <div class="summary-item">
-                        <span class="summary-label">Total Revenue</span>
-                        <span class="summary-value revenue" id="totalRevenue">$0.00</span>
+                        <span class="summary-label">Total Assets</span>
+                        <span class="summary-value assets" id="totalAssets">$0.00</span>
                     </div>
                     <div class="summary-item">
-                        <span class="summary-label">Total Expenses</span>
-                        <span class="summary-value expense" id="totalExpenses">$0.00</span>
+                        <span class="summary-label">Total Liabilities</span>
+                        <span class="summary-value liabilities" id="totalLiabilities">$0.00</span>
                     </div>
                     <div class="summary-item">
-                        <span class="summary-label">Net Income</span>
-                        <span class="summary-value" id="netIncome">$0.00</span>
+                        <span class="summary-label">Total Equity</span>
+                        <span class="summary-value equity" id="totalEquity">$0.00</span>
                     </div>
                     <div class="summary-item">
-                        <span class="summary-label">Status</span>
-                        <div id="profitLossStatus" class="profit-loss-status"></div>
+                        <span class="summary-label">Balance Check</span>
+                        <div id="balanceStatus" class="balance-status"></div>
                     </div>
                 </div>
 
-                <!-- Income Statement Content -->
-                <div class="income-statement-content" id="incomeStatementContent" style="display: none;">
-                    <!-- Revenue Section -->
+                <!-- Balance Sheet Content -->
+                <div class="balance-sheet-content" id="balanceSheetContent" style="display: none;">
+                    <!-- Assets Section -->
                     <section class="statement-section">
                         <div class="section-header">
-                            <h2>Revenue</h2>
+                            <h2>Assets</h2>
+                        </div>
+
+                        <!-- Current Assets -->
+                        <div class="subsection">
+                            <div class="subsection-header">
+                                <h3>Current Assets</h3>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table statement-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-code">Code</th>
+                                            <th class="col-name">Account Name</th>
+                                            <th class="col-amount">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="currentAssetsBody">
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="subtotal-row">
+                                            <td colspan="2" class="subtotal-label">Total Current Assets</td>
+                                            <td class="col-amount subtotal-amount" id="currentAssetsSubtotal">$0.00</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Fixed Assets -->
+                        <div class="subsection">
+                            <div class="subsection-header">
+                                <h3>Fixed Assets</h3>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table statement-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-code">Code</th>
+                                            <th class="col-name">Account Name</th>
+                                            <th class="col-amount">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fixedAssetsBody">
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="subtotal-row">
+                                            <td colspan="2" class="subtotal-label">Total Fixed Assets</td>
+                                            <td class="col-amount subtotal-amount" id="fixedAssetsSubtotal">$0.00</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Total Assets -->
+                        <div class="section-total">
+                            <span class="section-total-label">TOTAL ASSETS</span>
+                            <span class="section-total-amount" id="totalAssetsSection">$0.00</span>
+                        </div>
+                    </section>
+
+                    <!-- Liabilities Section -->
+                    <section class="statement-section">
+                        <div class="section-header">
+                            <h2>Liabilities</h2>
+                        </div>
+
+                        <!-- Current Liabilities -->
+                        <div class="subsection">
+                            <div class="subsection-header">
+                                <h3>Current Liabilities</h3>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table statement-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-code">Code</th>
+                                            <th class="col-name">Account Name</th>
+                                            <th class="col-amount">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="currentLiabilitiesBody">
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="subtotal-row">
+                                            <td colspan="2" class="subtotal-label">Total Current Liabilities</td>
+                                            <td class="col-amount subtotal-amount" id="currentLiabilitiesSubtotal">$0.00
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Long-term Liabilities -->
+                        <div class="subsection">
+                            <div class="subsection-header">
+                                <h3>Long-term Liabilities</h3>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table statement-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-code">Code</th>
+                                            <th class="col-name">Account Name</th>
+                                            <th class="col-amount">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="longTermLiabilitiesBody">
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="subtotal-row">
+                                            <td colspan="2" class="subtotal-label">Total Long-term Liabilities</td>
+                                            <td class="col-amount subtotal-amount" id="longTermLiabilitiesSubtotal">
+                                                $0.00</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Total Liabilities -->
+                        <div class="section-total">
+                            <span class="section-total-label">TOTAL LIABILITIES</span>
+                            <span class="section-total-amount" id="totalLiabilitiesSection">$0.00</span>
+                        </div>
+                    </section>
+
+                    <!-- Equity Section -->
+                    <section class="statement-section">
+                        <div class="section-header">
+                            <h2>Equity</h2>
                         </div>
                         <div class="table-container">
                             <table class="data-table statement-table">
@@ -280,49 +399,48 @@
                                         <th class="col-amount">Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody id="revenueBody">
+                                <tbody id="equityBody">
                                 </tbody>
                                 <tfoot>
+                                    <tr class="subtotal-row retained-earnings-row">
+                                        <td colspan="2" class="subtotal-label">Retained Earnings</td>
+                                        <td class="col-amount subtotal-amount" id="retainedEarnings">$0.00</td>
+                                    </tr>
                                     <tr class="subtotal-row">
-                                        <td colspan="2" class="subtotal-label">Total Revenue</td>
-                                        <td class="col-amount subtotal-amount" id="revenueSubtotal">$0.00</td>
+                                        <td colspan="2" class="subtotal-label">Total Equity</td>
+                                        <td class="col-amount subtotal-amount" id="equitySubtotal">$0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
-                    </section>
 
-                    <!-- Expenses Section -->
-                    <section class="statement-section">
-                        <div class="section-header">
-                            <h2>Expenses</h2>
-                        </div>
-                        <div class="table-container">
-                            <table class="data-table statement-table">
-                                <thead>
-                                    <tr>
-                                        <th class="col-code">Code</th>
-                                        <th class="col-name">Account Name</th>
-                                        <th class="col-amount">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expensesBody">
-                                </tbody>
-                                <tfoot>
-                                    <tr class="subtotal-row">
-                                        <td colspan="2" class="subtotal-label">Total Expenses</td>
-                                        <td class="col-amount subtotal-amount" id="expensesSubtotal">$0.00</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                        <!-- Total Equity -->
+                        <div class="section-total">
+                            <span class="section-total-label">TOTAL EQUITY</span>
+                            <span class="section-total-amount" id="totalEquitySection">$0.00</span>
                         </div>
                     </section>
 
-                    <!-- Net Income Section -->
-                    <section class="statement-section net-income-section">
-                        <div class="net-income-row">
-                            <span class="net-income-label">Net Income (Loss)</span>
-                            <span class="net-income-amount" id="netIncomeAmount">$0.00</span>
+                    <!-- Balance Equation -->
+                    <section class="balance-equation-section">
+                        <div class="equation-row">
+                            <div class="equation-item">
+                                <span class="equation-label">Total Assets</span>
+                                <span class="equation-value" id="eqAssets">$0.00</span>
+                            </div>
+                            <div class="equation-operator">=</div>
+                            <div class="equation-item">
+                                <span class="equation-label">Total Liabilities</span>
+                                <span class="equation-value" id="eqLiabilities">$0.00</span>
+                            </div>
+                            <div class="equation-operator">+</div>
+                            <div class="equation-item">
+                                <span class="equation-label">Total Equity</span>
+                                <span class="equation-value" id="eqEquity">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="equation-result" id="equationResult">
+                            <!-- Balanced or not balanced indicator -->
                         </div>
                     </section>
                 </div>
@@ -332,57 +450,18 @@
                     <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="48"
                         height="48" fill="currentColor">
                         <path
-                            d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z">
+                            d="M3 3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm2-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5Zm1.25 2.5a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5Z">
                         </path>
                     </svg>
-                    <h3>No Data Available</h3>
-                    <p>Select a date range and click Generate to view the income statement.</p>
+                    <h3>No Balance Sheet Data</h3>
+                    <p>Select a date and click Generate to create a balance sheet report.</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Close Period Confirmation Modal -->
-    <div class="modal-overlay" id="closePeriodModal" style="display: none;">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Close Accounting Period</h2>
-                <button class="modal-close" id="closeModalX">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"
-                        fill="currentColor">
-                        <path
-                            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z">
-                        </path>
-                    </svg>
-                    <span>This action requires admin approval before taking effect.</span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Period</label>
-                    <div class="period-info" id="periodInfo">
-                        <span class="period-dates" id="periodDates">-</span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Net Income to Transfer</label>
-                    <div class="net-income-display" id="netIncomeDisplay">$0.00</div>
-                </div>
-                <p class="modal-description">
-                    Closing the period will transfer the net income to Retained Earnings
-                    and mark this period as closed for future transactions.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelClosePeriod">Cancel</button>
-                <button class="btn btn-primary" id="confirmClosePeriod">Submit for Approval</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/assets/js/api.js"></script>
-    <script src="/assets/js/income-statement.js"></script>
+    <script src="/shared/js/api.js"></script>
+    <script src="balance-sheet.js"></script>
 </body>
 
 </html>
