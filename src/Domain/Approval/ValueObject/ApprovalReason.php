@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Approval\ValueObject;
 
 use Domain\Shared\ValueObject\Money;
+use Domain\Transaction\ValueObject\EdgeCaseFlag;
 
 /**
  * Value object representing the reason an approval is required.
@@ -105,6 +106,60 @@ final readonly class ApprovalReason
             sprintf('Request to %s transaction %s', $actionVerb, $id),
             [$idKey => $id]
         );
+    }
+
+    /**
+     * Create an ApprovalReason from edge case detection flags.
+     *
+     * @param array<EdgeCaseFlag> $flags
+     */
+    public static function fromEdgeCaseFlags(array $flags): self
+    {
+        $descriptions = array_map(fn(EdgeCaseFlag $f) => $f->description(), $flags);
+        $types = array_map(fn(EdgeCaseFlag $f) => $f->type(), $flags);
+
+        // Determine the most appropriate approval type based on flags
+        $approvalType = self::determineApprovalTypeFromFlags($types);
+
+        return new self(
+            $approvalType,
+            sprintf('Edge case flags: %s', implode('; ', $descriptions)),
+            [
+                'flag_types' => $types,
+                'flag_count' => count($flags),
+                'flags' => array_map(fn(EdgeCaseFlag $f) => $f->toArray(), $flags),
+            ],
+        );
+    }
+
+    /**
+     * @param array<string> $flagTypes
+     */
+    private static function determineApprovalTypeFromFlags(array $flagTypes): ApprovalType
+    {
+        // Priority order for determining approval type
+        if (in_array('negative_balance', $flagTypes, true)) {
+            return ApprovalType::NEGATIVE_EQUITY;
+        }
+        if (in_array('asset_writedown', $flagTypes, true)) {
+            return ApprovalType::ASSET_WRITEDOWN;
+        }
+        if (in_array('large_amount', $flagTypes, true)) {
+            return ApprovalType::HIGH_VALUE;
+        }
+        if (in_array('future_dated', $flagTypes, true)) {
+            return ApprovalType::FUTURE_DATED;
+        }
+        if (in_array('backdated', $flagTypes, true)) {
+            return ApprovalType::BACKDATED_TRANSACTION;
+        }
+        if (in_array('contra_revenue', $flagTypes, true) ||
+            in_array('contra_expense', $flagTypes, true)) {
+            return ApprovalType::CONTRA_ENTRY;
+        }
+
+        // Default for any other edge case
+        return ApprovalType::EDGE_CASE;
     }
 
     public function type(): ApprovalType
