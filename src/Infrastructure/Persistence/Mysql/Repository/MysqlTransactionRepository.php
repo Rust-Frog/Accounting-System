@@ -369,4 +369,64 @@ final class MysqlTransactionRepository extends AbstractMysqlRepository implement
             throw $e;
         }
     }
+
+    public function getLastActivityDate(AccountId $accountId): ?DateTimeImmutable
+    {
+        $result = $this->fetchOne(
+            'SELECT MAX(t.transaction_date) as last_activity
+             FROM transactions t
+             INNER JOIN transaction_lines tl ON t.id = tl.transaction_id
+             WHERE tl.account_id = :account_id
+             AND t.status != :voided_status',
+            [
+                'account_id' => $accountId->toString(),
+                'voided_status' => TransactionStatus::VOIDED->value,
+            ]
+        );
+
+        if ($result === null || $result['last_activity'] === null) {
+            return null;
+        }
+
+        return new DateTimeImmutable($result['last_activity']);
+    }
+
+    public function findSimilarTransaction(
+        CompanyId $companyId,
+        int $totalAmountCents,
+        string $description,
+        DateTimeImmutable $transactionDate,
+    ): ?string {
+        // Find transaction with same amount on same day
+        // Sum debit amounts to get total (could also sum credits, they should be equal)
+        $result = $this->fetchOne(
+            'SELECT t.reference_number, t.id
+             FROM transactions t
+             INNER JOIN (
+                 SELECT transaction_id, SUM(amount_cents) as total_amount
+                 FROM transaction_lines
+                 WHERE line_type = :line_type
+                 GROUP BY transaction_id
+             ) tl_sum ON t.id = tl_sum.transaction_id
+             WHERE t.company_id = :company_id
+             AND t.transaction_date = :transaction_date
+             AND tl_sum.total_amount = :total_amount
+             AND t.status != :voided_status
+             LIMIT 1',
+            [
+                'company_id' => $companyId->toString(),
+                'transaction_date' => $transactionDate->format('Y-m-d'),
+                'total_amount' => $totalAmountCents,
+                'line_type' => 'debit',
+                'voided_status' => TransactionStatus::VOIDED->value,
+            ]
+        );
+
+        if ($result === null) {
+            return null;
+        }
+
+        // Return reference number if available, otherwise ID
+        return $result['reference_number'] ?? $result['id'];
+    }
 }

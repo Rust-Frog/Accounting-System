@@ -57,4 +57,21 @@ interface TransactionRepositoryInterface
     public function countToday(): int;
 
     public function delete(TransactionId $id): void;
+
+    /**
+     * Get the date of the last transaction activity for an account.
+     * Returns null if no transactions exist for this account.
+     */
+    public function getLastActivityDate(AccountId $accountId): ?\DateTimeImmutable;
+
+    /**
+     * Find a similar transaction (same amount, same day, similar description).
+     * Returns the transaction number/ID if found, null otherwise.
+     */
+    public function findSimilarTransaction(
+        CompanyId $companyId,
+        int $totalAmountCents,
+        string $description,
+        \DateTimeImmutable $transactionDate,
+    ): ?string;
 }

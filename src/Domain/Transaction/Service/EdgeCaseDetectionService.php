@@ -11,10 +11,14 @@ use Domain\Company\ValueObject\CompanyId;
 use Domain\Ledger\Repository\LedgerRepositoryInterface;
 use Domain\Ledger\Service\BalanceCalculationService;
 use Domain\Transaction\Repository\ThresholdRepositoryInterface;
+use Domain\Transaction\Repository\TransactionRepositoryInterface;
 use Domain\Transaction\Service\EdgeCaseDetector\AccountTypeAnomalyDetector;
 use Domain\Transaction\Service\EdgeCaseDetector\AmountAnomalyDetector;
 use Domain\Transaction\Service\EdgeCaseDetector\BalanceImpactDetector;
 use Domain\Transaction\Service\EdgeCaseDetector\DocumentationAnomalyDetector;
+use Domain\Transaction\Service\EdgeCaseDetector\DormantAccountDetector;
+use Domain\Transaction\Service\EdgeCaseDetector\DuplicateTransactionDetector;
+use Domain\Transaction\Service\EdgeCaseDetector\PeriodEndDetector;
 use Domain\Transaction\Service\EdgeCaseDetector\TimingAnomalyDetector;
 use Domain\Transaction\ValueObject\EdgeCaseDetectionResult;
 use Domain\Transaction\ValueObject\EdgeCaseThresholds;
@@ -31,11 +35,15 @@ final readonly class EdgeCaseDetectionService implements EdgeCaseDetectionServic
     private AccountTypeAnomalyDetector $accountTypeDetector;
     private DocumentationAnomalyDetector $documentationDetector;
     private BalanceImpactDetector $balanceImpactDetector;
+    private PeriodEndDetector $periodEndDetector;
+    private DormantAccountDetector $dormantAccountDetector;
+    private DuplicateTransactionDetector $duplicateTransactionDetector;
 
     public function __construct(
         private ThresholdRepositoryInterface $thresholdRepository,
         private AccountRepositoryInterface $accountRepository,
         private LedgerRepositoryInterface $ledgerRepository,
+        private TransactionRepositoryInterface $transactionRepository,
         BalanceCalculationService $balanceCalculator,
     ) {
         $this->timingDetector = new TimingAnomalyDetector();
@@ -46,6 +54,9 @@ final readonly class EdgeCaseDetectionService implements EdgeCaseDetectionServic
             $this->ledgerRepository,
             $balanceCalculator,
         );
+        $this->periodEndDetector = new PeriodEndDetector();
+        $this->dormantAccountDetector = new DormantAccountDetector($this->transactionRepository);
+        $this->duplicateTransactionDetector = new DuplicateTransactionDetector($this->transactionRepository);
     }
 
     public function detect(
@@ -61,6 +72,12 @@ final readonly class EdgeCaseDetectionService implements EdgeCaseDetectionServic
         // Hydrate account entities for lines that need them
         $hydratedLines = $this->hydrateAccountsForLines($lines);
 
+        // Calculate total amount for duplicate detection
+        $totalAmountCents = array_sum(array_map(
+            fn($line) => $line['debit_cents'] ?? 0,
+            $lines
+        ));
+
         // Run all detectors
         $results = [
             $this->timingDetector->detect($transactionDate, $today, $thresholds),
@@ -68,6 +85,9 @@ final readonly class EdgeCaseDetectionService implements EdgeCaseDetectionServic
             $this->accountTypeDetector->detect($hydratedLines, $thresholds),
             $this->documentationDetector->detect($description),
             $this->balanceImpactDetector->detect($hydratedLines, $companyId, $thresholds),
+            $this->periodEndDetector->detect($transactionDate, $thresholds),
+            $this->dormantAccountDetector->detect($hydratedLines, $companyId, $thresholds),
+            $this->duplicateTransactionDetector->detect($totalAmountCents, $description, $transactionDate, $companyId),
         ];
 
         // Merge all results

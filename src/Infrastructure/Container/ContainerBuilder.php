@@ -209,6 +209,7 @@ final class ContainerBuilder
                 $c->get(\Domain\Transaction\Repository\ThresholdRepositoryInterface::class),
                 $c->get(\Domain\ChartOfAccounts\Repository\AccountRepositoryInterface::class),
                 $c->get(\Domain\Ledger\Repository\LedgerRepositoryInterface::class),
+                $c->get(\Domain\Transaction\Repository\TransactionRepositoryInterface::class),
                 new \Domain\Ledger\Service\BalanceCalculationService()
             )
         );

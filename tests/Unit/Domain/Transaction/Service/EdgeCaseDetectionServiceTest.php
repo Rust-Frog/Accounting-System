@@ -13,6 +13,7 @@ use Domain\Company\ValueObject\CompanyId;
 use Domain\Ledger\Repository\LedgerRepositoryInterface;
 use Domain\Ledger\Service\BalanceCalculationService;
 use Domain\Transaction\Repository\ThresholdRepositoryInterface;
+use Domain\Transaction\Repository\TransactionRepositoryInterface;
 use Domain\Transaction\Service\EdgeCaseDetectionService;
 use Domain\Transaction\ValueObject\EdgeCaseThresholds;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ final class EdgeCaseDetectionServiceTest extends TestCase
     private ThresholdRepositoryInterface $thresholdRepository;
     private AccountRepositoryInterface $accountRepository;
     private LedgerRepositoryInterface $ledgerRepository;
+    private TransactionRepositoryInterface $transactionRepository;
     private CompanyId $companyId;
 
     protected function setUp(): void
@@ -35,10 +37,16 @@ final class EdgeCaseDetectionServiceTest extends TestCase
         $this->ledgerRepository = $this->createMock(LedgerRepositoryInterface::class);
         $this->ledgerRepository->method('getBalanceCents')->willReturn(1_000_000);
 
+        $this->transactionRepository = $this->createMock(TransactionRepositoryInterface::class);
+        // Default: no duplicate transactions found, no dormant accounts
+        $this->transactionRepository->method('findSimilarTransaction')->willReturn(null);
+        $this->transactionRepository->method('getLastActivityDate')->willReturn(null);
+
         $this->service = new EdgeCaseDetectionService(
             $this->thresholdRepository,
             $this->accountRepository,
             $this->ledgerRepository,
+            $this->transactionRepository,
             new BalanceCalculationService(),
         );
 

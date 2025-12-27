@@ -187,6 +187,16 @@ final readonly class EdgeCaseFlag
         );
     }
 
+    public static function duplicateTransaction(string $existingTransactionNumber): self
+    {
+        return new self(
+            type: 'duplicate_transaction',
+            description: "Possible duplicate of existing transaction {$existingTransactionNumber}",
+            requiresApproval: false,
+            context: ['existing_transaction' => $existingTransactionNumber],
+        );
+    }
+
     // === Accessors ===
 
     public function type(): string
