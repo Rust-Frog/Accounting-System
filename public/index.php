@@ -131,7 +131,8 @@ $healthController = new \Api\Controller\HealthController(
 );
 
 $transactionValidationController = new \Api\Controller\TransactionValidationController(
-    $container->get(\Domain\Transaction\Service\TransactionValidationService::class)
+    $container->get(\Domain\Transaction\Service\TransactionValidationService::class),
+    $container->get(\Domain\Transaction\Service\EdgeCaseDetectionServiceInterface::class)
 );
 
 // Create router

@@ -2983,10 +2983,3 @@ Integration test:
 
 Plan complete and saved to `docs/plans/2025-12-28-transaction-edge-case-validation.md`.
 
-**Two execution options:**
-
-1. **Subagent-Driven (this session)** - I dispatch fresh subagent per task, review between tasks, fast iteration
-
-2. **Parallel Session (separate)** - Open new session with executing-plans, batch execution with checkpoints
-
-**Which approach?**

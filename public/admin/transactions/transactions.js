@@ -46,6 +46,12 @@ class TransactionsManager {
             btnCloseDetail: document.getElementById('btnCloseDetail'),
             detailContent: document.getElementById('detailContent'),
             detailActions: document.getElementById('detailActions'),
+            // Edge Case Warning Modal
+            edgeCaseModal: document.getElementById('edgeCaseModal'),
+            edgeCaseFlags: document.getElementById('edgeCaseFlags'),
+            edgeCaseCheckbox: document.getElementById('edgeCaseCheckbox'),
+            btnEdgeCaseCancel: document.getElementById('btnEdgeCaseCancel'),
+            btnEdgeCaseProceed: document.getElementById('btnEdgeCaseProceed'),
             // Confirmation Modal
             confirmModal: document.getElementById('confirmModal'),
             confirmTitle: document.getElementById('confirmTitle'),
@@ -163,6 +169,7 @@ class TransactionsManager {
         this.bindModalEvents();
         this.bindDetailModalEvents();
         this.bindConfirmModalEvents();
+        this.bindEdgeCaseModalEvents();
     }
 
     bindToolbarEvents() {
@@ -205,6 +212,17 @@ class TransactionsManager {
         this.elements.btnConfirmCancel?.addEventListener('click', () => this.closeConfirmModal());
         this.elements.btnConfirmAction?.addEventListener('click', () => this.handleConfirmAction());
         this.elements.confirmModal?.querySelector('.modal-backdrop')?.addEventListener('click', () => this.closeConfirmModal());
+    }
+
+    bindEdgeCaseModalEvents() {
+        this.elements.btnEdgeCaseCancel?.addEventListener('click', () => this.closeEdgeCaseModal());
+        this.elements.btnEdgeCaseProceed?.addEventListener('click', () => this.proceedWithEdgeCases());
+        this.elements.edgeCaseModal?.querySelector('.modal-backdrop')?.addEventListener('click', () => this.closeEdgeCaseModal());
+        this.elements.edgeCaseCheckbox?.addEventListener('change', (e) => {
+            if (this.elements.btnEdgeCaseProceed) {
+                this.elements.btnEdgeCaseProceed.disabled = !e.target.checked;
+            }
+        });
     }
 
     checkUrlAction() {
@@ -655,14 +673,32 @@ class TransactionsManager {
             credit_cents: line.line_type === 'credit' ? line.amount_cents : 0
         }));
 
-        // Pre-validate transaction
+        const date = this.elements.txnDate.value;
+        const description = document.getElementById('txnDescription').value;
+
+        // Pre-validate transaction (includes edge case detection)
         this.elements.btnSubmitTransaction.disabled = true;
         this.elements.btnSubmitTransaction.textContent = 'Validating...';
 
         try {
-            const validation = await api.validateTransaction(validationLines, this.selectedCompanyId);
+            const validation = await api.validateTransaction(validationLines, date, description, this.selectedCompanyId);
+
             if (!validation.valid) {
                 alert('Validation errors:\n\n' + validation.errors.join('\n'));
+                this.elements.btnSubmitTransaction.disabled = false;
+                this.elements.btnSubmitTransaction.textContent = this.editingTransactionId ? 'Update Transaction' : 'Create Transaction';
+                return;
+            }
+
+            // Check for edge cases that require approval
+            if (validation.edge_cases && validation.edge_cases.requires_approval) {
+                this.pendingTransactionData = {
+                    date: date,
+                    description: description,
+                    reference_number: document.getElementById('txnReference').value || null,
+                    lines: lines
+                };
+                this.showEdgeCaseWarningModal(validation.edge_cases);
                 return;
             }
         } catch (error) {
@@ -1223,6 +1259,97 @@ class TransactionsManager {
                 }
             }
         });
+    }
+
+    // ========== Edge Case Warning Modal ==========
+
+    showEdgeCaseWarningModal(edgeCases) {
+        // Reset state
+        if (this.elements.edgeCaseCheckbox) {
+            this.elements.edgeCaseCheckbox.checked = false;
+        }
+        if (this.elements.btnEdgeCaseProceed) {
+            this.elements.btnEdgeCaseProceed.disabled = true;
+        }
+
+        // Render flags
+        const flags = edgeCases.flags || [];
+        if (this.elements.edgeCaseFlags) {
+            this.elements.edgeCaseFlags.innerHTML = flags.map(flag => `
+                <div class="edge-case-flag">
+                    <span class="edge-case-type">${this.getEdgeCaseLabel(flag.type)}</span>
+                    <span class="edge-case-description">${this.escapeHtml(flag.description)}</span>
+                </div>
+            `).join('');
+        }
+
+        // Reset submit button
+        this.elements.btnSubmitTransaction.disabled = false;
+        this.elements.btnSubmitTransaction.textContent = this.editingTransactionId ? 'Update Transaction' : 'Create Transaction';
+
+        // Show modal
+        if (this.elements.edgeCaseModal) {
+            this.elements.edgeCaseModal.classList.add('active');
+        }
+    }
+
+    closeEdgeCaseModal() {
+        if (this.elements.edgeCaseModal) {
+            this.elements.edgeCaseModal.classList.remove('active');
+        }
+        this.pendingTransactionData = null;
+    }
+
+    async proceedWithEdgeCases() {
+        if (!this.pendingTransactionData) return;
+
+        this.closeEdgeCaseModal();
+
+        const data = this.pendingTransactionData;
+        const isEditing = !!this.editingTransactionId;
+        const actionText = isEditing ? 'Updating...' : 'Creating...';
+        const successText = isEditing ? 'Update Transaction' : 'Create Transaction';
+
+        this.elements.btnSubmitTransaction.disabled = true;
+        this.elements.btnSubmitTransaction.textContent = actionText;
+
+        try {
+            if (isEditing) {
+                await api.updateTransaction(this.editingTransactionId, data, this.selectedCompanyId);
+            } else {
+                await api.createTransaction(data, this.selectedCompanyId);
+            }
+            this.closeModal();
+            this.loadTransactions();
+        } catch (error) {
+            const action = isEditing ? 'update' : 'create';
+            alert(`Failed to ${action} transaction: ${error.message}`);
+        } finally {
+            this.elements.btnSubmitTransaction.disabled = false;
+            this.elements.btnSubmitTransaction.textContent = successText;
+            this.pendingTransactionData = null;
+        }
+    }
+
+    getEdgeCaseLabel(type) {
+        const labels = {
+            'future_dated': '📅 Future Dated',
+            'backdated': '⏪ Backdated',
+            'large_transaction': '💰 Large Amount',
+            'below_threshold': '⚠️ Near Threshold',
+            'round_number': '🔢 Round Number',
+            'contra_revenue': '🔄 Contra Revenue',
+            'contra_expense': '🔄 Contra Expense',
+            'asset_writedown': '📉 Asset Write-down',
+            'liability_reduction': '💳 Liability Reduction',
+            'equity_adjustment': '📊 Equity Adjustment',
+            'minimal_description': '📝 Minimal Description',
+            'negative_balance': '⚠️ Negative Balance',
+            'period_end': '📆 Period End Entry',
+            'dormant_account': '💤 Dormant Account',
+            'duplicate_transaction': '🔁 Possible Duplicate'
+        };
+        return labels[type] || `⚠️ ${type.replace(/_/g, ' ')}`;
     }
 
     // ========== Utilities ==========

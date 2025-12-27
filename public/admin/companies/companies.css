@@ -81,6 +81,19 @@
     gap: 1rem;
 }
 
+.form-row .form-group {
+    min-width: 0;
+}
+
+.form-row .form-select,
+.modal-body .form-row .form-select,
+#currency {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    padding: 13px;
+}
+
 /* Required Field Indicator */
 .required {
     color: var(--danger);

@@ -173,7 +173,7 @@
         elements.auditBody.innerHTML = logs.map(log => `
             <tr>
                 <td>
-                    <span class="timestamp">${formatDateTime(log.occurred_at)}</span>
+                    <span class="timestamp">${formatDateTime(log.created_at)}</span>
                 </td>
                 <td>
                     <div class="actor-cell">
@@ -191,15 +191,10 @@
                     </div>
                 </td>
                 <td>
-                    <span class="category-badge">-</span>
+                    <span class="category-badge">${escapeHtml(deriveCategory(log.activity_type))}</span>
                 </td>
                 <td>
                     <span class="severity-badge ${log.severity}">${escapeHtml(log.severity)}</span>
-                </td>
-                <td>
-                    <span class="hash-value" title="${escapeHtml(log.chain_hash || '-')}">
-                        ${escapeHtml((log.chain_hash || '-').substring(0, 8))}...
-                    </span>
                 </td>
             </tr>
         `).join('');
@@ -494,7 +489,7 @@
     function showLoading() {
         elements.auditBody.innerHTML = `
             <tr>
-                <td colspan="7">
+                <td colspan="6">
                     <div class="loading-spinner">Loading audit logs...</div>
                 </td>
             </tr>
@@ -528,7 +523,7 @@
     function showError(message) {
         elements.auditBody.innerHTML = `
             <tr>
-                <td colspan="7" style="color: var(--color-danger); text-align: center;">
+                <td colspan="6" style="color: var(--color-danger); text-align: center;">
                     ${escapeHtml(message)}
                 </td>
             </tr>
@@ -564,6 +559,34 @@
     function formatCategory(category) {
         if (!category) return '-';
         return category.replace(/_/g, ' ');
+    }
+
+    function deriveCategory(activityType) {
+        if (!activityType) return '-';
+        const type = activityType.toLowerCase();
+
+        if (type.includes('login') || type.includes('logout') || type.includes('auth')) {
+            return 'Authentication';
+        }
+        if (type.includes('user') || type.includes('password') || type.includes('otp')) {
+            return 'User';
+        }
+        if (type.includes('transaction') || type.includes('post') || type.includes('void')) {
+            return 'Transaction';
+        }
+        if (type.includes('account') || type.includes('ledger')) {
+            return 'Accounting';
+        }
+        if (type.includes('approval') || type.includes('approve') || type.includes('reject')) {
+            return 'Approval';
+        }
+        if (type.includes('company') || type.includes('settings')) {
+            return 'Administration';
+        }
+        if (type.includes('api') || type.includes('request')) {
+            return 'Api';
+        }
+        return 'System';
     }
 
     function truncateId(id) {

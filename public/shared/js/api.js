@@ -170,13 +170,19 @@ class ApiClient {
     /**
      * Pre-validate transaction lines before submitting.
      * @param {Array} lines - Array of transaction lines
+     * @param {string} date - Transaction date (YYYY-MM-DD)
+     * @param {string} description - Transaction description
      * @param {string} companyId - Optional company ID
-     * @returns {Promise<{valid: boolean, errors: string[]}>}
+     * @returns {Promise<{valid: boolean, errors: string[], edge_cases: object}>}
      */
-    async validateTransaction(lines, companyId = null) {
+    async validateTransaction(lines, date = null, description = '', companyId = null) {
         const cid = companyId || this.getCompanyId();
-        const result = await this.post(`/companies/${cid}/transactions/validate`, { lines });
-        return result.data || { valid: false, errors: ['Validation failed'] };
+        const result = await this.post(`/companies/${cid}/transactions/validate`, {
+            lines,
+            date: date || new Date().toISOString().split('T')[0],
+            description: description || ''
+        });
+        return result.data || { valid: false, errors: ['Validation failed'], edge_cases: null };
     }
 
     async updateTransaction(id, data, companyId = null) {
