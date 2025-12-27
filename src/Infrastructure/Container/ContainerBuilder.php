@@ -204,6 +204,14 @@ final class ContainerBuilder
                 $c->get(PDO::class)
             )
         );
+
+        // Transaction Validation Service
+        $container->singleton(
+            \Domain\Transaction\Service\TransactionValidationService::class,
+            fn(ContainerInterface $c) => new \Domain\Transaction\Service\TransactionValidationService(
+                $c->get(\Domain\ChartOfAccounts\Repository\AccountRepositoryInterface::class)
+            )
+        );
     }
 
     private static function registerAuditServices(Container $container): void
@@ -338,7 +346,8 @@ final class ContainerBuilder
                 $c->get(EventDispatcherInterface::class),
                 $c->get(\Domain\Transaction\Service\TransactionNumberGeneratorInterface::class),
                 $c->get(\Domain\Company\Repository\CompanyRepositoryInterface::class),
-                $c->get(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class)
+                $c->get(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class),
+                $c->get(\Domain\Transaction\Service\TransactionValidationService::class)
             )
         );
 

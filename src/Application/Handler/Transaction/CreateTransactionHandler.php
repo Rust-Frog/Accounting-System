@@ -22,6 +22,7 @@ use Domain\Shared\ValueObject\Money;
 use Domain\Transaction\Entity\Transaction;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
 use Domain\Transaction\Service\TransactionNumberGeneratorInterface;
+use Domain\Transaction\Service\TransactionValidationService;
 use Domain\Transaction\ValueObject\LineType;
 
 /**
@@ -38,6 +39,7 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         private ?TransactionNumberGeneratorInterface $transactionNumberGenerator = null,
         private ?CompanyRepositoryInterface $companyRepository = null,
         private ?ClosedPeriodRepositoryInterface $closedPeriodRepository = null,
+        private ?TransactionValidationService $validationService = null,
     ) {
     }
 
@@ -71,6 +73,16 @@ final readonly class CreateTransactionHandler implements HandlerInterface
             if ($this->closedPeriodRepository->isDateInClosedPeriod($companyId, $transactionDate)) {
                 throw new BusinessRuleException(
                     'Cannot create transactions in a closed period. Transaction date: ' . $transactionDate->format('Y-m-d')
+                );
+            }
+        }
+
+        // Validate transaction lines using the validation service
+        if ($this->validationService !== null) {
+            $validationResult = $this->validationService->validate($command->lines, $companyId);
+            if (!$validationResult->isValid()) {
+                throw new BusinessRuleException(
+                    'Transaction validation failed: ' . implode('; ', $validationResult->errors())
                 );
             }
         }

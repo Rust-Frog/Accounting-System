@@ -167,6 +167,18 @@ class ApiClient {
         return this.post(`/companies/${cid}/transactions`, data);
     }
 
+    /**
+     * Pre-validate transaction lines before submitting.
+     * @param {Array} lines - Array of transaction lines
+     * @param {string} companyId - Optional company ID
+     * @returns {Promise<{valid: boolean, errors: string[]}>}
+     */
+    async validateTransaction(lines, companyId = null) {
+        const cid = companyId || this.getCompanyId();
+        const result = await this.post(`/companies/${cid}/transactions/validate`, { lines });
+        return result.data || { valid: false, errors: ['Validation failed'] };
+    }
+
     async updateTransaction(id, data, companyId = null) {
         const cid = companyId || this.getCompanyId();
         return this.put(`/companies/${cid}/transactions/${id}`, data);

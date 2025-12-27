@@ -573,6 +573,45 @@ class TransactionsManager {
         lineRow.querySelector('.btn-remove-line').addEventListener('click', (e) => {
             lineRow.remove();
             this.updateBalanceCheck();
+            this.updateAccountOptions(); // Refresh available accounts after removing line
+        });
+
+        // Add change listener for account dropdown to update other dropdowns
+        lineRow.querySelector('.line-account').addEventListener('change', () => {
+            this.updateAccountOptions();
+        });
+
+        // Update all dropdowns to disable already-selected accounts
+        this.updateAccountOptions();
+    }
+
+    /**
+     * Updates all account dropdowns to disable accounts that are already selected
+     * in other lines, preventing duplicate account selection.
+     */
+    updateAccountOptions() {
+        // Collect all currently selected account IDs
+        const selectedAccounts = new Set();
+        this.elements.linesContainer.querySelectorAll('.line-row').forEach(row => {
+            const selectedValue = row.querySelector('.line-account').value;
+            if (selectedValue) {
+                selectedAccounts.add(selectedValue);
+            }
+        });
+
+        // Update each dropdown to disable accounts selected in OTHER lines
+        this.elements.linesContainer.querySelectorAll('.line-row').forEach(row => {
+            const select = row.querySelector('.line-account');
+            const currentValue = select.value;
+
+            select.querySelectorAll('option').forEach(option => {
+                if (option.value && option.value !== currentValue) {
+                    // Disable if selected in another line
+                    option.disabled = selectedAccounts.has(option.value);
+                } else {
+                    option.disabled = false;
+                }
+            });
         });
     }
 
@@ -609,6 +648,28 @@ class TransactionsManager {
             return;
         }
 
+        // Convert lines to validation format (debit_cents/credit_cents)
+        const validationLines = lines.map(line => ({
+            account_id: line.account_id,
+            debit_cents: line.line_type === 'debit' ? line.amount_cents : 0,
+            credit_cents: line.line_type === 'credit' ? line.amount_cents : 0
+        }));
+
+        // Pre-validate transaction
+        this.elements.btnSubmitTransaction.disabled = true;
+        this.elements.btnSubmitTransaction.textContent = 'Validating...';
+
+        try {
+            const validation = await api.validateTransaction(validationLines, this.selectedCompanyId);
+            if (!validation.valid) {
+                alert('Validation errors:\n\n' + validation.errors.join('\n'));
+                return;
+            }
+        } catch (error) {
+            console.error('Validation failed:', error);
+            // Continue anyway - backend will catch any errors
+        }
+
         const data = {
             date: this.elements.txnDate.value,
             description: document.getElementById('txnDescription').value,
@@ -620,7 +681,6 @@ class TransactionsManager {
         const actionText = isEditing ? 'Updating...' : 'Creating...';
         const successText = isEditing ? 'Update Transaction' : 'Create Transaction';
 
-        this.elements.btnSubmitTransaction.disabled = true;
         this.elements.btnSubmitTransaction.textContent = actionText;
 
         try {

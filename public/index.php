@@ -130,6 +130,10 @@ $healthController = new \Api\Controller\HealthController(
     $container->get(\Predis\ClientInterface::class)
 );
 
+$transactionValidationController = new \Api\Controller\TransactionValidationController(
+    $container->get(\Domain\Transaction\Service\TransactionValidationService::class)
+);
+
 // Create router
 $router = new Router();
 
@@ -228,6 +232,7 @@ $router->put('/api/v1/companies/{companyId}/transactions/{id}', [$transactionCon
 $router->delete('/api/v1/companies/{companyId}/transactions/{id}', [$transactionController, 'delete']);
 $router->post('/api/v1/companies/{companyId}/transactions/{id}/post', [$transactionController, 'post']);
 $router->post('/api/v1/companies/{companyId}/transactions/{id}/void', [$transactionController, 'void']);
+$router->post('/api/v1/companies/{companyId}/transactions/validate', [$transactionValidationController, 'validate']);
 
 // Approval routes
 $router->get('/api/v1/companies/{companyId}/approvals/pending', [$approvalController, 'pending']);
