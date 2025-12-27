@@ -7,18 +7,12 @@ namespace Domain\Transaction\ValueObject;
 enum TransactionStatus: string
 {
     case DRAFT = 'draft';
-    case PENDING = 'pending';
     case POSTED = 'posted';
     case VOIDED = 'voided';
 
     public function isDraft(): bool
     {
         return $this === self::DRAFT;
-    }
-
-    public function isPending(): bool
-    {
-        return $this === self::PENDING;
     }
 
     public function isPosted(): bool
@@ -66,10 +60,10 @@ enum TransactionStatus: string
     public function canTransitionTo(self $newStatus): bool
     {
         return match ($this) {
-            self::DRAFT => in_array($newStatus, [self::PENDING, self::POSTED, self::VOIDED], true),
-            self::PENDING => in_array($newStatus, [self::POSTED, self::VOIDED], true),
+            self::DRAFT => in_array($newStatus, [self::POSTED, self::VOIDED], true),
             self::POSTED => $newStatus === self::VOIDED,
             self::VOIDED => false, // Terminal state
         };
     }
 }
+

@@ -104,7 +104,7 @@ class BalanceSheetController {
 
     async loadCompanies() {
         try {
-            const response = await api.getCompanies();
+            const response = await api.getActiveCompanies();
             if (!response) {
                 // Auth redirect happened
                 return;
@@ -119,7 +119,7 @@ class BalanceSheetController {
                 window.location.href = '/login.html';
                 return;
             }
-            this.showError('Failed to load companies');
+            this.showError('No companies available');
         }
     }
 
@@ -128,7 +128,7 @@ class BalanceSheetController {
             ? this.companies.map(company =>
                 `<option value="${company.id}">${company.name}</option>`
             ).join('')
-            : '<option value="">No companies</option>';
+            : '<option value="">No companies available</option>';
 
         // Restore stored company ID
         const storedId = localStorage.getItem('company_id');

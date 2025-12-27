@@ -214,7 +214,7 @@ class TransactionsManager {
         const txnId = urlParams.get('txn');
 
         // Validation constants
-        const validStatuses = ['all', 'draft', 'pending', 'approved', 'posted', 'rejected', 'voided'];
+        const validStatuses = ['all', 'draft', 'posted', 'voided'];
 
         // Status filter
         if (status && validStatuses.includes(status) && this.elements.filterStatus) {
@@ -393,32 +393,7 @@ class TransactionsManager {
             `;
         }
 
-        if (status === 'pending') {
-            actions += `
-                <button class="btn-icon view" title="Reject" onclick="event.stopPropagation(); transactionsManager.rejectTransaction('${id}')" style="color: var(--danger-color); border-color: var(--danger-color);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-                <button class="btn-icon post" title="Approve" onclick="event.stopPropagation(); transactionsManager.approveTransaction('${id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                </button>
-            `;
-        } else if (status === 'approved') {
-            actions += `
-                <button class="btn-icon post" title="Post" onclick="event.stopPropagation(); transactionsManager.postTransaction('${id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="12" y1="18" x2="12" y2="12"></line>
-                        <line x1="9" y1="15" x2="15" y2="15"></line>
-                    </svg>
-                </button>
-            `;
-        } else if (status === 'posted') {
+        if (status === 'posted') {
             actions += `
                 <button class="btn-icon void" title="Void" onclick="event.stopPropagation(); transactionsManager.voidTransaction('${id}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

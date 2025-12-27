@@ -10,8 +10,11 @@ use Api\Response\JsonResponse;
 use Domain\Approval\Entity\Approval;
 use Domain\Approval\Repository\ApprovalRepositoryInterface;
 use Domain\Approval\ValueObject\ApprovalId;
+use Domain\Approval\ValueObject\ApprovalType;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\ValueObject\UserId;
+use Domain\Reporting\Entity\ClosedPeriod;
+use Domain\Reporting\Repository\ClosedPeriodRepositoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -24,7 +27,8 @@ final class ApprovalController
 
     public function __construct(
         private readonly ApprovalRepositoryInterface $approvalRepository,
-        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null
+        private readonly ?\Domain\Audit\Service\SystemActivityService $activityService = null,
+        private readonly ?ClosedPeriodRepositoryInterface $closedPeriodRepository = null
     ) {
     }
 
@@ -101,6 +105,11 @@ final class ApprovalController
                 metadata: ['entity_id' => $approval->entityId()]
             );
 
+            // If this is a period close approval, create the ClosedPeriod record
+            if ($approval->approvalType() === ApprovalType::PERIOD_CLOSE && $this->closedPeriodRepository !== null) {
+                $this->handlePeriodCloseApproval($approval, UserId::fromString($userId));
+            }
+
             return JsonResponse::success($this->formatApproval($approval));
         } catch (\Throwable $e) {
             return JsonResponse::error($this->getSafeErrorMessage($e), $this->getExceptionStatusCode($e));
@@ -160,6 +169,53 @@ final class ApprovalController
     }
 
     /**
+     * Handle period close approval - create ClosedPeriod record and log to hash chain.
+     */
+    private function handlePeriodCloseApproval(Approval $approval, UserId $approvedBy): void
+    {
+        // Parse the entityId format: period-close-{companyId}-{startDate}-{endDate}
+        $parts = explode('-', $approval->entityId());
+        if (count($parts) < 7) {
+            return; // Invalid format, skip
+        }
+
+        // Extract dates (format: period-close-{uuid}-YYYY-MM-DD-YYYY-MM-DD)
+        $startDate = "{$parts[4]}-{$parts[5]}-{$parts[6]}";
+        $endDate = "{$parts[7]}-{$parts[8]}-{$parts[9]}";
+
+        // Get net income from the approval details if available
+        $netIncomeCents = 0;
+
+        // Create the ClosedPeriod record
+        $closedPeriod = ClosedPeriod::create(
+            companyId: $approval->companyId(),
+            startDate: new \DateTimeImmutable($startDate),
+            endDate: new \DateTimeImmutable($endDate),
+            closedBy: $approvedBy,
+            approvalId: $approval->id()->toString(),
+            netIncomeCents: $netIncomeCents
+        );
+
+        $this->closedPeriodRepository->save($closedPeriod);
+
+        // Log to hash chain with critical severity
+        $this->activityService?->log(
+            activityType: 'period.closed',
+            entityType: 'closed_period',
+            entityId: $closedPeriod->id(),
+            description: "Period closed: {$startDate} to {$endDate}",
+            actorUserId: $approvedBy,
+            severity: 'critical',
+            metadata: [
+                'company_id' => $approval->companyId()->toString(),
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'approval_id' => $approval->id()->toString(),
+            ]
+        );
+    }
+
+    /**
      * Format approval for API response.
      */
     private function formatApproval(Approval $approval): array
@@ -179,3 +235,4 @@ final class ApprovalController
         ];
     }
 }
+

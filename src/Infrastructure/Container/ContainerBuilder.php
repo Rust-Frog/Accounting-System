@@ -153,6 +153,10 @@ final class ContainerBuilder
         $container->singleton(UserSettingsRepositoryInterface::class, fn(ContainerInterface $c) =>
             new MysqlUserSettingsRepository($c->get(PDO::class))
         );
+
+        $container->singleton(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class, fn(ContainerInterface $c) =>
+            new \Infrastructure\Persistence\Mysql\Repository\MysqlClosedPeriodRepository($c->get(PDO::class))
+        );
     }
 
     private static function registerServices(Container $container): void
@@ -333,7 +337,8 @@ final class ContainerBuilder
                 $c->get(AccountRepositoryInterface::class),
                 $c->get(EventDispatcherInterface::class),
                 $c->get(\Domain\Transaction\Service\TransactionNumberGeneratorInterface::class),
-                $c->get(\Domain\Company\Repository\CompanyRepositoryInterface::class)
+                $c->get(\Domain\Company\Repository\CompanyRepositoryInterface::class),
+                $c->get(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class)
             )
         );
 

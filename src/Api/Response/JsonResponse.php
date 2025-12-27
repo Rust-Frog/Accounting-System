@@ -139,7 +139,7 @@ final class JsonResponse implements ResponseInterface
     {
         return [
             'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
-            'requestId' => uniqid('req_', true),
+            'requestId' => $_SERVER['REQUEST_ID'] ?? uniqid('req_', true),
         ];
     }
 

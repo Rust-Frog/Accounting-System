@@ -94,6 +94,11 @@ $transactionController = new TransactionController(
 
 $approvalController = new ApprovalController(
     $container->get(ApprovalRepositoryInterface::class),
+    $container->get(\Domain\Audit\Service\SystemActivityService::class),
+    $container->get(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class)
+);
+
+$auditController = new \Api\Controller\AuditController(
     $container->get(\Domain\Audit\Service\SystemActivityService::class)
 );
 
@@ -120,12 +125,18 @@ $healthController = new HealthController(
     $container->get(\Predis\ClientInterface::class)
 );
 
+$healthController = new \Api\Controller\HealthController(
+    $container->get(PDO::class),
+    $container->get(\Predis\ClientInterface::class)
+);
+
 // Create router
 $router = new Router();
 
 // Add middleware
 $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
 $router->addMiddleware(new ErrorHandlerMiddleware($debug));
+$router->addMiddleware(new \Api\Middleware\RequestIdMiddleware());
 $router->addMiddleware(new ApiVersionMiddleware());
 $router->addMiddleware(new RequestLoggingMiddleware($container->get(\Domain\Audit\Service\SystemActivityService::class)));
 $router->addMiddleware(new CorsMiddleware());
@@ -137,6 +148,7 @@ $router->addMiddleware(new AuthenticationMiddleware(
     $container->get(\Infrastructure\Service\JwtService::class),
     [
         '/',                        // Root info
+        '/health',                  // Health check (no auth needed)
         '/api/v1/auth/register',    // Registration
         '/api/v1/auth/login',       // Login
         '/api/v1/setup/',           // Setup routes (handled by SetupMiddleware)
@@ -158,8 +170,12 @@ $router->get('/', fn() => \Api\Response\JsonResponse::success([
         'transactions' => '/api/v1/companies/{companyId}/transactions',
         'approvals' => '/api/v1/companies/{companyId}/approvals',
         'reports' => '/api/v1/companies/{companyId}/reports',
+        'health' => '/health',
     ],
 ]));
+
+// Health check route (for container orchestration)
+$router->get('/health', [$healthController, 'check']);
 
 $router->get('/api/v1/', fn() => new \Api\Response\JsonResponse([
     'status' => 'success',
@@ -217,6 +233,10 @@ $router->post('/api/v1/companies/{companyId}/transactions/{id}/void', [$transact
 $router->get('/api/v1/companies/{companyId}/approvals/pending', [$approvalController, 'pending']);
 $router->post('/api/v1/companies/{companyId}/approvals/{id}/approve', [$approvalController, 'approve']);
 $router->post('/api/v1/companies/{companyId}/approvals/{id}/reject', [$approvalController, 'reject']);
+
+// Audit routes (admin only)
+$router->get('/api/v1/audit/verify', [$auditController, 'verify']);
+$router->get('/api/v1/audit/stats', [$auditController, 'stats']);
 
 // Report routes
 $router->get('/api/v1/companies/{companyId}/reports', [$reportController, 'list']);

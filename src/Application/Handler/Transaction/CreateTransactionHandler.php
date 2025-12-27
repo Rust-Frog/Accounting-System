@@ -14,6 +14,7 @@ use Domain\ChartOfAccounts\ValueObject\AccountId;
 use Domain\Company\Repository\CompanyRepositoryInterface;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\ValueObject\UserId;
+use Domain\Reporting\Repository\ClosedPeriodRepositoryInterface;
 use Domain\Shared\Event\EventDispatcherInterface;
 use Domain\Shared\Exception\BusinessRuleException;
 use Domain\Shared\ValueObject\Currency;
@@ -36,6 +37,7 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         private EventDispatcherInterface $eventDispatcher,
         private ?TransactionNumberGeneratorInterface $transactionNumberGenerator = null,
         private ?CompanyRepositoryInterface $companyRepository = null,
+        private ?ClosedPeriodRepositoryInterface $closedPeriodRepository = null,
     ) {
     }
 
@@ -63,6 +65,15 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         $transactionDate = $command->transactionDate 
             ? new \DateTimeImmutable($command->transactionDate) 
             : new \DateTimeImmutable();
+
+        // Validate transaction date is not in a closed period
+        if ($this->closedPeriodRepository !== null) {
+            if ($this->closedPeriodRepository->isDateInClosedPeriod($companyId, $transactionDate)) {
+                throw new BusinessRuleException(
+                    'Cannot create transactions in a closed period. Transaction date: ' . $transactionDate->format('Y-m-d')
+                );
+            }
+        }
             
         $currency = Currency::from($command->currency);
 

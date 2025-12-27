@@ -46,7 +46,7 @@
 
         // Set default date to today
         elements.filterAsOfDate.value = new Date().toISOString().split('T')[0];
-        
+
         await loadUserInfo();
         await loadCompanies();
         setupEventListeners();
@@ -67,7 +67,7 @@
     // Load companies for filter
     async function loadCompanies() {
         try {
-            const response = await api.get('/companies');
+            const response = await api.get('/companies?active_only=true');
             if (!response) {
                 // Auth redirect happened
                 return;
@@ -76,7 +76,7 @@
 
             elements.filterCompany.innerHTML = companies.length > 0
                 ? companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
-                : '<option value="">No companies</option>';
+                : '<option value="">No companies available</option>';
 
             const storedId = localStorage.getItem('company_id');
             let targetId = null;
@@ -100,7 +100,7 @@
                 window.location.href = '/login.html';
                 return;
             }
-            elements.filterCompany.innerHTML = '<option value="">Error loading</option>';
+            elements.filterCompany.innerHTML = '<option value="">No companies available</option>';
         }
     }
 
@@ -147,7 +147,7 @@
         elements.totalDebits.textContent = formatCurrency(data.totals.debit_cents / 100);
         elements.totalCredits.textContent = formatCurrency(data.totals.credit_cents / 100);
         elements.difference.textContent = formatCurrency(data.difference_cents / 100);
-        
+
         if (data.is_balanced) {
             elements.balanceStatusText.textContent = 'BALANCED';
             elements.balanceStatusText.className = 'summary-value balanced';
@@ -192,7 +192,7 @@
     function updateTotals(totals, isBalanced) {
         elements.footerTotalDebits.textContent = formatCurrency(totals.debit_cents / 100);
         elements.footerTotalCredits.textContent = formatCurrency(totals.credit_cents / 100);
-        
+
         // Highlight if unbalanced
         const totalsRow = elements.trialBalanceTotals.querySelector('.totals-row');
         if (totalsRow) {

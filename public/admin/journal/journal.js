@@ -56,12 +56,12 @@
     // Load companies for filter
     async function loadCompanies() {
         try {
-            const response = await api.get('/companies');
+            const response = await api.get('/companies?active_only=true');
             const companies = response.data || [];
 
             elements.filterCompany.innerHTML = companies.length > 0
                 ? companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
-                : '<option value="">No companies</option>';
+                : '<option value="">No companies available</option>';
 
             const urlParams = new URLSearchParams(window.location.search);
             const urlCompanyId = urlParams.get('company');
@@ -92,7 +92,7 @@
             }
         } catch (error) {
             console.error('Failed to load companies:', error);
-            elements.filterCompany.innerHTML = '<option value="">Error loading</option>';
+            elements.filterCompany.innerHTML = '<option value="">No companies available</option>';
             showNoCompanyState();
         }
     }
@@ -100,11 +100,11 @@
     // Load accounts for name resolution
     async function loadAccounts() {
         if (!currentCompanyId) return;
-        
+
         try {
             const response = await api.get(`/companies/${currentCompanyId}/accounts`);
             const accounts = response.data || [];
-            
+
             // Build lookup map
             accountsMap = {};
             accounts.forEach(acc => {
@@ -276,11 +276,11 @@
             // Amount is stored in cents in the database
             const amountCents = b.amount || b.amountCents || 0;
             const amount = amountCents / 100;
-            
+
             const isDebit = lineType === 'debit';
             const isCredit = lineType === 'credit';
             const accountName = getAccountDisplayName(accountId);
-            
+
             return `
             <tr>
                 <td class="account-name">${accountName}</td>
