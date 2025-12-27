@@ -19,6 +19,7 @@ use Domain\Transaction\Event\TransactionVoided;
 use Domain\Transaction\ValueObject\LineType;
 use Domain\Transaction\ValueObject\TransactionId;
 use Domain\Transaction\ValueObject\TransactionStatus;
+use Domain\Shared\ValueObject\HashChain\ContentHash;
 
 final class Transaction
 {
@@ -34,6 +35,11 @@ final class Transaction
     private ?UserId $voidedBy = null;
     private ?string $voidReason = null;
     private ?string $transactionNumber = null;
+
+    // Hash chain fields for tamper-evident audit trail
+    private ?ContentHash $contentHash = null;
+    private ?ContentHash $previousHash = null;
+    private ?ContentHash $chainHash = null;
 
     private function __construct(
         private readonly TransactionId $id,
@@ -68,7 +74,10 @@ final class Transaction
         ?UserId $voidedBy = null,
         ?string $voidReason = null,
         array $lines = [],
-        ?string $transactionNumber = null
+        ?string $transactionNumber = null,
+        ?ContentHash $contentHash = null,
+        ?ContentHash $previousHash = null,
+        ?ContentHash $chainHash = null,
     ): self {
         $transaction = new self(
             id: $id,
@@ -88,6 +97,9 @@ final class Transaction
         $transaction->voidReason = $voidReason;
         $transaction->lines = $lines;
         $transaction->transactionNumber = $transactionNumber;
+        $transaction->contentHash = $contentHash;
+        $transaction->previousHash = $previousHash;
+        $transaction->chainHash = $chainHash;
 
         return $transaction;
     }
@@ -455,5 +467,81 @@ final class Transaction
         $this->domainEvents = [];
 
         return $events;
+    }
+
+    // ========================================
+    // Hash Chain Methods
+    // ========================================
+
+    /**
+     * Compute and set the hash chain for this transaction.
+     * Called when transaction is first saved or when posting.
+     *
+     * @param ContentHash|null $previousHash The chain hash from the last transaction
+     */
+    public function computeHashChain(?ContentHash $previousHash = null): void
+    {
+        // Compute content hash from transaction data
+        $this->contentHash = ContentHash::fromArray($this->toContentArray());
+        
+        // Set previous hash (null for first transaction)
+        $this->previousHash = $previousHash;
+        
+        // Compute chain hash: hash(content_hash + previous_hash)
+        $previousHashValue = $previousHash !== null ? $previousHash->toString() : 'GENESIS';
+        $this->chainHash = ContentHash::fromContent(
+            $this->contentHash->toString() . $previousHashValue
+        );
+    }
+
+    /**
+     * Verify this transaction's hash chain integrity.
+     */
+    public function verifyHashChain(?ContentHash $expectedPreviousHash = null): bool
+    {
+        if ($this->contentHash === null || $this->chainHash === null) {
+            return false;
+        }
+
+        // Recompute content hash
+        $recomputedContent = ContentHash::fromArray($this->toContentArray());
+        if (!$this->contentHash->equals($recomputedContent)) {
+            return false; // Content was tampered with
+        }
+
+        // Verify previous hash matches
+        if ($expectedPreviousHash !== null && $this->previousHash !== null) {
+            if (!$this->previousHash->equals($expectedPreviousHash)) {
+                return false; // Chain is broken
+            }
+        }
+
+        // Verify chain hash
+        $previousHashValue = $this->previousHash !== null ? $this->previousHash->toString() : 'GENESIS';
+        $recomputedChain = ContentHash::fromContent(
+            $this->contentHash->toString() . $previousHashValue
+        );
+
+        return $this->chainHash->equals($recomputedChain);
+    }
+
+    public function contentHash(): ?ContentHash
+    {
+        return $this->contentHash;
+    }
+
+    public function previousHash(): ?ContentHash
+    {
+        return $this->previousHash;
+    }
+
+    public function chainHash(): ?ContentHash
+    {
+        return $this->chainHash;
+    }
+
+    public function hasHashChain(): bool
+    {
+        return $this->chainHash !== null;
     }
 }

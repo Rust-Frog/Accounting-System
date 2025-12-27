@@ -9,6 +9,7 @@ use Domain\ChartOfAccounts\ValueObject\AccountId;
 use Domain\Company\ValueObject\CompanyId;
 use Domain\Identity\ValueObject\UserId;
 use Domain\Shared\ValueObject\Currency;
+use Domain\Shared\ValueObject\HashChain\ContentHash;
 use Domain\Shared\ValueObject\Money;
 use Domain\Transaction\Entity\Transaction;
 use Domain\Transaction\Entity\TransactionLine;
@@ -50,7 +51,11 @@ final class TransactionHydrator
             voidedAt: $row['voided_at'] !== null ? new DateTimeImmutable($row['voided_at']) : null,
             voidedBy: $row['voided_by'] !== null ? UserId::fromString($row['voided_by']) : null,
             voidReason: $row['void_reason'],
-            lines: $lines
+            lines: $lines,
+            transactionNumber: $row['transaction_number'] ?? null,
+            contentHash: isset($row['content_hash']) ? ContentHash::fromString($row['content_hash']) : null,
+            previousHash: isset($row['previous_hash']) ? ContentHash::fromString($row['previous_hash']) : null,
+            chainHash: isset($row['chain_hash']) ? ContentHash::fromString($row['chain_hash']) : null,
         );
     }
 
@@ -91,6 +96,9 @@ final class TransactionHydrator
             'voided_by' => $transaction->voidedBy()?->toString(),
             'voided_at' => $transaction->voidedAt()?->format('Y-m-d H:i:s'),
             'void_reason' => $transaction->voidReason(),
+            'content_hash' => $transaction->contentHash()?->toString(),
+            'previous_hash' => $transaction->previousHash()?->toString(),
+            'chain_hash' => $transaction->chainHash()?->toString(),
         ];
     }
 

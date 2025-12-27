@@ -160,6 +160,13 @@ final class ContainerBuilder
                 $listener = $c->get(\Application\Listener\ActivityLogListener::class);
                 $dispatcher->addListener('*', $listener);
             }
+
+            // Register BalanceUpdateListener
+            if ($c->has(\Application\Listener\BalanceUpdateListener::class)) {
+                $listener = $c->get(\Application\Listener\BalanceUpdateListener::class);
+                $dispatcher->addListener('transaction.posted', $listener);
+                $dispatcher->addListener('transaction.voided', $listener);
+            }
             
             return $dispatcher;
         });
@@ -234,6 +241,14 @@ final class ContainerBuilder
             new \Application\Listener\ActivityLogListener(
                 $c->get(\Domain\Audit\Service\ActivityLogService::class),
                 $c->get(\Domain\Identity\Repository\UserRepositoryInterface::class)
+            )
+        );
+
+        $container->singleton(\Application\Listener\BalanceUpdateListener::class, fn(ContainerInterface $c) =>
+            new \Application\Listener\BalanceUpdateListener(
+                $c->get(\Domain\Transaction\Repository\TransactionRepositoryInterface::class),
+                $c->get(\Domain\Ledger\Repository\LedgerRepositoryInterface::class),
+                $c->get(\Domain\ChartOfAccounts\Repository\AccountRepositoryInterface::class)
             )
         );
 

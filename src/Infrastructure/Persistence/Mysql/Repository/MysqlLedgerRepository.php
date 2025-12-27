@@ -106,8 +106,23 @@ class MysqlLedgerRepository extends AbstractMysqlRepository implements LedgerRep
 
     public function getBalanceCents(CompanyId $companyId, AccountId $accountId): int
     {
-        $balance = $this->findByAccount($accountId);
-        return $balance ? $balance->currentBalanceCents() : 0;
+        // Use account_balances table as the source of truth per "Production Accounting System" recommendation.
+        // This is maintained by BalanceUpdateListener (Event-Driven).
+        $sql = "SELECT current_balance_cents 
+                FROM account_balances 
+                WHERE account_id = :account_id 
+                AND company_id = :company_id
+                ORDER BY period_end DESC 
+                LIMIT 1";
+        
+        $stmt = $this->connection->prepare($sql);
+        $stmt->execute([
+            'account_id' => $accountId->toString(),
+            'company_id' => $companyId->toString(),
+        ]);
+        
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ? (int) $row['current_balance_cents'] : 0;
     }
 
     public function initializeBalance(AccountBalance $balance): void

@@ -7,6 +7,7 @@ namespace Infrastructure\Persistence\Mysql\Repository;
 use DateTimeImmutable;
 use Domain\ChartOfAccounts\ValueObject\AccountId;
 use Domain\Company\ValueObject\CompanyId;
+use Domain\Shared\ValueObject\HashChain\ContentHash;
 use Domain\Transaction\Entity\Transaction;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
 use Domain\Transaction\ValueObject\TransactionId;
@@ -33,12 +34,18 @@ final class MysqlTransactionRepository extends AbstractMysqlRepository implement
         $this->beginTransaction();
 
         try {
-            $data = $this->hydrator->extract($transaction);
-
             $exists = $this->exists(
                 'SELECT 1 FROM transactions WHERE id = :id',
-                ['id' => $data['id']]
+                ['id' => $transaction->id()->toString()]
             );
+
+            // Compute hash chain if not already set
+            if (!$transaction->hasHashChain()) {
+                $previousHash = $this->getLatestChainHash($transaction->companyId());
+                $transaction->computeHashChain($previousHash);
+            }
+
+            $data = $this->hydrator->extract($transaction);
 
             if ($exists) {
                 $this->updateTransaction($data);
@@ -271,11 +278,13 @@ final class MysqlTransactionRepository extends AbstractMysqlRepository implement
             INSERT INTO transactions (
                 id, company_id, transaction_date, description, reference_number,
                 status, created_by, created_at, posted_by, posted_at,
-                voided_by, voided_at, void_reason
+                voided_by, voided_at, void_reason,
+                content_hash, previous_hash, chain_hash
             ) VALUES (
                 :id, :company_id, :transaction_date, :description, :reference_number,
                 :status, :created_by, :created_at, :posted_by, :posted_at,
-                :voided_by, :voided_at, :void_reason
+                :voided_by, :voided_at, :void_reason,
+                :content_hash, :previous_hash, :chain_hash
             )
         SQL;
 
@@ -428,5 +437,27 @@ final class MysqlTransactionRepository extends AbstractMysqlRepository implement
 
         // Return reference number if available, otherwise ID
         return $result['reference_number'] ?? $result['id'];
+    }
+
+    /**
+     * Get the chain hash of the most recent transaction for a company.
+     * Used to link new transactions to the chain.
+     */
+    public function getLatestChainHash(CompanyId $companyId): ?ContentHash
+    {
+        $result = $this->fetchOne(
+            'SELECT chain_hash FROM transactions 
+             WHERE company_id = :company_id 
+             AND chain_hash IS NOT NULL
+             ORDER BY created_at DESC 
+             LIMIT 1',
+            ['company_id' => $companyId->toString()]
+        );
+
+        if ($result === null || $result['chain_hash'] === null) {
+            return null;
+        }
+
+        return ContentHash::fromString($result['chain_hash']);
     }
 }
