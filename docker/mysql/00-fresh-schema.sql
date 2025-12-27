@@ -116,6 +116,16 @@ CREATE TABLE company_settings (
     fiscal_year_start_month TINYINT NOT NULL DEFAULT 1,
     fiscal_year_start_day TINYINT NOT NULL DEFAULT 1,
     settings_json JSON NULL,
+    -- Edge case detection thresholds
+    large_transaction_threshold_cents BIGINT NOT NULL DEFAULT 1000000,
+    backdated_days_threshold INT NOT NULL DEFAULT 30,
+    future_dated_allowed TINYINT(1) NOT NULL DEFAULT 1,
+    require_approval_contra_entry TINYINT(1) NOT NULL DEFAULT 1,
+    require_approval_equity_adjustment TINYINT(1) NOT NULL DEFAULT 1,
+    require_approval_negative_balance TINYINT(1) NOT NULL DEFAULT 1,
+    flag_round_numbers TINYINT(1) NOT NULL DEFAULT 0,
+    flag_period_end_entries TINYINT(1) NOT NULL DEFAULT 0,
+    dormant_account_days_threshold INT NOT NULL DEFAULT 90,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
