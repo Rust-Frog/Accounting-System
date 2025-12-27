@@ -66,29 +66,10 @@ final class ContainerBuilder
 
     private static function registerDatabase(Container $container): void
     {
-        // Database connection
+        // Database connection - use singleton factory to ensure single connection
+        // This is critical for tests that wrap in transactions
         $container->singleton(PDO::class, function () {
-            $host = $_ENV['DB_HOST'] ?? 'mysql';
-            $port = $_ENV['DB_PORT'] ?? '3306';
-            $database = $_ENV['DB_DATABASE'] ?? 'accounting_system';
-            $username = $_ENV['DB_USERNAME'] ?? null;
-            $password = $_ENV['DB_PASSWORD'] ?? null;
-
-            // Fail fast if credentials are not configured
-            if (empty($username)) {
-                throw new \RuntimeException('DB_USERNAME environment variable is required');
-            }
-            if ($password === null) {
-                throw new \RuntimeException('DB_PASSWORD environment variable is required');
-            }
-
-            $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
-
-            return new PDO($dsn, $username, $password, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
+            return PdoConnectionFactory::getConnection();
         });
 
         // Database connection factory
@@ -210,6 +191,25 @@ final class ContainerBuilder
             \Domain\Transaction\Service\TransactionValidationService::class,
             fn(ContainerInterface $c) => new \Domain\Transaction\Service\TransactionValidationService(
                 $c->get(\Domain\ChartOfAccounts\Repository\AccountRepositoryInterface::class)
+            )
+        );
+
+        // Edge Case Threshold Repository
+        $container->singleton(
+            \Domain\Transaction\Repository\ThresholdRepositoryInterface::class,
+            fn(ContainerInterface $c) => new \Infrastructure\Persistence\Mysql\Repository\MysqlThresholdRepository(
+                $c->get(PDO::class)
+            )
+        );
+
+        // Edge Case Detection Service
+        $container->singleton(
+            \Domain\Transaction\Service\EdgeCaseDetectionServiceInterface::class,
+            fn(ContainerInterface $c) => new \Domain\Transaction\Service\EdgeCaseDetectionService(
+                $c->get(\Domain\Transaction\Repository\ThresholdRepositoryInterface::class),
+                $c->get(\Domain\ChartOfAccounts\Repository\AccountRepositoryInterface::class),
+                $c->get(\Domain\Ledger\Repository\LedgerRepositoryInterface::class),
+                new \Domain\Ledger\Service\BalanceCalculationService()
             )
         );
     }
@@ -347,7 +347,9 @@ final class ContainerBuilder
                 $c->get(\Domain\Transaction\Service\TransactionNumberGeneratorInterface::class),
                 $c->get(\Domain\Company\Repository\CompanyRepositoryInterface::class),
                 $c->get(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class),
-                $c->get(\Domain\Transaction\Service\TransactionValidationService::class)
+                $c->get(\Domain\Transaction\Service\TransactionValidationService::class),
+                $c->get(\Domain\Transaction\Service\EdgeCaseDetectionServiceInterface::class),
+                $c->get(ApprovalRepositoryInterface::class)
             )
         );
 

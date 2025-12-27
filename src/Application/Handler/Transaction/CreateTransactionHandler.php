@@ -9,6 +9,10 @@ use Application\Command\Transaction\CreateTransactionCommand;
 use Application\Dto\Transaction\TransactionDto;
 use Application\Dto\Transaction\TransactionLineDto;
 use Application\Handler\HandlerInterface;
+use Domain\Approval\Entity\Approval;
+use Domain\Approval\Repository\ApprovalRepositoryInterface;
+use Domain\Approval\ValueObject\ApprovalReason;
+use Domain\Approval\ValueObject\CreateApprovalRequest;
 use Domain\ChartOfAccounts\Repository\AccountRepositoryInterface;
 use Domain\ChartOfAccounts\ValueObject\AccountId;
 use Domain\Company\Repository\CompanyRepositoryInterface;
@@ -21,8 +25,10 @@ use Domain\Shared\ValueObject\Currency;
 use Domain\Shared\ValueObject\Money;
 use Domain\Transaction\Entity\Transaction;
 use Domain\Transaction\Repository\TransactionRepositoryInterface;
+use Domain\Transaction\Service\EdgeCaseDetectionServiceInterface;
 use Domain\Transaction\Service\TransactionNumberGeneratorInterface;
 use Domain\Transaction\Service\TransactionValidationService;
+use Domain\Transaction\ValueObject\EdgeCaseDetectionResult;
 use Domain\Transaction\ValueObject\LineType;
 
 /**
@@ -40,6 +46,8 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         private ?CompanyRepositoryInterface $companyRepository = null,
         private ?ClosedPeriodRepositoryInterface $closedPeriodRepository = null,
         private ?TransactionValidationService $validationService = null,
+        private ?EdgeCaseDetectionServiceInterface $edgeCaseDetectionService = null,
+        private ?ApprovalRepositoryInterface $approvalRepository = null,
     ) {
     }
 
@@ -86,7 +94,24 @@ final readonly class CreateTransactionHandler implements HandlerInterface
                 );
             }
         }
-            
+
+        // Edge case detection (runs after hard-block validation passes)
+        $edgeCaseResult = null;
+        if ($this->edgeCaseDetectionService !== null) {
+            $linesForDetection = array_map(fn($line) => [
+                'account_id' => $line->accountId,
+                'debit_cents' => $line->lineType === 'debit' ? $line->amountCents : 0,
+                'credit_cents' => $line->lineType === 'credit' ? $line->amountCents : 0,
+            ], $command->lines);
+
+            $edgeCaseResult = $this->edgeCaseDetectionService->detect(
+                $linesForDetection,
+                $transactionDate,
+                $command->description,
+                $companyId,
+            );
+        }
+
         $currency = Currency::from($command->currency);
 
         // Create transaction header
@@ -110,12 +135,41 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         // Persist
         $this->transactionRepository->save($transaction);
 
-        // Dispatch events
+        // Create approval request if edge cases require it
+        $approvalId = null;
+        if ($edgeCaseResult !== null && $edgeCaseResult->requiresApproval() && $this->approvalRepository !== null) {
+            $approvalReason = ApprovalReason::fromEdgeCaseFlags($edgeCaseResult->flags());
+            $totalAmountCents = array_sum(array_map(
+                fn($line) => $line->lineType === 'debit' ? $line->amountCents : 0,
+                $command->lines
+            ));
+
+            $approval = Approval::request(new CreateApprovalRequest(
+                companyId: $companyId,
+                approvalType: $approvalReason->type(),
+                entityType: 'transaction',
+                entityId: $transaction->id()->toString(),
+                reason: $approvalReason,
+                requestedBy: $createdBy,
+                amountCents: $totalAmountCents,
+                priority: $approvalReason->type()->getDefaultPriority(),
+            ));
+
+            $this->approvalRepository->save($approval);
+            $approvalId = $approval->id()->toString();
+
+            // Dispatch approval events
+            foreach ($approval->releaseEvents() as $event) {
+                $this->eventDispatcher->dispatch($event);
+            }
+        }
+
+        // Dispatch transaction events
         foreach ($transaction->releaseEvents() as $event) {
             $this->eventDispatcher->dispatch($event);
         }
 
-        return $this->toDto($transaction);
+        return $this->toDto($transaction, $edgeCaseResult, $approvalId);
     }
 
     private function processTransactionLines(
@@ -149,14 +203,17 @@ final readonly class CreateTransactionHandler implements HandlerInterface
         }
     }
 
-    private function toDto(Transaction $transaction): TransactionDto
-    {
+    private function toDto(
+        Transaction $transaction,
+        ?EdgeCaseDetectionResult $edgeCaseResult = null,
+        ?string $approvalId = null,
+    ): TransactionDto {
         $lines = [];
         $i = 0;
         foreach ($transaction->lines() as $line) {
             $accountId = $line->accountId();
             $account = $this->accountRepository->findById($accountId);
-            
+
             $lines[] = new TransactionLineDto(
                 id: (string)$i,
                 accountId: $accountId->toString(),
@@ -168,6 +225,11 @@ final readonly class CreateTransactionHandler implements HandlerInterface
                 description: $line->description() ?? ''
             );
         }
+
+        $requiresApproval = $edgeCaseResult !== null && $edgeCaseResult->requiresApproval();
+        $edgeCaseFlags = $edgeCaseResult !== null && $edgeCaseResult->hasFlags()
+            ? array_map(fn($f) => $f->toArray(), $edgeCaseResult->flags())
+            : null;
 
         return new TransactionDto(
             id: $transaction->id()->toString(),
@@ -182,6 +244,9 @@ final readonly class CreateTransactionHandler implements HandlerInterface
             transactionDate: $transaction->transactionDate()->format('Y-m-d'),
             createdAt: $transaction->createdAt()->format('Y-m-d H:i:s'),
             postedAt: $transaction->postedAt()?->format('Y-m-d H:i:s'),
+            requiresApproval: $requiresApproval,
+            approvalId: $approvalId,
+            edgeCaseFlags: $edgeCaseFlags,
         );
     }
 }
