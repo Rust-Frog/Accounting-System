@@ -87,7 +87,14 @@ final readonly class CreateTransactionHandler implements HandlerInterface
 
         // Validate transaction lines using the validation service
         if ($this->validationService !== null) {
-            $validationResult = $this->validationService->validate($command->lines, $companyId);
+            // Convert TransactionLineData objects to array format for validation
+            $linesForValidation = array_map(fn($line) => [
+                'account_id' => $line->accountId,
+                'debit_cents' => $line->lineType === 'debit' ? $line->amountCents : 0,
+                'credit_cents' => $line->lineType === 'credit' ? $line->amountCents : 0,
+            ], $command->lines);
+
+            $validationResult = $this->validationService->validate($linesForValidation, $companyId);
             if (!$validationResult->isValid()) {
                 throw new BusinessRuleException(
                     'Transaction validation failed: ' . implode('; ', $validationResult->errors())

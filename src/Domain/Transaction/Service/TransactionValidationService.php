@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Transaction\Service;
 
 use Domain\ChartOfAccounts\Repository\AccountRepositoryInterface;
+use Domain\ChartOfAccounts\ValueObject\AccountId;
 use Domain\Company\ValueObject\CompanyId;
 
 /**
@@ -96,10 +97,11 @@ final class TransactionValidationService
         }
 
         // Rule 5: Check accounts exist and are active
-        foreach (array_unique($accountIds) as $accountId) {
-            $account = $this->accountRepository->findById($accountId);
+        foreach (array_unique($accountIds) as $accountIdString) {
+            $accountIdVO = AccountId::fromString($accountIdString);
+            $account = $this->accountRepository->findById($accountIdVO);
             if ($account === null) {
-                $errors[] = "Account '{$accountId}' not found";
+                $errors[] = "Account '{$accountIdString}' not found";
             } elseif (!$account->isActive()) {
                 $errors[] = "Account '{$account->name()}' is inactive and cannot be used";
             }

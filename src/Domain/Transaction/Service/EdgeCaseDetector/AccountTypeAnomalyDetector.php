@@ -41,31 +41,35 @@ final class AccountTypeAnomalyDetector
                     $flags[] = EdgeCaseFlag::contraRevenue($accountName, $debitCents);
                 }
 
-                // Rule #8: Contra Expense (credit to expense)
+                // Rule #8: Contra Expense (credit to expense) - unusual, flag it
                 if ($accountType === AccountType::EXPENSE && $creditCents > 0) {
                     $flags[] = EdgeCaseFlag::contraExpense($accountName, $creditCents);
                 }
 
                 // Rule #9: Asset Write-down (credit to asset)
-                if ($accountType === AccountType::ASSET && $creditCents > 0) {
-                    $flags[] = EdgeCaseFlag::assetWritedown($accountName, $creditCents);
-                }
+                // Commenting out - credits to assets are normal (paying for things)
+                // Only unusual if the asset is being written off without corresponding entry
+                // TODO: Make smarter by checking if there's a corresponding expense/liability
+                // if ($accountType === AccountType::ASSET && $creditCents > 0) {
+                //     $flags[] = EdgeCaseFlag::assetWritedown($accountName, $creditCents);
+                // }
             }
 
-            // Rule #10: Liability Reduction (debit to liability) - review only
-            if ($accountType === AccountType::LIABILITY && $debitCents > 0) {
-                $flags[] = EdgeCaseFlag::liabilityReduction($accountName, $debitCents);
-            }
+            // Rule #10: Liability Reduction (debit to liability)
+            // Only flag if this would reduce liability below what's expected for normal payments
+            // For now, don't flag at all - paying off liabilities is normal business
+            // Uncomment to enable: if ($accountType === AccountType::LIABILITY && $debitCents > 0) {
+            //     $flags[] = EdgeCaseFlag::liabilityReduction($accountName, $debitCents);
+            // }
 
-            // Rule #11: Equity Adjustment (any entry to equity)
+            // Rule #11: Equity Adjustment - ONLY flag DEBITS (equity reduction/withdrawal)
+            // Credits to equity (investments) are normal business operations
             if ($thresholds->requireApprovalEquityAdjustment()) {
-                if ($accountType === AccountType::EQUITY) {
-                    $lineType = $debitCents > 0 ? 'debit' : 'credit';
-                    $amount = $debitCents > 0 ? $debitCents : $creditCents;
-                    if ($amount > 0) {
-                        $flags[] = EdgeCaseFlag::equityAdjustment($accountName, $amount, $lineType);
-                    }
+                if ($accountType === AccountType::EQUITY && $debitCents > 0) {
+                    // Debiting equity = reducing owner's stake = unusual, needs review
+                    $flags[] = EdgeCaseFlag::equityAdjustment($accountName, $debitCents, 'debit');
                 }
+                // Credits to equity are normal (investments, retained earnings) - no flag
             }
         }
 
