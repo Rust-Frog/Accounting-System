@@ -127,9 +127,21 @@ final class CompanyRepositoryInterfaceTest extends TestCase
             /**
              * @return array<Company>
              */
-            public function findAll(): array
+            public function findAll(int $limit = 100, int $offset = 0): array
             {
-                return array_values($this->companies);
+                return array_slice(array_values($this->companies), $offset, $limit);
+            }
+
+            /**
+             * @return array<Company>
+             */
+            public function findActiveCompanies(int $limit = 100, int $offset = 0): array
+            {
+                $active = array_filter(
+                    $this->companies,
+                    fn(Company $company) => $company->status()->isActive()
+                );
+                return array_slice(array_values($active), $offset, $limit);
             }
         };
     }

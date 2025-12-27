@@ -82,9 +82,9 @@ final class InMemoryUserRepository implements UserRepositoryInterface
     /**
      * @return array<User>
      */
-    public function findAll(): array
+    public function findAll(int $limit = 100, int $offset = 0): array
     {
-        return array_values($this->users);
+        return array_slice(array_values($this->users), $offset, $limit);
     }
 
     /**
