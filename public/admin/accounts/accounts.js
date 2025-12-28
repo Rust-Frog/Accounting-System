@@ -272,7 +272,7 @@ class AccountsManager {
 
         if (tableContainer) tableContainer.style.display = 'block';
         this.elements.emptyState.style.display = 'none';
-        this.elements.accountsBody.innerHTML = accounts.map(account => this.renderAccountRow(account)).join('');
+        Security.safeInnerHTML(this.elements.accountsBody, accounts.map(account => this.renderAccountRow(account)).join(''));
 
         // Bind row action events
         this.bindRowEvents();
@@ -292,30 +292,37 @@ class AccountsManager {
         const toggleDisabled = !canDeactivate ? 'disabled title="Cannot deactivate account with balance"' : '';
         const toggleLabel = account.is_active ? 'Deactivate' : 'Activate';
 
+        // Escape all API data to prevent XSS
+        const safeId = Security.escapeHtml(account.id);
+        const safeCode = Security.escapeHtml(String(account.code));
+        const safeName = Security.escapeHtml(account.name);
+        const safeDesc = account.description ? Security.escapeHtml(account.description) : '';
+        const safeNormalBalance = account.normal_balance === 'debit' ? 'debit' : 'credit';
+
         return `
-            <tr data-id="${account.id}">
-                <td class="code-cell">${account.code}</td>
+            <tr data-id="${safeId}">
+                <td class="code-cell">${safeCode}</td>
                 <td class="name-cell">
-                    <span class="account-name">${this.escapeHtml(account.name)}</span>
-                    ${account.description ? `<small class="account-desc">${this.escapeHtml(account.description)}</small>` : ''}
+                    <span class="account-name">${safeName}</span>
+                    ${safeDesc ? `<small class="account-desc">${safeDesc}</small>` : ''}
                 </td>
                 <td>${typeBadge}</td>
-                <td><span class="normal-balance normal-${account.normal_balance}">${normalBalanceLabel}</span></td>
+                <td><span class="normal-balance normal-${safeNormalBalance}">${normalBalanceLabel}</span></td>
                 <td class="balance-cell ${balanceClass}">${formattedBalance}</td>
                 <td>${statusBadge}</td>
                 <td class="actions-cell">
-                    <button class="btn btn-sm btn-icon" data-action="view" data-id="${account.id}" title="View Details">
+                    <button class="btn btn-sm btn-icon" data-action="view" data-id="${safeId}" title="View Details">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
                             <path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.831.88 9.577.43 8.899a1.62 1.62 0 0 1 0-1.798c.45-.678 1.367-1.932 2.637-3.023C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.824.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"/>
                         </svg>
                     </button>
-                    <button class="btn btn-sm btn-icon" data-action="edit" data-id="${account.id}" title="Edit">
+                    <button class="btn btn-sm btn-icon" data-action="edit" data-id="${safeId}" title="Edit">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
                             <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354Z"/>
                         </svg>
                     </button>
                     <button class="btn btn-sm btn-icon ${account.is_active ? 'btn-warning' : 'btn-success'}" 
-                            data-action="toggle" data-id="${account.id}" ${toggleDisabled} title="${toggleLabel}">
+                            data-action="toggle" data-id="${safeId}" ${toggleDisabled} title="${toggleLabel}">
                         ${account.is_active
                 ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M4.53 4.53a.75.75 0 0 1 1.06 0L8 6.94l2.41-2.41a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 0 1 0-1.06Z"/></svg>'
                 : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>'
@@ -371,7 +378,7 @@ class AccountsManager {
         const start = (this.currentPage - 1) * this.itemsPerPage + 1;
         const end = Math.min(this.currentPage * this.itemsPerPage, this.filteredAccounts.length);
 
-        container.innerHTML = `
+        Security.safeInnerHTML(container, `
             <button class="btn btn-sm btn-secondary" id="btnPrevPage" ${this.currentPage === 1 ? 'disabled' : ''}>
                 ← Previous
             </button>
@@ -381,7 +388,7 @@ class AccountsManager {
             <button class="btn btn-sm btn-secondary" id="btnNextPage" ${this.currentPage >= totalPages ? 'disabled' : ''}>
                 Next →
             </button>
-        `;
+        `);
 
         // Insert after table
         const tableContainer = document.querySelector('.table-container');
@@ -492,15 +499,15 @@ class AccountsManager {
             ? '<span class="status-badge status-active">Active</span>'
             : '<span class="status-badge status-inactive">Inactive</span>';
 
-        this.elements.detailContent.innerHTML = `
+        Security.safeInnerHTML(this.elements.detailContent, `
             <div class="detail-grid">
                 <div class="detail-row">
                     <span class="detail-label">Code</span>
-                    <span class="detail-value code-value">${account.code}</span>
+                    <span class="detail-value code-value">${Security.escapeHtml(String(account.code))}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Name</span>
-                    <span class="detail-value">${this.escapeHtml(account.name)}</span>
+                    <span class="detail-value">${Security.escapeHtml(account.name)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Type</span>
@@ -521,7 +528,7 @@ class AccountsManager {
                 ${account.description ? `
                 <div class="detail-row full-width">
                     <span class="detail-label">Description</span>
-                    <span class="detail-value">${this.escapeHtml(account.description)}</span>
+                    <span class="detail-value">${Security.escapeHtml(account.description)}</span>
                 </div>
                 ` : ''}
             </div>
@@ -532,12 +539,12 @@ class AccountsManager {
                     <div class="loading-text">Loading transactions...</div>
                 </div>
             </div>
-        `;
+        `);
 
-        this.elements.detailActions.innerHTML = `
+        Security.safeInnerHTML(this.elements.detailActions, `
             <button class="btn btn-secondary" onclick="accountsManager.closeDetailModal()">Close</button>
-            <button class="btn btn-primary" onclick="accountsManager.openEditModal('${account.id}'); accountsManager.closeDetailModal();">Edit</button>
-        `;
+            <button class="btn btn-primary" onclick="accountsManager.openEditModal('${Security.escapeHtml(account.id)}'); accountsManager.closeDetailModal();">Edit</button>
+        `);
 
         this.elements.detailModal.classList.add('active');
 
@@ -557,14 +564,14 @@ class AccountsManager {
                 return;
             }
 
-            listEl.innerHTML = transactions.map(t => `
+            Security.safeInnerHTML(listEl, transactions.map(t => `
                 <div class="transaction-item">
-                    <div class="transaction-date">${t.transaction_date}</div>
-                    <div class="transaction-desc">${this.escapeHtml(t.description)}</div>
-                    <div class="transaction-status status-${t.status}">${t.status}</div>
+                    <div class="transaction-date">${Security.escapeHtml(t.transaction_date)}</div>
+                    <div class="transaction-desc">${Security.escapeHtml(t.description)}</div>
+                    <div class="transaction-status status-${Security.escapeHtml(t.status)}">${Security.escapeHtml(t.status)}</div>
                     <div class="transaction-amount">${this.formatCurrency(t.amount)}</div>
                 </div>
-            `).join('');
+            `).join(''));
         } catch (error) {
             listEl.innerHTML = '<div class="error-text">Failed to load transactions</div>';
         }
@@ -708,11 +715,7 @@ class AccountsManager {
         return amount < 0 ? `(${symbol}${formatted})` : `${symbol}${formatted}`;
     }
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+
 
     showToast(message, type = 'info') {
         this.elements.toast.className = `toast toast-${type} show`;

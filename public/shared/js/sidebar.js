@@ -174,9 +174,19 @@ window.Sidebar = (function () {
         }
 
         try {
-            // Load and inject template
+            // Load and inject template (sanitized for security)
+            // Load and inject template (sanitized for security)
             const template = await loadTemplate();
-            sidebarContainer.innerHTML = template;
+
+            if (typeof Security !== 'undefined' && Security.safeInnerHTML) {
+                Security.safeInnerHTML(sidebarContainer, template);
+            } else {
+                // Fallback if Security not loaded yet (should not happen in admin app)
+                const sanitizedTemplate = typeof DOMPurify !== 'undefined'
+                    ? DOMPurify.sanitize(template, { ADD_TAGS: ['svg', 'path'], ADD_ATTR: ['d', 'viewBox', 'fill', 'stroke', 'stroke-width'] })
+                    : template;
+                sidebarContainer.innerHTML = sanitizedTemplate;
+            }
 
             // Detect or use provided active page
             const currentPage = options.activePage || detectCurrentPage();

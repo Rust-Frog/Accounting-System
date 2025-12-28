@@ -177,8 +177,8 @@
 
         const rows = entries.map(entry => `
             <tr>
-                <td class="col-code"><code>${escapeHtml(entry.account_code)}</code></td>
-                <td class="col-name">${escapeHtml(entry.account_name)}</td>
+                <td class="col-code"><code>${Security.escapeHtml(entry.account_code)}</code></td>
+                <td class="col-name">${Security.escapeHtml(entry.account_name)}</td>
                 <td class="col-type"><span class="type-badge type-${entry.account_type}">${capitalizeFirst(entry.account_type)}</span></td>
                 <td class="col-debit amount">${entry.debit_cents > 0 ? formatCurrency(entry.debit_cents / 100) : ''}</td>
                 <td class="col-credit amount">${entry.credit_cents > 0 ? formatCurrency(entry.credit_cents / 100) : ''}</td>
@@ -246,7 +246,7 @@
         elements.trialBalanceBody.innerHTML = `
             <tr class="error-row">
                 <td colspan="5">
-                    <div class="error-message">Error: ${escapeHtml(message)}</div>
+                    <div class="error-message">Error: ${Security.escapeHtml(message)}</div>
                 </td>
             </tr>
         `;
@@ -274,12 +274,7 @@
         return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+
 
     async function logout() {
         try {

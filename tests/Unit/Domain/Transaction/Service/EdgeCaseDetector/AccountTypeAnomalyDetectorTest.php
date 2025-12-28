@@ -83,8 +83,10 @@ final class AccountTypeAnomalyDetectorTest extends TestCase
         $this->assertSame('contra_expense', $result->flags()[0]->type());
     }
 
-    public function test_detects_asset_writedown_credit_to_asset(): void
+    public function test_allows_credit_to_asset_without_flag(): void
     {
+        // Asset writedown detection was intentionally disabled
+        // Credits to assets are normal (e.g., paying for things from cash)
         $assetAccount = $this->createAccount(1500, 'Equipment', AccountType::ASSET);
 
         $lines = [
@@ -97,8 +99,8 @@ final class AccountTypeAnomalyDetectorTest extends TestCase
 
         $result = $this->detector->detect($lines, $this->thresholds);
 
-        $this->assertTrue($result->hasFlags());
-        $this->assertSame('asset_writedown', $result->flags()[0]->type());
+        $writedownFlags = array_filter($result->flags(), fn($f) => $f->type() === 'asset_writedown');
+        $this->assertEmpty($writedownFlags);
     }
 
     public function test_detects_equity_adjustment(): void
@@ -119,8 +121,10 @@ final class AccountTypeAnomalyDetectorTest extends TestCase
         $this->assertSame('equity_adjustment', $result->flags()[0]->type());
     }
 
-    public function test_detects_liability_reduction(): void
+    public function test_allows_liability_reduction_without_flag(): void
     {
+        // Liability reduction detection was intentionally disabled
+        // Debits to liabilities are normal (e.g., paying off debts)
         $liabilityAccount = $this->createAccount(2100, 'Accounts Payable', AccountType::LIABILITY);
 
         $lines = [
@@ -133,9 +137,8 @@ final class AccountTypeAnomalyDetectorTest extends TestCase
 
         $result = $this->detector->detect($lines, $this->thresholds);
 
-        $this->assertTrue($result->hasFlags());
-        $this->assertSame('liability_reduction', $result->flags()[0]->type());
-        $this->assertFalse($result->requiresApproval()); // Review only
+        $liabilityFlags = array_filter($result->flags(), fn($f) => $f->type() === 'liability_reduction');
+        $this->assertEmpty($liabilityFlags);
     }
 
     public function test_respects_disabled_contra_entry_detection(): void

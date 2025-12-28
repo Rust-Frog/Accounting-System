@@ -166,25 +166,25 @@
                 <td>
                     ${renderChainIcon(entry, index === entries.length - 1)}
                 </td>
-                <td>${formatDate(entry.occurred_at)}</td>
+                <td>${Security.escapeHtml(formatDate(entry.occurred_at))}</td>
                 <td>
-                    <span class="entry-type ${entry.entry_type.toLowerCase()}">${entry.entry_type}</span>
+                    <span class="entry-type ${Security.escapeHtml(entry.entry_type.toLowerCase())}">${Security.escapeHtml(entry.entry_type)}</span>
                 </td>
                 <td>
-                    <span class="txn-link" data-txn-id="${entry.transaction_id}">
-                        ${entry.transaction_id.substring(0, 8)}...
+                    <span class="txn-link" data-txn-id="${Security.escapeHtml(entry.transaction_id)}">
+                        ${Security.escapeHtml(entry.transaction_id.substring(0, 8))}...
                     </span>
                 </td>
                 <td>
-                    <span class="hash-display">${entry.content_hash}</span>
+                    <span class="hash-display">${Security.escapeHtml(entry.content_hash)}</span>
                 </td>
                 <td style="text-align: center;">
-                    <button class="btn-view" data-id="${entry.id}">View</button>
+                    <button class="btn-view" data-id="${Security.escapeHtml(entry.id)}">View</button>
                 </td>
             </tr>
         `).join('');
 
-        elements.journalBody.innerHTML = html;
+        Security.safeInnerHTML(elements.journalBody, html);
 
         // Add event listeners for view buttons
         document.querySelectorAll('.btn-view').forEach(btn => {
@@ -231,23 +231,23 @@
         const bookingsHtml = renderBookingsTable(entry.bookings);
         const hashChainHtml = renderHashChain(entry);
 
-        elements.detailContent.innerHTML = `
+        const html = `
             <div class="detail-section">
                 <h4 class="detail-section-title">Entry Information</h4>
                 <div class="detail-grid">
                     <span class="detail-label">Entry ID</span>
-                    <span class="detail-value mono">${entry.id}</span>
+                    <span class="detail-value mono">${Security.escapeHtml(entry.id)}</span>
                     
                     <span class="detail-label">Type</span>
                     <span class="detail-value">
-                        <span class="entry-type ${entry.entry_type.toLowerCase()}">${entry.entry_type}</span>
+                        <span class="entry-type ${Security.escapeHtml(entry.entry_type.toLowerCase())}">${Security.escapeHtml(entry.entry_type)}</span>
                     </span>
                     
                     <span class="detail-label">Occurred At</span>
-                    <span class="detail-value">${formatDateTime(entry.occurred_at)}</span>
+                    <span class="detail-value">${Security.escapeHtml(formatDateTime(entry.occurred_at))}</span>
                     
                     <span class="detail-label">Transaction ID</span>
-                    <span class="detail-value mono">${entry.transaction_id}</span>
+                    <span class="detail-value mono">${Security.escapeHtml(entry.transaction_id)}</span>
                 </div>
             </div>
 
@@ -261,6 +261,8 @@
                 ${hashChainHtml}
             </div>
         `;
+
+        Security.safeInnerHTML(elements.detailContent, html);
     }
 
     // Render bookings table
@@ -283,7 +285,7 @@
 
             return `
             <tr>
-                <td class="account-name">${accountName}</td>
+                <td class="account-name">${Security.escapeHtml(accountName)}</td>
                 <td class="amount-debit">${isDebit ? formatCurrency(amount) : ''}</td>
                 <td class="amount-credit">${isCredit ? formatCurrency(amount) : ''}</td>
             </tr>
@@ -318,7 +320,7 @@
             html += `
                 <div class="hash-block previous">
                     <span class="hash-block-label">Previous Hash</span>
-                    <span class="hash-block-value">${entry.previous_hash}</span>
+                    <span class="hash-block-value">${Security.escapeHtml(entry.previous_hash)}</span>
                 </div>
                 <div class="chain-arrow">↓</div>
             `;
@@ -327,7 +329,7 @@
         html += `
             <div class="hash-block">
                 <span class="hash-block-label">Content Hash</span>
-                <span class="hash-block-value">${entry.content_hash}</span>
+                <span class="hash-block-value">${Security.escapeHtml(entry.content_hash)}</span>
             </div>
         `;
 
@@ -336,7 +338,7 @@
                 <div class="chain-arrow">↓</div>
                 <div class="hash-block">
                     <span class="hash-block-label">Chain Hash</span>
-                    <span class="hash-block-value">${entry.chain_hash}</span>
+                    <span class="hash-block-value">${Security.escapeHtml(entry.chain_hash)}</span>
                 </div>
             `;
         }

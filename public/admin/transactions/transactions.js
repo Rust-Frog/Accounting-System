@@ -133,7 +133,7 @@ class TransactionsManager {
         }
 
         this.elements.filterCompany.innerHTML = this.companies.map(company =>
-            `<option value="${company.id}">${this.escapeHtml(company.name)}</option>`
+            `<option value="${company.id}">${Security.escapeHtml(company.name)}</option>`
         ).join('');
     }
 
@@ -320,7 +320,7 @@ class TransactionsManager {
         this.elements.transactionsBody.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align: center; padding: 2rem; color: var(--danger-color);">
-                    ${this.escapeHtml(message)}
+                    ${Security.escapeHtml(message)}
                 </td>
             </tr>
         `;
@@ -341,7 +341,7 @@ class TransactionsManager {
         document.querySelector('.panel').style.display = 'block';
         this.elements.emptyState.style.display = 'none';
 
-        this.elements.transactionsBody.innerHTML = transactions.map(txn => this.renderTransactionRow(txn)).join('');
+        Security.safeInnerHTML(this.elements.transactionsBody, transactions.map(txn => this.renderTransactionRow(txn)).join(''));
 
         // Bind clickable rows
         this.elements.transactionsBody.querySelectorAll('tr[data-id]').forEach(row => {
@@ -354,16 +354,16 @@ class TransactionsManager {
         // Backend provides total_amount in dollars - just use it
         const amount = this.formatCurrency(txn.total_amount || this.calculateTotal(txn.lines));
         const status = txn.status || 'draft';
-        const safeId = this.escapeHtml(txn.id || '');
-        const safeStatus = this.escapeHtml(status);
+        const safeId = Security.escapeHtml(txn.id || '');
+        const safeStatus = Security.escapeHtml(status);
         const statusClass = this.getStatusClass(status);
 
         return `
             <tr class="clickable-row" data-id="${safeId}">
-                <td><code>${this.escapeHtml(txn.id?.substring(0, 8) || 'N/A')}...</code></td>
-                <td>${this.escapeHtml(date)}</td>
-                <td>${this.escapeHtml(txn.description || 'No description')}</td>
-                <td style="font-family: var(--font-mono);">${this.escapeHtml(amount)}</td>
+                <td><code>${Security.escapeHtml(txn.id?.substring(0, 8) || 'N/A')}...</code></td>
+                <td>${Security.escapeHtml(date)}</td>
+                <td>${Security.escapeHtml(txn.description || 'No description')}</td>
+                <td style="font-family: var(--font-mono);">${Security.escapeHtml(amount)}</td>
                 <td><span class="status-badge ${statusClass}">${safeStatus}</span></td>
                 <td>
                     <div class="action-btns">
@@ -375,7 +375,7 @@ class TransactionsManager {
     }
 
     renderRowActions(txn) {
-        const id = this.escapeHtml(txn.id);
+        const id = Security.escapeHtml(txn.id);
         const status = (txn.status || 'draft').toLowerCase();
 
         let actions = `
@@ -545,7 +545,7 @@ class TransactionsManager {
                 <select name="account_${this.lineCounter}" class="form-select line-account" required>
                     <option value="">Select Account</option>
                     ${this.accounts.map(acc => `
-                        <option value="${acc.id}">${this.escapeHtml(acc.code)} - ${this.escapeHtml(acc.name)}</option>
+                        <option value="${acc.id}">${Security.escapeHtml(acc.code)} - ${Security.escapeHtml(acc.name)}</option>
                     `).join('')}
                 </select>
                 
@@ -796,17 +796,17 @@ class TransactionsManager {
 
         // Pre-escape values for security
         // Backend provides total_amount in dollars - just use it
-        const safeDate = this.escapeHtml(date);
-        const safeStatus = this.escapeHtml(status);
-        const safeAmount = this.escapeHtml(this.formatCurrency(txn.total_amount || totalDebit));
+        const safeDate = Security.escapeHtml(date);
+        const safeStatus = Security.escapeHtml(status);
+        const safeAmount = Security.escapeHtml(this.formatCurrency(txn.total_amount || totalDebit));
 
-        this.elements.detailContent.innerHTML = `
+        Security.safeInnerHTML(this.elements.detailContent, `
             <div class="detail-section">
                 <h4>Transaction Information</h4>
                 <div class="detail-grid">
                     <div class="detail-item">
                         <label>Reference</label>
-                        <span><code>${this.escapeHtml(txn.reference_number || txn.id)}</code></span>
+                        <span><code>${Security.escapeHtml(txn.reference_number || txn.id)}</code></span>
                     </div>
                     <div class="detail-item">
                         <label>Date</label>
@@ -824,12 +824,12 @@ class TransactionsManager {
             </div>
             <div class="detail-section">
                 <h4>Description</h4>
-                <p>${this.escapeHtml(txn.description || 'No description')}</p>
+                <p>${Security.escapeHtml(txn.description || 'No description')}</p>
             </div>
             ${this.renderScenarioSection(txn)}
             ${this.renderJournalLinesTable(txn, totalDebit, totalCredit)}
             ${this.renderReviewSection(status)}
-        `;
+        `);
 
         this.elements.detailActions.innerHTML = this.renderDetailActions(txn.id, status);
     }
@@ -838,15 +838,15 @@ class TransactionsManager {
         if (!txn.scenario) return '';
         return `
             <div class="detail-section scenario-section">
-                <div class="scenario-badge">${this.escapeHtml(txn.scenario)}</div>
-                <p class="scenario-detail">${this.escapeHtml(txn.scenario_detail || '')}</p>
+                <div class="scenario-badge">${Security.escapeHtml(txn.scenario)}</div>
+                <p class="scenario-detail">${Security.escapeHtml(txn.scenario_detail || '')}</p>
             </div>
         `;
     }
 
     renderJournalLinesTable(txn, totalDebit, totalCredit) {
-        const safeTotalDebit = this.escapeHtml(this.formatCurrency(totalDebit));
-        const safeTotalCredit = this.escapeHtml(this.formatCurrency(totalCredit));
+        const safeTotalDebit = Security.escapeHtml(this.formatCurrency(totalDebit));
+        const safeTotalCredit = Security.escapeHtml(this.formatCurrency(totalCredit));
 
         return `
             <div class="detail-section">
@@ -876,9 +876,9 @@ class TransactionsManager {
             }
             return `
                             <tr>
-                                <td>${this.escapeHtml(this.getAccountDisplayName(line.account_id))}</td>
-                                <td class="amount debit">${debitAmount > 0 ? this.escapeHtml(this.formatCurrency(debitAmount)) : ''}</td>
-                                <td class="amount credit">${creditAmount > 0 ? this.escapeHtml(this.formatCurrency(creditAmount)) : ''}</td>
+                                <td>${Security.escapeHtml(this.getAccountDisplayName(line.account_id))}</td>
+                                <td class="amount debit">${debitAmount > 0 ? Security.escapeHtml(this.formatCurrency(debitAmount)) : ''}</td>
+                                <td class="amount credit">${creditAmount > 0 ? Security.escapeHtml(this.formatCurrency(creditAmount)) : ''}</td>
                             </tr>
                         `;
         }).join('')}
@@ -915,7 +915,7 @@ class TransactionsManager {
     }
 
     renderDetailActions(txnId, status) {
-        const safeId = this.escapeHtml(txnId);
+        const safeId = Security.escapeHtml(txnId);
 
         if (status === 'draft') {
             return `
@@ -1125,9 +1125,9 @@ class TransactionsManager {
 
                 accountsHtml += `
                     <div class="impact-account">
-                        <span class="account-name">${this.escapeHtml(accountName)}</span>
+                        <span class="account-name">${Security.escapeHtml(accountName)}</span>
                         <span class="impact-type ${impactType}">${impactLabel}</span>
-                        <span style="font-family: monospace; color: #fff;">${this.escapeHtml(this.formatCurrency(amount))}</span>
+                        <span style="font-family: monospace; color: #fff;">${Security.escapeHtml(this.formatCurrency(amount))}</span>
                     </div>
                 `;
             });
@@ -1275,12 +1275,12 @@ class TransactionsManager {
         // Render flags
         const flags = edgeCases.flags || [];
         if (this.elements.edgeCaseFlags) {
-            this.elements.edgeCaseFlags.innerHTML = flags.map(flag => `
+            Security.safeInnerHTML(this.elements.edgeCaseFlags, flags.map(flag => `
                 <div class="edge-case-flag">
                     <span class="edge-case-type">${this.getEdgeCaseLabel(flag.type)}</span>
-                    <span class="edge-case-description">${this.escapeHtml(flag.description)}</span>
+                    <span class="edge-case-description">${Security.escapeHtml(flag.description)}</span>
                 </div>
-            `).join('');
+            `).join(''));
         }
 
         // Reset submit button
@@ -1349,7 +1349,7 @@ class TransactionsManager {
             'dormant_account': '💤 Dormant Account',
             'duplicate_transaction': '🔁 Possible Duplicate'
         };
-        return labels[type] || `⚠️ ${type.replace(/_/g, ' ')}`;
+        return labels[type] || `⚠️ ${Security.escapeHtml(type.replace(/_/g, ' '))}`;
     }
 
     // ========== Utilities ==========
@@ -1366,12 +1366,7 @@ class TransactionsManager {
         return map[status.toLowerCase()] || 'draft';
     }
 
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+
 
     async logout() {
         try {

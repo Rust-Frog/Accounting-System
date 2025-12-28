@@ -190,13 +190,13 @@
 
         // Revenue accounts
         if (data.revenue_accounts && data.revenue_accounts.length > 0) {
-            elements.revenueBody.innerHTML = data.revenue_accounts.map(acc => `
+            Security.safeInnerHTML(elements.revenueBody, data.revenue_accounts.map(acc => `
                 <tr>
-                    <td class="col-code"><code>${escapeHtml(acc.account_code)}</code></td>
-                    <td class="col-name">${escapeHtml(acc.account_name)}</td>
+                    <td class="col-code"><code>${Security.escapeHtml(acc.account_code)}</code></td>
+                    <td class="col-name">${Security.escapeHtml(acc.account_name)}</td>
                     <td class="col-amount">${formatCurrency(acc.amount_cents / 100)}</td>
                 </tr>
-            `).join('');
+            `).join(''));
         } else {
             elements.revenueBody.innerHTML = `
                 <tr><td colspan="3" class="empty-message">No revenue accounts</td></tr>
@@ -206,13 +206,13 @@
 
         // Expense accounts
         if (data.expense_accounts && data.expense_accounts.length > 0) {
-            elements.expensesBody.innerHTML = data.expense_accounts.map(acc => `
+            Security.safeInnerHTML(elements.expensesBody, data.expense_accounts.map(acc => `
                 <tr>
-                    <td class="col-code"><code>${escapeHtml(acc.account_code)}</code></td>
-                    <td class="col-name">${escapeHtml(acc.account_name)}</td>
+                    <td class="col-code"><code>${Security.escapeHtml(acc.account_code)}</code></td>
+                    <td class="col-name">${Security.escapeHtml(acc.account_name)}</td>
                     <td class="col-amount">${formatCurrency(acc.amount_cents / 100)}</td>
                 </tr>
-            `).join('');
+            `).join(''));
         } else {
             elements.expensesBody.innerHTML = `
                 <tr><td colspan="3" class="empty-message">No expense accounts</td></tr>
@@ -297,9 +297,10 @@
 
     function showError(message) {
         elements.incomeStatementContent.style.display = 'block';
-        elements.revenueBody.innerHTML = `
-            <tr><td colspan="3" class="error-message">Error: ${escapeHtml(message)}</td></tr>
+        const errorHtml = `
+            <tr><td colspan="3" class="error-message">Error: ${Security.escapeHtml(message)}</td></tr>
         `;
+        Security.safeInnerHTML(elements.revenueBody, errorHtml);
         elements.expensesBody.innerHTML = '';
     }
 
@@ -321,12 +322,7 @@
         });
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+
 
     async function logout() {
         try {

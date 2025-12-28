@@ -136,8 +136,10 @@
             // Sort by code
             accounts.sort((a, b) => a.code - b.code);
 
-            elements.filterAccount.innerHTML = '<option value="">Select an account...</option>' +
-                accounts.map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('');
+            Security.safeInnerHTML(elements.filterAccount,
+                '<option value="">Select an account...</option>' +
+                accounts.map(a => `<option value="${a.id}">${Security.escapeHtml(String(a.code))} - ${Security.escapeHtml(a.name)}</option>`).join('')
+            );
 
             if (currentAccountId) {
                 elements.filterAccount.value = currentAccountId;
@@ -219,7 +221,7 @@
             </tr>
         `).join('');
 
-        elements.ledgerBody.innerHTML = rows;
+        Security.safeInnerHTML(elements.ledgerBody, rows);
     }
 
     // Update totals row
@@ -343,12 +345,7 @@
         return id.substring(0, 12) + '...';
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+
 
     async function logout() {
         try {

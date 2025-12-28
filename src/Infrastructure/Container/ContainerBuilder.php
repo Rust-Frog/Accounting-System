@@ -164,8 +164,8 @@ final class ContainerBuilder
             // Register BalanceUpdateListener
             if ($c->has(\Application\Listener\BalanceUpdateListener::class)) {
                 $listener = $c->get(\Application\Listener\BalanceUpdateListener::class);
-                $dispatcher->addListener('transaction.posted', $listener);
-                $dispatcher->addListener('transaction.voided', $listener);
+                $dispatcher->addListener(\Domain\Transaction\Event\TransactionPosted::class, $listener);
+                $dispatcher->addListener(\Domain\Transaction\Event\TransactionVoided::class, $listener);
             }
             
             return $dispatcher;

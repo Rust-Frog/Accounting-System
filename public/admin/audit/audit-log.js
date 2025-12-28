@@ -170,34 +170,34 @@
         hideSelectCompanyState();
         updateLogCount(logs.length);
 
-        elements.auditBody.innerHTML = logs.map(log => `
+        Security.safeInnerHTML(elements.auditBody, logs.map(log => `
             <tr>
                 <td>
                     <span class="timestamp">${formatDateTime(log.created_at)}</span>
                 </td>
                 <td>
                     <div class="actor-cell">
-                        <span class="actor-name">${escapeHtml(log.actor_username || 'System')}</span>
-                        <span class="actor-ip">${escapeHtml(log.actor_ip_address || '-')}</span>
+                        <span class="actor-name">${Security.escapeHtml(log.actor_username || 'System')}</span>
+                        ${log.actor_ip_address ? `<span class="actor-ip">${Security.escapeHtml(log.actor_ip_address)}</span>` : ''}
                     </div>
                 </td>
                 <td>
-                    <span class="activity-type-cell">${escapeHtml(log.activity_type)}</span>
+                    <span class="activity-type-cell">${Security.escapeHtml(log.activity_type)}</span>
                 </td>
                 <td>
                     <div class="entity-cell">
-                        <span class="entity-type">${escapeHtml(log.entity_type)}</span>
-                        <span class="entity-id">${escapeHtml(truncateId(log.entity_id))}</span>
+                        <span class="entity-type">${formatEntityType(log.activity_type, log.entity_type)}</span>
+                        ${shouldShowEntityId(log.activity_type) ? `<span class="entity-id">${Security.escapeHtml(truncateId(log.entity_id))}</span>` : ''}
                     </div>
                 </td>
                 <td>
-                    <span class="category-badge">${escapeHtml(deriveCategory(log.activity_type))}</span>
+                    <span class="category-badge">${Security.escapeHtml(deriveCategory(log.activity_type))}</span>
                 </td>
                 <td>
-                    <span class="severity-badge ${log.severity}">${escapeHtml(log.severity)}</span>
+                    <span class="severity-badge ${log.severity}">${Security.escapeHtml(log.severity)}</span>
                 </td>
             </tr>
-        `).join('');
+        `).join(''));
     }
 
     // Note: loadUserInfo is now handled by sidebar.js
@@ -321,39 +321,39 @@
         hideSelectCompanyState();
         updateLogCount(pagination.total);
 
-        elements.auditBody.innerHTML = logs.map(log => `
+        Security.safeInnerHTML(elements.auditBody, logs.map(log => `
             <tr>
                 <td>
                     <span class="timestamp">${formatDateTime(log.occurred_at)}</span>
                 </td>
                 <td>
                     <div class="actor-cell">
-                        <span class="actor-name">${escapeHtml(log.actor?.username || 'System')}</span>
-                        <span class="actor-ip">${escapeHtml(log.context?.ip_address || '-')}</span>
+                        <span class="actor-name">${Security.escapeHtml(log.actor?.username || 'System')}</span>
+                        <span class="actor-ip">${Security.escapeHtml(log.context?.ip_address || '-')}</span>
                     </div>
                 </td>
                 <td>
-                    <span class="activity-type-cell">${escapeHtml(formatActivityType(log.activity_type))}</span>
+                    <span class="activity-type-cell">${Security.escapeHtml(formatActivityType(log.activity_type))}</span>
                 </td>
                 <td>
                     <div class="entity-cell">
-                        <span class="entity-type">${escapeHtml(log.entity_type)}</span>
-                        <span class="entity-id">${escapeHtml(truncateId(log.entity_id))}</span>
+                        <span class="entity-type">${Security.escapeHtml(log.entity_type)}</span>
+                        <span class="entity-id">${Security.escapeHtml(truncateId(log.entity_id))}</span>
                     </div>
                 </td>
                 <td>
-                    <span class="category-badge">${escapeHtml(formatCategory(log.category))}</span>
+                    <span class="category-badge">${Security.escapeHtml(formatCategory(log.category))}</span>
                 </td>
                 <td>
-                    <span class="severity-badge ${log.severity}">${escapeHtml(log.severity)}</span>
+                    <span class="severity-badge ${log.severity}">${Security.escapeHtml(log.severity)}</span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="viewLogDetail('${log.id}')">
+                    <button class="btn btn-sm btn-secondary" onclick="viewLogDetail('${Security.escapeHtml(String(log.id))}')">
                         View
                     </button>
                 </td>
             </tr>
-        `).join('');
+        `).join(''));
     }
 
     // View log detail
@@ -381,20 +381,20 @@
         elements.detailAction.textContent = log.action || '-';
 
         // Severity with badge
-        elements.detailSeverity.innerHTML = `<span class="severity-badge ${log.severity}">${log.severity}</span>`;
+        Security.safeInnerHTML(elements.detailSeverity, `<span class="severity-badge ${Security.escapeHtml(log.severity)}">${Security.escapeHtml(log.severity)}</span>`);
 
         // Render changes
         if (log.changes && log.changes.length > 0) {
             elements.changesSection.style.display = 'block';
-            elements.detailChanges.innerHTML = log.changes.map(change => `
+            Security.safeInnerHTML(elements.detailChanges, log.changes.map(change => `
                 <div class="change-item">
-                    <span class="change-field">${escapeHtml(change.field)}</span>
+                    <span class="change-field">${Security.escapeHtml(change.field)}</span>
                     <span class="change-arrow">→</span>
-                    <span class="change-old">${escapeHtml(formatValue(change.previous_value))}</span>
+                    <span class="change-old">${Security.escapeHtml(formatValue(change.previous_value))}</span>
                     <span class="change-arrow">→</span>
-                    <span class="change-new">${escapeHtml(formatValue(change.new_value))}</span>
+                    <span class="change-new">${Security.escapeHtml(formatValue(change.new_value))}</span>
                 </div>
-            `).join('');
+            `).join(''));
         } else {
             elements.changesSection.style.display = 'none';
         }
@@ -561,32 +561,52 @@
         return category.replace(/_/g, ' ');
     }
 
+    // Category mappings: keyword -> category
+    const CATEGORY_MAPPINGS = [
+        { keywords: ['login', 'logout', 'auth'], category: 'Authentication' },
+        { keywords: ['user', 'password', 'otp'], category: 'User' },
+        { keywords: ['transaction', 'post', 'void'], category: 'Transaction' },
+        { keywords: ['account', 'ledger'], category: 'Accounting' },
+        { keywords: ['approval', 'approve', 'reject'], category: 'Approval' },
+        { keywords: ['company', 'settings'], category: 'Administration' },
+        { keywords: ['api', 'request'], category: 'Api' },
+    ];
+
     function deriveCategory(activityType) {
         if (!activityType) return '-';
         const type = activityType.toLowerCase();
 
-        if (type.includes('login') || type.includes('logout') || type.includes('auth')) {
-            return 'Authentication';
-        }
-        if (type.includes('user') || type.includes('password') || type.includes('otp')) {
-            return 'User';
-        }
-        if (type.includes('transaction') || type.includes('post') || type.includes('void')) {
-            return 'Transaction';
-        }
-        if (type.includes('account') || type.includes('ledger')) {
-            return 'Accounting';
-        }
-        if (type.includes('approval') || type.includes('approve') || type.includes('reject')) {
-            return 'Approval';
-        }
-        if (type.includes('company') || type.includes('settings')) {
-            return 'Administration';
-        }
-        if (type.includes('api') || type.includes('request')) {
-            return 'Api';
+        for (const mapping of CATEGORY_MAPPINGS) {
+            if (mapping.keywords.some(keyword => type.includes(keyword))) {
+                return mapping.category;
+            }
         }
         return 'System';
+    }
+
+    // Format entity type for cleaner display
+    function formatEntityType(activityType, entityType) {
+        if (!activityType) return entityType || '-';
+        const type = activityType.toLowerCase();
+
+        // For login/logout/auth activities, show friendlier text
+        if (type.includes('login')) return 'Logged in';
+        if (type.includes('logout')) return 'Logged out';
+        if (type.includes('auth.failed')) return 'Auth failed';
+
+        return entityType || '-';
+    }
+
+    // Determine if entity ID should be shown
+    function shouldShowEntityId(activityType) {
+        if (!activityType) return true;
+        const type = activityType.toLowerCase();
+
+        // Hide entity ID for login/logout activities (redundant with actor)
+        if (type.includes('login') || type.includes('logout')) {
+            return false;
+        }
+        return true;
     }
 
     function truncateId(id) {
@@ -605,16 +625,7 @@
         return String(value);
     }
 
-    function escapeHtml(text) {
-        // Use shared Utils if available
-        if (window.Utils && Utils.escapeHtml) {
-            return Utils.escapeHtml(text);
-        }
-        if (text === null || text === undefined) return '';
-        const div = document.createElement('div');
-        div.textContent = String(text);
-        return div.innerHTML;
-    }
+
 
     // Initialize on DOM ready
     if (document.readyState === 'loading') {

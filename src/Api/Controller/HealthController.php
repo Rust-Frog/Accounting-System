@@ -24,20 +24,22 @@ final class HealthController
         $status = [
             'status' => 'up',
             'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+            'version' => '1.0.0',
+            'environment' => $_ENV['APP_ENV'] ?? 'production',
+            'php_version' => PHP_VERSION,
             'services' => [
                 'database' => $this->checkDatabase(),
                 'cache' => $this->checkRedis(),
             ]
         ];
 
-        $statusCode = 200;
         foreach ($status['services'] as $service) {
-            if ($service['status'] !== 'ok') {
+            if ($service['status'] !== 'ok' && $service['status'] !== 'disabled') {
                 $status['status'] = 'degraded';
             }
         }
 
-        return JsonResponse::success($status, $statusCode);
+        return JsonResponse::success($status, 200);
     }
 
     private function checkDatabase(): array

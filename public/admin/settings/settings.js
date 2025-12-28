@@ -321,9 +321,9 @@
             const response = await api.regenerateBackupCodes(password);
             if (response?.data?.backup_codes) {
                 const codesList = document.getElementById('newBackupCodesList');
-                codesList.innerHTML = response.data.backup_codes.map(code =>
-                    `<div class="backup-code">${code}</div>`
-                ).join('');
+                Security.safeInnerHTML(codesList, response.data.backup_codes.map(code =>
+                    `<div class="backup-code">${Security.escapeHtml(code)}</div>`
+                ).join(''));
                 document.getElementById('newBackupCodesDisplay').style.display = 'block';
                 document.getElementById('btnConfirmRegenerateBackup').style.display = 'none';
                 showToast('New backup codes generated', 'success');
@@ -338,14 +338,14 @@
 
     function applyTheme() {
         const theme = currentSettings?.theme || localStorage.getItem('theme') || 'light';
-        
+
         if (theme === 'system') {
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
         } else {
             document.documentElement.setAttribute('data-theme', theme);
         }
-        
+
         localStorage.setItem('theme', theme);
     }
 
