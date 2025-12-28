@@ -27,7 +27,8 @@ final class PeriodCloseController
     use SafeExceptionHandlerTrait;
 
     public function __construct(
-        private readonly ApprovalRepositoryInterface $approvalRepository
+        private readonly ApprovalRepositoryInterface $approvalRepository,
+        private readonly \Domain\Reporting\Repository\ClosedPeriodRepositoryInterface $closedPeriodRepository
     ) {
     }
 
@@ -115,7 +116,7 @@ final class PeriodCloseController
     /**
      * GET /api/v1/companies/{companyId}/period-close
      * 
-     * List period close requests for the company.
+     * List closed periods for the company.
      */
     public function list(ServerRequestInterface $request): ResponseInterface
     {
@@ -125,11 +126,24 @@ final class PeriodCloseController
             return JsonResponse::error('Company ID required', 400);
         }
 
-        // For now, just return pending approvals of type PERIOD_CLOSE
-        // A more complete implementation would filter by approval type
-        return JsonResponse::success([
-            'message' => 'Period close requests are listed in the approvals queue',
-        ]);
+        try {
+            $periods = $this->closedPeriodRepository->findByCompany(CompanyId::fromString($companyId));
+
+            return JsonResponse::success([
+                'data' => array_map(fn($p) => [
+                    'id' => $p->id(),
+                    'start_date' => $p->startDate()->format('Y-m-d'),
+                    'end_date' => $p->endDate()->format('Y-m-d'),
+                    'closed_at' => $p->closedAt()->format('Y-m-d H:i:s'),
+                    'net_income_cents' => $p->netIncomeCents(),
+                    'closed_by' => $p->closedBy()->toString(),
+                    'approval_id' => $p->approvalId(),
+                    'chain_hash' => $p->chainHash()?->toString(),
+                ], $periods)
+            ]);
+        } catch (\Throwable $e) {
+            return JsonResponse::error($this->getSafeErrorMessage($e), 500);
+        }
     }
 
     /**

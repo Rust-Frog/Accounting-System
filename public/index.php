@@ -279,7 +279,8 @@ $router->get('/api/v1/companies/{companyId}/income-statement', [$incomeStatement
 
 // Period Close routes
 $periodCloseController = new \Api\Controller\PeriodCloseController(
-    $container->get(\Domain\Approval\Repository\ApprovalRepositoryInterface::class)
+    $container->get(\Domain\Approval\Repository\ApprovalRepositoryInterface::class),
+    $container->get(\Domain\Reporting\Repository\ClosedPeriodRepositoryInterface::class)
 );
 $router->post('/api/v1/companies/{companyId}/period-close', [$periodCloseController, 'requestClose']);
 $router->get('/api/v1/companies/{companyId}/period-close', [$periodCloseController, 'list']);

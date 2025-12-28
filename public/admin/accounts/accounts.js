@@ -64,29 +64,29 @@ class AccountsManager {
     }
 
     bindEvents() {
-        // Filter events
+        this.bindFilterEvents();
+        this.bindButtonEvents();
+        this.bindModalEvents();
+        this.bindFormEvents();
+    }
+
+    bindFilterEvents() {
         this.elements.filterCompany?.addEventListener('change', () => this.onCompanyChange());
         this.elements.filterType?.addEventListener('change', () => this.applyFilters());
         this.elements.filterStatus?.addEventListener('change', () => this.applyFilters());
+    }
 
-        // Button events
+    bindButtonEvents() {
         document.getElementById('btnNewAccount')?.addEventListener('click', () => this.openCreateModal());
         document.getElementById('btnCreateFirst')?.addEventListener('click', () => this.openCreateModal());
         document.getElementById('btnRefresh')?.addEventListener('click', () => this.loadAccounts());
         document.getElementById('btnLogout')?.addEventListener('click', () => this.logout());
+    }
 
-        // Modal events
+    bindModalEvents() {
         document.getElementById('btnCloseModal')?.addEventListener('click', () => this.closeModal());
         document.getElementById('btnCancelAccount')?.addEventListener('click', () => this.closeModal());
         document.getElementById('btnCloseDetail')?.addEventListener('click', () => this.closeDetailModal());
-
-        // Form events
-        this.elements.accountForm?.addEventListener('submit', (e) => this.handleSubmit(e));
-        this.elements.accountCode?.addEventListener('input', () => this.updateTypePreview());
-
-        // Character counter events
-        this.elements.accountName?.addEventListener('input', (e) => this.updateCharCount(e.target, this.elements.nameCharCount, 100));
-        this.elements.accountDescription?.addEventListener('input', (e) => this.updateCharCount(e.target, this.elements.descCharCount, 255));
 
         // Modal backdrop clicks
         this.elements.accountModal?.querySelector('.modal-backdrop')?.addEventListener('click', () => this.closeModal());
@@ -96,6 +96,15 @@ class AccountsManager {
         this.elements.btnConfirmCancel?.addEventListener('click', () => this.closeConfirmModal());
         this.elements.btnConfirmAction?.addEventListener('click', () => this.handleConfirmAction());
         this.elements.confirmModal?.querySelector('.modal-backdrop')?.addEventListener('click', () => this.closeConfirmModal());
+    }
+
+    bindFormEvents() {
+        this.elements.accountForm?.addEventListener('submit', (e) => this.handleSubmit(e));
+        this.elements.accountCode?.addEventListener('input', () => this.updateTypePreview());
+
+        // Character counter events
+        this.elements.accountName?.addEventListener('input', (e) => this.updateCharCount(e.target, this.elements.nameCharCount, 100));
+        this.elements.accountDescription?.addEventListener('input', (e) => this.updateCharCount(e.target, this.elements.descCharCount, 255));
     }
 
     updateCharCount(input, countEl, max) {
@@ -129,19 +138,8 @@ class AccountsManager {
                 return;
             }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlCompanyId = urlParams.get('company');
-            const storedId = localStorage.getItem('company_id');
-            let targetId = null;
-
-            // Priority: URL > localStorage > first company
-            if (urlCompanyId && companies.some(c => c.id === urlCompanyId)) {
-                targetId = urlCompanyId;
-                localStorage.setItem('company_id', targetId);
-            } else if (storedId && companies.some(c => c.id === storedId)) {
-                targetId = storedId;
-            } else if (companies.length > 0) {
-                targetId = companies[0].id;
+            const targetId = this.determineTargetCompanyId(companies);
+            if (targetId) {
                 localStorage.setItem('company_id', targetId);
             }
 
@@ -166,6 +164,22 @@ class AccountsManager {
             this.elements.filterCompany.innerHTML = '<option value="">Error loading companies</option>';
             this.showNoCompanyState();
         }
+    }
+
+    determineTargetCompanyId(companies) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlCompanyId = urlParams.get('company');
+        const storedId = localStorage.getItem('company_id');
+
+        if (urlCompanyId && companies.some(c => c.id === urlCompanyId)) {
+            return urlCompanyId;
+        }
+
+        if (storedId && companies.some(c => c.id === storedId)) {
+            return storedId;
+        }
+
+        return companies.length > 0 ? companies[0].id : null;
     }
 
     showNoCompanyState() {
@@ -583,25 +597,24 @@ class AccountsManager {
 
     updateTypePreview() {
         const code = parseInt(this.elements.accountCode.value, 10);
+
+        const ranges = [
+            { min: 1000, max: 1999, type: 'asset', label: 'Asset (Debit balance)', hint: 'Assets: 1000-1999' },
+            { min: 2000, max: 2999, type: 'liability', label: 'Liability (Credit balance)', hint: 'Liabilities: 2000-2999' },
+            { min: 3000, max: 3999, type: 'equity', label: 'Equity (Credit balance)', hint: 'Equity: 3000-3999' },
+            { min: 4000, max: 4999, type: 'revenue', label: 'Revenue (Credit balance)', hint: 'Revenue: 4000-4999' },
+            { min: 5000, max: 5999, type: 'expense', label: 'Expense (Debit balance)', hint: 'Expenses: 5000-5999' }
+        ];
+
         let typeHtml = '<span class="type-badge type-unknown">Enter code to determine type</span>';
         let hint = 'Code determines account type automatically';
 
         if (!isNaN(code)) {
-            if (code >= 1000 && code <= 1999) {
-                typeHtml = '<span class="type-badge type-asset">Asset (Debit balance)</span>';
-                hint = 'Assets: 1000-1999';
-            } else if (code >= 2000 && code <= 2999) {
-                typeHtml = '<span class="type-badge type-liability">Liability (Credit balance)</span>';
-                hint = 'Liabilities: 2000-2999';
-            } else if (code >= 3000 && code <= 3999) {
-                typeHtml = '<span class="type-badge type-equity">Equity (Credit balance)</span>';
-                hint = 'Equity: 3000-3999';
-            } else if (code >= 4000 && code <= 4999) {
-                typeHtml = '<span class="type-badge type-revenue">Revenue (Credit balance)</span>';
-                hint = 'Revenue: 4000-4999';
-            } else if (code >= 5000 && code <= 5999) {
-                typeHtml = '<span class="type-badge type-expense">Expense (Debit balance)</span>';
-                hint = 'Expenses: 5000-5999';
+            const match = ranges.find(r => code >= r.min && code <= r.max);
+
+            if (match) {
+                typeHtml = `<span class="type-badge type-${match.type}">${match.label}</span>`;
+                hint = match.hint;
             } else {
                 typeHtml = '<span class="type-badge type-invalid">Invalid code range</span>';
                 hint = 'Code must be between 1000-5999';
@@ -615,10 +628,11 @@ class AccountsManager {
     async handleSubmit(e) {
         e.preventDefault();
 
-        const data = {
-            name: this.elements.accountName.value.trim(),
-            description: this.elements.accountDescription.value.trim() || null,
-        };
+        if (!this.validateForm()) {
+            return;
+        }
+
+        const data = this.buildAccountPayload();
 
         try {
             if (this.editingAccountId) {
@@ -640,44 +654,60 @@ class AccountsManager {
         }
     }
 
+    validateForm() {
+        // Basic validation is handled by HTML5 attributes
+        // Add custom validation here if needed
+        return true;
+    }
+
+    buildAccountPayload() {
+        return {
+            name: this.elements.accountName.value.trim(),
+            description: this.elements.accountDescription.value.trim() || null,
+        };
+    }
+
     toggleAccount(accountId) {
         const account = this.accounts.find(a => a.id === accountId);
         if (!account) return;
 
-        const isDeactivating = account.is_active;
-        const variant = isDeactivating ? 'warning' : 'success';
-        const title = isDeactivating ? 'Deactivate Account' : 'Activate Account';
-        const icon = isDeactivating ? '⚠' : '✓';
-        const message = isDeactivating
-            ? 'This account will be marked as inactive and hidden from transaction forms. You can reactivate it later.'
-            : 'This account will be marked as active and available for use in transactions.';
-        const buttonClass = isDeactivating ? 'btn-warning' : 'btn-success';
-        const buttonText = isDeactivating ? 'Deactivate' : 'Activate';
-
+        const config = this.getToggleConfirmationConfig(account);
         this.showConfirmModal({
-            variant,
-            title,
-            icon,
-            message,
+            ...config,
+            onConfirm: () => this.executeToggleAccount(accountId, config.isDeactivating)
+        });
+    }
+
+    getToggleConfirmationConfig(account) {
+        const isDeactivating = account.is_active;
+        return {
+            isDeactivating,
+            variant: isDeactivating ? 'warning' : 'success',
+            title: isDeactivating ? 'Deactivate Account' : 'Activate Account',
+            icon: isDeactivating ? '⚠' : '✓',
+            message: isDeactivating
+                ? 'This account will be marked as inactive and hidden from transaction forms. You can reactivate it later.'
+                : 'This account will be marked as active and available for use in transactions.',
             accountCode: account.code,
             accountName: account.name,
-            buttonClass,
-            buttonText,
-            onConfirm: async () => {
-                try {
-                    this.elements.btnConfirmAction.classList.add('loading');
-                    await api.toggleAccount(accountId, this.selectedCompanyId);
-                    this.closeConfirmModal();
-                    this.showToast(`Account ${isDeactivating ? 'deactivated' : 'activated'} successfully`, 'success');
-                    await this.loadAccounts();
-                } catch (error) {
-                    console.error('Failed to toggle account:', error);
-                    this.showToast(error.message || 'Failed to update account status', 'error');
-                } finally {
-                    this.elements.btnConfirmAction.classList.remove('loading');
-                }
-            }
-        });
+            buttonClass: isDeactivating ? 'btn-warning' : 'btn-success',
+            buttonText: isDeactivating ? 'Deactivate' : 'Activate'
+        };
+    }
+
+    async executeToggleAccount(accountId, isDeactivating) {
+        try {
+            this.elements.btnConfirmAction.classList.add('loading');
+            await api.toggleAccount(accountId, this.selectedCompanyId);
+            this.closeConfirmModal();
+            this.showToast(`Account ${isDeactivating ? 'deactivated' : 'activated'} successfully`, 'success');
+            await this.loadAccounts();
+        } catch (error) {
+            console.error('Failed to toggle account:', error);
+            this.showToast(error.message || 'Failed to update account status', 'error');
+        } finally {
+            this.elements.btnConfirmAction.classList.remove('loading');
+        }
     }
 
     showConfirmModal(options) {

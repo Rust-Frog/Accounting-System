@@ -336,10 +336,10 @@
         </div>
     </div>
 
-    <!-- Company Details Modal -->
+    <!-- Modify Company Details Modal to use Tabs -->
     <div class="modal" id="detailsModal">
         <div class="modal-backdrop"></div>
-        <div class="modal-content modal-md">
+        <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2 id="detailsModalTitle">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -351,12 +351,83 @@
                 </h2>
                 <button class="modal-close" id="btnCloseDetails">&times;</button>
             </div>
+
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="periods">Accounting Periods</button>
+            </div>
+
             <div class="modal-body" id="detailsContent">
-                <div class="loading-spinner">Loading...</div>
+                <div class="tab-content active" id="tab-overview">
+                    <div class="loading-spinner">Loading...</div>
+                </div>
+                <div class="tab-content" id="tab-periods" style="display: none;">
+                    <div class="periods-header">
+                        <h3>Closed Periods</h3>
+                        <button class="btn btn-sm btn-primary" id="btnClosePeriod">Close New Period</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="periodsTable">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Closed By</th>
+                                    <th>Closed At</th>
+                                    <th>Net Income</th>
+                                </tr>
+                            </thead>
+                            <tbody id="periodsBody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer" id="detailsFooter">
                 <button type="button" class="btn btn-secondary" id="btnCloseDetailsFooter">Close</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Close Period Modal -->
+    <div class="modal" id="closePeriodModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2>Close Accounting Period</h2>
+                <button class="modal-close" id="btnClosePeriodModal">&times;</button>
+            </div>
+            <form id="closePeriodForm">
+                <div class="modal-body">
+                    <p class="text-muted">Closing a period prevents any further transactions from being recorded within
+                        that date range.</p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="periodStartDate">Start Date <span class="required">*</span></label>
+                            <input type="date" class="form-input" id="periodStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="periodEndDate">End Date <span class="required">*</span></label>
+                            <input type="date" class="form-input" id="periodEndDate" required>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        This action will require approval if configured.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelClosePeriod">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitClosePeriod">Close Period</button>
+                </div>
+            </form>
         </div>
     </div>
 

@@ -181,11 +181,8 @@ window.Sidebar = (function () {
             if (typeof Security !== 'undefined' && Security.safeInnerHTML) {
                 Security.safeInnerHTML(sidebarContainer, template);
             } else {
-                // Fallback if Security not loaded yet (should not happen in admin app)
-                const sanitizedTemplate = typeof DOMPurify !== 'undefined'
-                    ? DOMPurify.sanitize(template, { ADD_TAGS: ['svg', 'path'], ADD_ATTR: ['d', 'viewBox', 'fill', 'stroke', 'stroke-width'] })
-                    : template;
-                sidebarContainer.innerHTML = sanitizedTemplate;
+                console.error('Security module not loaded');
+                sidebarContainer.textContent = 'Failed to load sidebar securely.';
             }
 
             // Detect or use provided active page

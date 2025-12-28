@@ -367,7 +367,7 @@
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        toast.textContent = message;
+        Security.safeInnerHTML(toast, Security.escapeHtml(message));
         toast.style.cssText = `
             position: fixed;
             bottom: 20px;
