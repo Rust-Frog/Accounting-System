@@ -33,6 +33,8 @@
         footerTotalCredits: document.getElementById('footerTotalCredits'),
         // States
         emptyState: document.getElementById('emptyState'),
+        // Print
+        btnPrint: document.getElementById('btnPrint'),
     };
 
     // Initialize
@@ -135,15 +137,14 @@
             // Show generated timestamp
             elements.generatedAt.textContent = `Generated: ${formatDateTime(data.generated_at)}`;
 
+            // Show print button
+            if (elements.btnPrint) {
+                elements.btnPrint.style.display = 'inline-flex';
+            }
+
         } catch (error) {
             console.error('Failed to generate trial balance:', error);
             showError(error.message);
-        } finally {
-            // Show export button if we have data (or attempt to)
-            const btnExport = document.getElementById('btnExport');
-            if (btnExport && currentCompanyId) {
-                btnExport.style.display = 'inline-flex';
-            }
         }
     }
 
@@ -222,68 +223,9 @@
 
         elements.btnLogout.addEventListener('click', logout);
 
-        // Export Dropdown
-        const btnExport = document.getElementById('btnExport');
-        const exportMenu = document.getElementById('exportMenu');
-
-        if (btnExport && exportMenu) {
-            btnExport.addEventListener('click', (e) => {
-                e.stopPropagation();
-                btnExport.parentElement.classList.toggle('active');
-
-                // Toggle menu display
-                if (exportMenu.style.display === 'none') {
-                    exportMenu.style.display = 'block';
-                } else {
-                    exportMenu.style.display = 'none';
-                }
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', () => {
-                btnExport.parentElement.classList.remove('active');
-                exportMenu.style.display = 'none';
-            });
-
-            // Handle export options
-            const exportItems = exportMenu.querySelectorAll('.dropdown-item');
-            exportItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    btnExport.parentElement.classList.remove('active');
-                    exportMenu.style.display = 'none';
-
-                    const format = e.target.dataset.format;
-                    exportReport(format);
-                });
-            });
-        }
-    }
-
-    // Export Report
-    async function exportReport(format) {
-        if (!currentCompanyId) return;
-
-        const asOfDate = elements.filterAsOfDate.value || new Date().toISOString().split('T')[0];
-        const filename = `trial_balance_${asOfDate}.${format}`;
-
-        const btnExport = document.getElementById('btnExport');
-        const originalText = btnExport.innerHTML;
-        btnExport.innerHTML = `<span class="loading-spinner" style="width:12px;height:12px;margin-right:5px;border-width:2px;"></span> Exporting...`;
-        btnExport.disabled = true;
-
-        try {
-            await api.download(
-                `/companies/${currentCompanyId}/trial-balance?as_of_date=${asOfDate}&format=${format}`,
-                filename
-            );
-        } catch (error) {
-            console.error('Export failed:', error);
-            alert('Export failed: ' + error.message);
-        } finally {
-            btnExport.innerHTML = originalText;
-            btnExport.disabled = false;
+        // Print button
+        if (elements.btnPrint) {
+            elements.btnPrint.addEventListener('click', () => window.print());
         }
     }
 

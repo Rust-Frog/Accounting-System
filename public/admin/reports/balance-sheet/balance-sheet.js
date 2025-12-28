@@ -30,8 +30,6 @@ class BalanceSheetController {
         this.asOfDateInput = document.getElementById('asOfDate');
         this.generateBtn = document.getElementById('generateBtn');
         this.btnRefresh = document.getElementById('btnRefresh');
-        this.btnExport = document.getElementById('btnExport');
-        this.exportMenu = document.getElementById('exportMenu');
 
         // Summary elements
         this.totalAssetsEl = document.getElementById('totalAssets');
@@ -69,6 +67,7 @@ class BalanceSheetController {
         this.eqEquity = document.getElementById('eqEquity');
         this.equationResult = document.getElementById('equationResult');
         this.generatedAt = document.getElementById('generatedAt');
+        this.btnPrint = document.getElementById('btnPrint');
     }
 
     bindEvents() {
@@ -82,56 +81,6 @@ class BalanceSheetController {
         }
         if (this.btnPrint) {
             this.btnPrint.addEventListener('click', () => window.print());
-        }
-
-        // Export Dropdown Logic
-        if (this.btnExport && this.exportMenu) {
-            this.btnExport.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.exportMenu.style.display = this.exportMenu.style.display === 'block' ? 'none' : 'block';
-            });
-
-            document.addEventListener('click', () => {
-                this.exportMenu.style.display = 'none';
-            });
-
-            this.exportMenu.addEventListener('click', (e) => {
-                if (e.target.classList.contains('dropdown-item')) {
-                    e.preventDefault();
-                    const format = e.target.dataset.format;
-                    this.exportReport(format);
-                }
-            });
-        }
-    }
-
-    async exportReport(format) {
-        const companyId = this.companySelect.value;
-        const asOfDate = this.asOfDateInput.value;
-
-        if (!companyId || !asOfDate) return;
-
-        try {
-            this.btnExport.disabled = true;
-            this.btnExport.innerHTML = `Exporting...`;
-
-            await api.download(`/companies/${companyId}/balance-sheet`, {
-                as_of_date: asOfDate,
-                format: format
-            }, `balance-sheet-${asOfDate}.${format}`);
-
-        } catch (error) {
-            console.error('Export failed:', error);
-            this.showError('Export failed. Please try again.');
-        } finally {
-            this.btnExport.disabled = false;
-            this.btnExport.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                    <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path>
-                    <path d="M7.47 10.78a.75.75 0 0 0 1.06 0l3.75-3.75a.75.75 0 0 0-1.06-1.06L8.75 8.44V1.75a.75.75 0 0 0-1.5 0v6.69L4.78 5.97a.75.75 0 0 0-1.06 1.06l3.75 3.75Z"></path>
-                </svg>
-                Export
-            `;
         }
     }
 
@@ -247,6 +196,11 @@ class BalanceSheetController {
 
         // Update generated timestamp
         this.generatedAt.textContent = `Generated: ${new Date(data.generated_at).toLocaleString()}`;
+
+        // Show print button
+        if (this.btnPrint) {
+            this.btnPrint.style.display = 'inline-flex';
+        }
 
         // Update summary card
         const totalAssets = data.assets?.total_cents || 0;

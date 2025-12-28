@@ -204,25 +204,15 @@
                     <div class="filter-group">
                         <button class="btn btn-primary btn-sm" id="btnGenerate">Generate</button>
                         <button class="btn btn-secondary btn-sm" id="btnRefresh">Refresh</button>
-                        <div class="dropdown" style="display:inline-block;">
-                            <button class="btn btn-secondary btn-sm dropdown-toggle" id="btnExport"
-                                style="display: none;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                                    fill="currentColor">
-                                    <path
-                                        d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z">
-                                    </path>
-                                    <path
-                                        d="M7.47 10.78a.75.75 0 0 0 1.06 0l3.75-3.75a.75.75 0 0 0-1.06-1.06L8.75 8.44V1.75a.75.75 0 0 0-1.5 0v6.69L4.78 5.97a.75.75 0 0 0-1.06 1.06l3.75 3.75Z">
-                                    </path>
-                                </svg>
-                                Export
-                            </button>
-                            <div class="dropdown-menu" id="exportMenu" style="display: none;">
-                                <a href="#" class="dropdown-item" data-format="pdf">Export as PDF</a>
-                                <a href="#" class="dropdown-item" data-format="csv">Export as CSV</a>
-                            </div>
-                        </div>
+                        <button class="btn btn-secondary btn-sm" id="btnPrint" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
+                                fill="currentColor">
+                                <path
+                                    d="M4 2.5A1.5 1.5 0 0 1 5.5 1h5A1.5 1.5 0 0 1 12 2.5v2h.5A1.5 1.5 0 0 1 14 6v4.5a1.5 1.5 0 0 1-1.5 1.5H12v1.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 13.5V12h-.5A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5H4Zm1.5 0v2h5v-2Zm5 9v2.5h-5V11.5Zm1.5-5H4v5h1V10h6v1.5h1ZM3.5 6a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h.5V10h8v1h.5a.5.5 0 0 0 .5-.5V6a.5.5 0 0 0-.5-.5Z">
+                                </path>
+                            </svg>
+                            Print
+                        </button>
                     </div>
                 </div>
 

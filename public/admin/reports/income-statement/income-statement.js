@@ -43,10 +43,7 @@
         netIncomeDisplay: document.getElementById('netIncomeDisplay'),
         closeModalX: document.getElementById('closeModalX'),
         cancelClosePeriod: document.getElementById('cancelClosePeriod'),
-        confirmClosePeriod: document.getElementById('confirmClosePeriod'),
-        // Export
-        btnExport: document.getElementById('btnExport'),
-        exportMenu: document.getElementById('exportMenu')
+        confirmClosePeriod: document.getElementById('confirmClosePeriod')
     };
 
     // Initialize
@@ -234,13 +231,9 @@
             elements.netIncomeAmount.textContent = `(${formatCurrency(Math.abs(netIncome))})`;
         }
 
-        // Show print/export buttons
+        // Show print button
         if (elements.btnPrint) {
             elements.btnPrint.style.display = 'inline-flex';
-        }
-        const btnExport = document.getElementById('btnExport');
-        if (btnExport) {
-            btnExport.style.display = 'inline-flex';
         }
 
         // Show close period button and store net income
@@ -266,46 +259,6 @@
             elements.btnPrint.addEventListener('click', () => window.print());
         }
 
-        // Export Dropdown
-        const btnExport = document.getElementById('btnExport');
-        const exportMenu = document.getElementById('exportMenu');
-
-        if (btnExport && exportMenu) {
-            btnExport.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Toggle active class on dropdown parent
-                btnExport.parentElement.classList.toggle('active');
-
-                // Toggle menu display directly as a fallback
-                if (exportMenu.style.display === 'none') {
-                    exportMenu.style.display = 'block';
-                } else {
-                    exportMenu.style.display = 'none';
-                }
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', () => {
-                btnExport.parentElement.classList.remove('active');
-                exportMenu.style.display = 'none';
-            });
-
-            // Handle export options
-            const exportItems = exportMenu.querySelectorAll('.dropdown-item');
-            exportItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation(); // Prevent closing immediately (?) or let it buble to close
-                    // Actually let it close
-                    btnExport.parentElement.classList.remove('active');
-                    exportMenu.style.display = 'none';
-
-                    const format = e.target.dataset.format;
-                    exportReport(format);
-                });
-            });
-        }
-
         // Close Period Modal
         if (elements.btnClosePeriod) {
             elements.btnClosePeriod.addEventListener('click', openClosePeriodModal);
@@ -318,33 +271,6 @@
         }
         if (elements.confirmClosePeriod) {
             elements.confirmClosePeriod.addEventListener('click', submitClosePeriod);
-        }
-    }
-
-    // Export Report
-    async function exportReport(format) {
-        if (!currentCompanyId) return;
-
-        const startDate = elements.filterStartDate.value;
-        const endDate = elements.filterEndDate.value;
-        const filename = `income_statement_${startDate}_${endDate}.${format}`;
-
-        const btnExport = document.getElementById('btnExport');
-        const originalText = btnExport.innerHTML;
-        btnExport.innerHTML = `<span class="loading-spinner" style="width:12px;height:12px;margin-right:5px;border-width:2px;"></span> Exporting...`;
-        btnExport.disabled = true;
-
-        try {
-            await api.download(
-                `/companies/${currentCompanyId}/income-statement?start_date=${startDate}&end_date=${endDate}&format=${format}`,
-                filename
-            );
-        } catch (error) {
-            console.error('Export failed:', error);
-            alert('Export failed: ' + error.message);
-        } finally {
-            btnExport.innerHTML = originalText;
-            btnExport.disabled = false;
         }
     }
 
