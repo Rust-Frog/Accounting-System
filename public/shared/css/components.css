@@ -548,6 +548,42 @@
     text-align: center;
 }
 
-.text-mono {
-    font-family: 'Fira Code', monospace;
+
+/* ========================= */
+/* Dropdown Menu */
+/* ========================= */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--bg-tertiary, #1a1a1f);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--radius-sm, 6px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 50;
+    min-width: 150px;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary, #ffffff);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: background 0.15s ease;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown.active .dropdown-menu {
+    display: block !important;
 }

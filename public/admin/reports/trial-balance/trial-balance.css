@@ -157,13 +157,17 @@
 
 /* ========== Type Badges ========== */
 .type-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     padding: 0.2rem 0.5rem;
     border-radius: var(--radius-sm);
+    line-height: 1;
 }
 
 .type-badge.type-asset {

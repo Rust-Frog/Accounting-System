@@ -186,33 +186,6 @@
                 </div>
                 <div class="header-actions">
                     <span class="generated-at" id="generatedAt"></span>
-                    <button class="btn btn-secondary" id="btnRefresh">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                            fill="currentColor">
-                            <path
-                                d="M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z">
-                            </path>
-                        </svg>
-                        Refresh
-                    </button>
-                    <button class="btn btn-secondary" id="btnPrint" style="display: none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                            fill="currentColor">
-                            <path
-                                d="M4 2.5a.75.75 0 0 0-.75.75v1.5H2.5a1.5 1.5 0 0 0-1.5 1.5v4.5a1.5 1.5 0 0 0 1.5 1.5h.75v.75a.75.75 0 0 0 .75.75h8a.75.75 0 0 0 .75-.75v-.75h.75a1.5 1.5 0 0 0 1.5-1.5v-4.5a1.5 1.5 0 0 0-1.5-1.5h-.75v-1.5a.75.75 0 0 0-.75-.75Zm7.5 1.5v1h-7v-1Zm-7.5 8h8v-2.5h-8Zm-1.5-2.5v2.5H2.5v-4.5h11v4.5h-.75V9.5a.75.75 0 0 0-.75-.75H4a.75.75 0 0 0-.75.75Z">
-                            </path>
-                        </svg>
-                        Print
-                    </button>
-                    <button class="btn btn-primary" id="btnClosePeriod" style="display: none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                            fill="currentColor">
-                            <path
-                                d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm3.78-9.72a.751.751 0 0 0-.018-1.042.751.751 0 0 0-1.042-.018L6.75 9.19 5.28 7.72a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042l2 2a.75.75 0 0 0 1.06 0Z">
-                            </path>
-                        </svg>
-                        Close Period
-                    </button>
                 </div>
             </header>
 
@@ -233,15 +206,45 @@
                         <label class="filter-label">To</label>
                         <input type="date" id="filterEndDate" class="form-input">
                     </div>
-                    <button class="btn btn-primary" id="btnGenerate">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                            fill="currentColor">
-                            <path
-                                d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z">
-                            </path>
-                        </svg>
-                        Generate
-                    </button>
+                    <div class="filter-group">
+                        <button class="btn btn-primary btn-sm" id="btnGenerate">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
+                                fill="currentColor">
+                                <path
+                                    d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z">
+                                </path>
+                            </svg>
+                            Generate
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="btnRefresh">
+                            Refresh
+                        </button>
+                        <div class="dropdown" style="display:inline-block;">
+                            <button class="btn btn-secondary btn-sm dropdown-toggle" id="btnExport"
+                                style="display: none;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
+                                    fill="currentColor">
+                                    <path
+                                        d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z">
+                                    </path>
+                                    <path
+                                        d="M7.47 10.78a.75.75 0 0 0 1.06 0l3.75-3.75a.75.75 0 0 0-1.06-1.06L8.75 8.44V1.75a.75.75 0 0 0-1.5 0v6.69L4.78 5.97a.75.75 0 0 0-1.06 1.06l3.75 3.75Z">
+                                    </path>
+                                </svg>
+                                Export
+                            </button>
+                            <div class="dropdown-menu" id="exportMenu" style="display: none;">
+                                <a href="#" class="dropdown-item" data-format="pdf">Export as PDF</a>
+                                <a href="#" class="dropdown-item" data-format="csv">Export as CSV</a>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="btnPrint" style="display: none;">
+                            Print
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="btnClosePeriod" style="display: none;">
+                            Close Period
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Summary Card -->

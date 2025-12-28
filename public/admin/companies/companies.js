@@ -269,9 +269,7 @@
         }
     }
 
-    `;
-        }
-    }
+
 
     // Switch tab
     function switchTab(tabName) {
@@ -286,7 +284,7 @@
 
         // Update content
         elements.tabContents.forEach(content => {
-            if (content.id === `tab - ${ tabName } `) {
+            if (content.id === `tab-${tabName}`) {
                 content.style.display = 'block';
                 content.classList.add('active');
             } else {
@@ -299,20 +297,20 @@
     // Load closed periods
     async function loadClosedPeriods(companyId) {
         if (!companyId) return;
-        
+
         const tbody = elements.periodsBody;
         tbody.innerHTML = '<tr><td colspan="4"><div class="loading-spinner">Loading periods...</div></td></tr>';
 
         try {
-            const response = await api.get(`/ companies / ${ companyId }/period-close`);
-    const periods = response.data || [];
+            const response = await api.get(`/ companies / ${companyId}/period-close`);
+            const periods = response.data || [];
 
-    if (periods.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No closed periods found.</td></tr>';
-        return;
-    }
+            if (periods.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No closed periods found.</td></tr>';
+                return;
+            }
 
-    tbody.innerHTML = periods.map(period => `
+            tbody.innerHTML = periods.map(period => `
                 <tr>
                     <td>
                         <div>${formatDate(period.start_date)} - ${formatDate(period.end_date)}</div>
@@ -327,84 +325,84 @@
                 </tr>
             `).join('');
 
-} catch (error) {
-    console.error('Failed to load closed periods:', error);
-    tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Failed to load periods.</td></tr>';
-}
-    }
-
-// Open Close Period Modal
-function openClosePeriodModal() {
-    if (!currentCompany) return;
-
-    elements.closePeriodModal.classList.add('active');
-    elements.closePeriodForm.reset();
-
-    // Set default dates based on last closed period or current month
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    elements.periodStartDate.value = firstDay.toISOString().split('T')[0];
-    elements.periodEndDate.value = lastDay.toISOString().split('T')[0];
-}
-
-// Close Close Period Modal
-function closeClosePeriodModal() {
-    elements.closePeriodModal.classList.remove('active');
-    elements.closePeriodForm.reset();
-}
-
-// Handle Close Period Submit
-async function handleClosePeriodSubmit(e) {
-    e.preventDefault();
-
-    const startDate = elements.periodStartDate.value;
-    const endDate = elements.periodEndDate.value;
-
-    if (!startDate || !endDate) {
-        alert('Please select start and end dates.');
-        return;
-    }
-
-    if (new Date(startDate) > new Date(endDate)) {
-        alert('Start date must be before end date.');
-        return;
-    }
-
-    elements.btnSubmitClosePeriod.disabled = true;
-    elements.btnSubmitClosePeriod.textContent = 'Closing...';
-
-    try {
-        await api.post(`/companies/${currentCompany.id}/period-close`, {
-            start_date: startDate,
-            end_date: endDate
-        });
-
-        closeClosePeriodModal();
-        // Refresh periods list
-        if (currentCompany) {
-            await loadClosedPeriods(currentCompany.id);
-            // Switch to periods tab to show result
-            switchTab('periods');
+        } catch (error) {
+            console.error('Failed to load closed periods:', error);
+            tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Failed to load periods.</td></tr>';
         }
-        alert('Period closed successfully.');
-    } catch (error) {
-        console.error('Failed to close period:', error);
-        alert(error.message || 'Failed to close period. Please try again.');
-    } finally {
-        elements.btnSubmitClosePeriod.disabled = false;
-        elements.btnSubmitClosePeriod.textContent = 'Close Period';
     }
-}
 
-// Render company details
-function renderCompanyDetails(company) {
-    const address = company.address || {};
-    const hasAddress = address.street && address.street !== 'Not Provided';
+    // Open Close Period Modal
+    function openClosePeriodModal() {
+        if (!currentCompany) return;
 
-    const detailsContainer = elements.detailsContent.querySelector('#tab-overview');
-    detailsContainer.innerHTML = `
+        elements.closePeriodModal.classList.add('active');
+        elements.closePeriodForm.reset();
+
+        // Set default dates based on last closed period or current month
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        elements.periodStartDate.value = firstDay.toISOString().split('T')[0];
+        elements.periodEndDate.value = lastDay.toISOString().split('T')[0];
+    }
+
+    // Close Close Period Modal
+    function closeClosePeriodModal() {
+        elements.closePeriodModal.classList.remove('active');
+        elements.closePeriodForm.reset();
+    }
+
+    // Handle Close Period Submit
+    async function handleClosePeriodSubmit(e) {
+        e.preventDefault();
+
+        const startDate = elements.periodStartDate.value;
+        const endDate = elements.periodEndDate.value;
+
+        if (!startDate || !endDate) {
+            alert('Please select start and end dates.');
+            return;
+        }
+
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('Start date must be before end date.');
+            return;
+        }
+
+        elements.btnSubmitClosePeriod.disabled = true;
+        elements.btnSubmitClosePeriod.textContent = 'Closing...';
+
+        try {
+            await api.post(`/companies/${currentCompany.id}/period-close`, {
+                start_date: startDate,
+                end_date: endDate
+            });
+
+            closeClosePeriodModal();
+            // Refresh periods list
+            if (currentCompany) {
+                await loadClosedPeriods(currentCompany.id);
+                // Switch to periods tab to show result
+                switchTab('periods');
+            }
+            alert('Period closed successfully.');
+        } catch (error) {
+            console.error('Failed to close period:', error);
+            alert(error.message || 'Failed to close period. Please try again.');
+        } finally {
+            elements.btnSubmitClosePeriod.disabled = false;
+            elements.btnSubmitClosePeriod.textContent = 'Close Period';
+        }
+    }
+
+    // Render company details
+    function renderCompanyDetails(company) {
+        const address = company.address || {};
+        const hasAddress = address.street && address.street !== 'Not Provided';
+
+        const detailsContainer = elements.detailsContent.querySelector('#tab-overview');
+        detailsContainer.innerHTML = `
             <div class="details-grid">
                 <div class="detail-row">
                     <span class="detail-label">Company Name</span>
@@ -441,391 +439,391 @@ function renderCompanyDetails(company) {
             </div>
         `;
 
-    // Update footer with action buttons
-    const actionButtons = getDetailActionButtons(company);
-    elements.detailsFooter.innerHTML = `
+        // Update footer with action buttons
+        const actionButtons = getDetailActionButtons(company);
+        elements.detailsFooter.innerHTML = `
             ${actionButtons}
             <button type="button" class="btn btn-secondary" id="btnCloseDetailsFooter">Close</button>
         `;
 
-    // Re-attach close event
-    document.getElementById('btnCloseDetailsFooter').addEventListener('click', closeDetailsModal);
-}
-
-// Get action buttons for details modal
-function getDetailActionButtons(company) {
-    const buttons = [];
-
-    if (company.status === 'pending') {
-        buttons.push('<button class="btn btn-success" data-action="activate">Activate</button>');
+        // Re-attach close event
+        document.getElementById('btnCloseDetailsFooter').addEventListener('click', closeDetailsModal);
     }
 
-    if (company.status === 'active') {
-        buttons.push('<button class="btn btn-warning" data-action="suspend">Suspend</button>');
-        buttons.push('<button class="btn btn-danger" data-action="deactivate">Void</button>');
-    }
+    // Get action buttons for details modal
+    function getDetailActionButtons(company) {
+        const buttons = [];
 
-    if (company.status === 'suspended') {
-        buttons.push('<button class="btn btn-success" data-action="reactivate">Reactivate</button>');
-        buttons.push('<button class="btn btn-danger" data-action="deactivate">Void</button>');
-    }
-
-    return buttons.join(' ');
-}
-
-// Format address
-function formatAddress(address) {
-    const parts = [];
-    if (address.street) parts.push(escapeHtml(address.street));
-
-    const cityState = [];
-    if (address.city) cityState.push(escapeHtml(address.city));
-    if (address.state) cityState.push(escapeHtml(address.state));
-    if (cityState.length > 0) parts.push(cityState.join(', '));
-
-    if (address.postal_code) parts.push(escapeHtml(address.postal_code));
-    if (address.country) parts.push(escapeHtml(address.country));
-
-    return parts.join('<br>');
-}
-
-// Close details modal
-function closeDetailsModal() {
-    elements.detailsModal.classList.remove('active');
-    currentCompany = null;
-}
-
-// Open confirm modal
-function openConfirmModal(action, company) {
-    pendingAction = { action, companyId: company.id };
-
-    const actionLabels = {
-        activate: 'Activate',
-        suspend: 'Suspend',
-        reactivate: 'Reactivate',
-        deactivate: 'Void Company'
-    };
-
-    const actionMessages = {
-        activate: `Are you sure you want to activate "${escapeHtml(company.name)}"? This will allow the company to operate.`,
-        suspend: `Are you sure you want to suspend "${escapeHtml(company.name)}"? This will temporarily disable the company.`,
-        reactivate: `Are you sure you want to reactivate "${escapeHtml(company.name)}"? This will restore the company to active status.`,
-        deactivate: `Are you sure you want to permanently void "${escapeHtml(company.name)}"? This action cannot be undone.`
-    };
-
-    elements.confirmModalTitle.textContent = `${actionLabels[action]} Company`;
-    elements.confirmMessage.textContent = actionMessages[action];
-
-    // Show reason field for suspend and deactivate
-    if (action === 'suspend' || action === 'deactivate') {
-        elements.reasonGroup.style.display = 'block';
-        elements.actionReason.value = '';
-    } else {
-        elements.reasonGroup.style.display = 'none';
-    }
-
-    // Update button style
-    if (action === 'activate' || action === 'reactivate') {
-        elements.btnConfirmAction.className = 'btn btn-success';
-    } else if (action === 'suspend') {
-        elements.btnConfirmAction.className = 'btn btn-warning';
-    } else {
-        elements.btnConfirmAction.className = 'btn btn-danger';
-    }
-
-    elements.confirmModal.classList.add('active');
-}
-
-// Close confirm modal
-function closeConfirmModal() {
-    elements.confirmModal.classList.remove('active');
-    pendingAction = null;
-    elements.actionReason.value = '';
-}
-
-// Execute status action
-async function executeAction() {
-    if (!pendingAction) return;
-
-    const { action, companyId } = pendingAction;
-    const reason = elements.actionReason.value.trim();
-
-    elements.btnConfirmAction.disabled = true;
-    elements.btnConfirmAction.textContent = 'Processing...';
-
-    try {
-        const payload = {};
-        if (action === 'suspend' || action === 'deactivate') {
-            payload.reason = reason || 'No reason provided';
+        if (company.status === 'pending') {
+            buttons.push('<button class="btn btn-success" data-action="activate">Activate</button>');
         }
 
-        await api.post(`/companies/${companyId}/${action}`, payload);
+        if (company.status === 'active') {
+            buttons.push('<button class="btn btn-warning" data-action="suspend">Suspend</button>');
+            buttons.push('<button class="btn btn-danger" data-action="deactivate">Void</button>');
+        }
 
-        closeConfirmModal();
-        closeDetailsModal();
-        await loadCompanies();
-    } catch (error) {
-        console.error(`Failed to ${action} company:`, error);
-        alert(error.message || `Failed to ${action} company. Please try again.`);
-    } finally {
-        elements.btnConfirmAction.disabled = false;
-        elements.btnConfirmAction.textContent = 'Confirm';
-    }
-}
+        if (company.status === 'suspended') {
+            buttons.push('<button class="btn btn-success" data-action="reactivate">Reactivate</button>');
+            buttons.push('<button class="btn btn-danger" data-action="deactivate">Void</button>');
+        }
 
-// Handle form submit
-async function handleSubmit(e) {
-    e.preventDefault();
-
-    const name = elements.companyName.value.trim();
-    const legalName = elements.legalName.value.trim();
-    const taxId = elements.taxId.value.trim();
-    const currency = elements.currency.value;
-
-    // Validate required fields
-    if (!name || !legalName || !taxId) {
-        alert('Please fill in all required fields.');
-        return;
+        return buttons.join(' ');
     }
 
-    // Build payload
-    const payload = {
-        name,
-        legal_name: legalName,
-        tax_id: taxId,
-        currency,
-    };
+    // Format address
+    function formatAddress(address) {
+        const parts = [];
+        if (address.street) parts.push(escapeHtml(address.street));
 
-    // Add address if any field is filled
-    const street = elements.street.value.trim();
-    const city = elements.city.value.trim();
-    const state = elements.state.value.trim();
-    const postalCode = elements.postalCode.value.trim();
-    const country = elements.country.value.trim();
+        const cityState = [];
+        if (address.city) cityState.push(escapeHtml(address.city));
+        if (address.state) cityState.push(escapeHtml(address.state));
+        if (cityState.length > 0) parts.push(cityState.join(', '));
 
-    if (street || city) {
-        payload.address = {
-            street: street || 'Not Provided',
-            city: city || 'Not Provided',
-            state: state || null,
-            postal_code: postalCode || null,
-            country: country || 'US',
+        if (address.postal_code) parts.push(escapeHtml(address.postal_code));
+        if (address.country) parts.push(escapeHtml(address.country));
+
+        return parts.join('<br>');
+    }
+
+    // Close details modal
+    function closeDetailsModal() {
+        elements.detailsModal.classList.remove('active');
+        currentCompany = null;
+    }
+
+    // Open confirm modal
+    function openConfirmModal(action, company) {
+        pendingAction = { action, companyId: company.id };
+
+        const actionLabels = {
+            activate: 'Activate',
+            suspend: 'Suspend',
+            reactivate: 'Reactivate',
+            deactivate: 'Void Company'
         };
+
+        const actionMessages = {
+            activate: `Are you sure you want to activate "${escapeHtml(company.name)}"? This will allow the company to operate.`,
+            suspend: `Are you sure you want to suspend "${escapeHtml(company.name)}"? This will temporarily disable the company.`,
+            reactivate: `Are you sure you want to reactivate "${escapeHtml(company.name)}"? This will restore the company to active status.`,
+            deactivate: `Are you sure you want to permanently void "${escapeHtml(company.name)}"? This action cannot be undone.`
+        };
+
+        elements.confirmModalTitle.textContent = `${actionLabels[action]} Company`;
+        elements.confirmMessage.textContent = actionMessages[action];
+
+        // Show reason field for suspend and deactivate
+        if (action === 'suspend' || action === 'deactivate') {
+            elements.reasonGroup.style.display = 'block';
+            elements.actionReason.value = '';
+        } else {
+            elements.reasonGroup.style.display = 'none';
+        }
+
+        // Update button style
+        if (action === 'activate' || action === 'reactivate') {
+            elements.btnConfirmAction.className = 'btn btn-success';
+        } else if (action === 'suspend') {
+            elements.btnConfirmAction.className = 'btn btn-warning';
+        } else {
+            elements.btnConfirmAction.className = 'btn btn-danger';
+        }
+
+        elements.confirmModal.classList.add('active');
     }
 
-    // Disable submit button
-    elements.btnSubmit.disabled = true;
-    elements.btnSubmit.textContent = 'Creating...';
-
-    try {
-        await api.post('/companies', payload);
-        closeModal();
-        await loadCompanies();
-    } catch (error) {
-        console.error('Failed to create company:', error);
-        alert(error.message || 'Failed to create company. Please try again.');
-    } finally {
-        elements.btnSubmit.disabled = false;
-        elements.btnSubmit.textContent = 'Create Company';
-    }
-}
-
-// Handle logout
-async function handleLogout() {
-    try {
-        await api.post('/auth/logout');
-        window.location.href = '/login.html';
-    } catch (error) {
-        console.error('Logout failed:', error);
-        window.location.href = '/login.html';
-    }
-}
-
-// Handle table click (event delegation)
-function handleTableClick(e) {
-    const button = e.target.closest('[data-action]');
-    if (!button) return;
-
-    const action = button.dataset.action;
-    const companyId = button.dataset.id;
-
-    if (action === 'view') {
-        openDetailsModal(companyId);
-        return;
+    // Close confirm modal
+    function closeConfirmModal() {
+        elements.confirmModal.classList.remove('active');
+        pendingAction = null;
+        elements.actionReason.value = '';
     }
 
-    // Find company for status actions
-    const company = companies.find(c => c.id === companyId);
-    if (company) {
-        openConfirmModal(action, company);
-    }
-}
+    // Execute status action
+    async function executeAction() {
+        if (!pendingAction) return;
 
-// Handle details footer click (event delegation)
-function handleDetailsFooterClick(e) {
-    const button = e.target.closest('[data-action]');
-    if (!button || !currentCompany) return;
+        const { action, companyId } = pendingAction;
+        const reason = elements.actionReason.value.trim();
 
-    const action = button.dataset.action;
-    openConfirmModal(action, currentCompany);
-}
+        elements.btnConfirmAction.disabled = true;
+        elements.btnConfirmAction.textContent = 'Processing...';
 
-// Setup event listeners
-function setupEventListeners() {
-    // Tab switching
-    elements.modalTabs?.addEventListener('click', handleTabClick);
+        try {
+            const payload = {};
+            if (action === 'suspend' || action === 'deactivate') {
+                payload.reason = reason || 'No reason provided';
+            }
 
-    // Filter change
-    elements.filterStatus.addEventListener('change', handleFilterChange);
+            await api.post(`/companies/${companyId}/${action}`, payload);
 
-    // Close Period Modal
-    elements.btnClosePeriod?.addEventListener('click', openClosePeriodModal);
-    elements.btnClosePeriodModal?.addEventListener('click', closeClosePeriodModal);
-    elements.btnCancelClosePeriod?.addEventListener('click', closeClosePeriodModal);
-    elements.closePeriodForm?.addEventListener('submit', handleClosePeriodSubmit);
-
-    // New company buttons
-    elements.btnNewCompany.addEventListener('click', openModal);
-    elements.btnCreateFirst?.addEventListener('click', openModal);
-
-    // Modal controls
-    elements.btnCloseModal.addEventListener('click', closeModal);
-    elements.btnCancelModal.addEventListener('click', closeModal);
-    elements.companyModal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
-
-    // Form submit
-    elements.companyForm.addEventListener('submit', handleSubmit);
-
-    // Form submit
-    elements.companyForm.addEventListener('submit', handleSubmit);
-
-    // Filter change
-    // elements.filterStatus.addEventListener('change', handleFilterChange); // Moved up
-
-    // Refresh
-    elements.btnRefresh.addEventListener('click', loadCompanies);
-
-    // Logout
-    elements.btnLogout.addEventListener('click', handleLogout);
-
-    // Table action buttons (event delegation)
-    elements.companiesBody.addEventListener('click', handleTableClick);
-
-    // Details modal
-    elements.btnCloseDetails.addEventListener('click', closeDetailsModal);
-    elements.btnCloseDetailsFooter.addEventListener('click', closeDetailsModal);
-    elements.detailsModal.querySelector('.modal-backdrop').addEventListener('click', closeDetailsModal);
-    elements.detailsFooter.addEventListener('click', handleDetailsFooterClick);
-
-    // Confirm modal
-    elements.btnCloseConfirm.addEventListener('click', closeConfirmModal);
-    elements.btnCancelConfirm.addEventListener('click', closeConfirmModal);
-    elements.confirmModal.querySelector('.modal-backdrop').addEventListener('click', closeConfirmModal);
-    elements.btnConfirmAction.addEventListener('click', executeAction);
-
-    // Close modals on Escape key
-    document.addEventListener('keydown', handleGlobalKeydown);
-}
-
-// Handle tab click
-function handleTabClick(e) {
-    if (e.target.classList.contains('tab-btn')) {
-        switchTab(e.target.dataset.tab);
-    }
-}
-
-// Handle filter change
-function handleFilterChange(e) {
-    currentFilter = e.target.value;
-    renderCompanies();
-}
-
-// Handle global keydown (Close modals on Escape)
-function handleGlobalKeydown(e) {
-    if (e.key === 'Escape') {
-        if (elements.confirmModal.classList.contains('active')) {
             closeConfirmModal();
-        } else if (elements.detailsModal.classList.contains('active')) {
             closeDetailsModal();
-        } else if (elements.closePeriodModal.classList.contains('active')) {
-            closeClosePeriodModal();
-        } else if (elements.companyModal.classList.contains('active')) {
-            closeModal();
+            await loadCompanies();
+        } catch (error) {
+            console.error(`Failed to ${action} company:`, error);
+            alert(error.message || `Failed to ${action} company. Please try again.`);
+        } finally {
+            elements.btnConfirmAction.disabled = false;
+            elements.btnConfirmAction.textContent = 'Confirm';
         }
     }
-}
 
-// Utility functions - delegate to shared Utils when available
-function escapeHtml(str) {
-    if (window.Utils && Utils.escapeHtml) {
-        return Utils.escapeHtml(str);
+    // Handle form submit
+    async function handleSubmit(e) {
+        e.preventDefault();
+
+        const name = elements.companyName.value.trim();
+        const legalName = elements.legalName.value.trim();
+        const taxId = elements.taxId.value.trim();
+        const currency = elements.currency.value;
+
+        // Validate required fields
+        if (!name || !legalName || !taxId) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+
+        // Build payload
+        const payload = {
+            name,
+            legal_name: legalName,
+            tax_id: taxId,
+            currency,
+        };
+
+        // Add address if any field is filled
+        const street = elements.street.value.trim();
+        const city = elements.city.value.trim();
+        const state = elements.state.value.trim();
+        const postalCode = elements.postalCode.value.trim();
+        const country = elements.country.value.trim();
+
+        if (street || city) {
+            payload.address = {
+                street: street || 'Not Provided',
+                city: city || 'Not Provided',
+                state: state || null,
+                postal_code: postalCode || null,
+                country: country || 'US',
+            };
+        }
+
+        // Disable submit button
+        elements.btnSubmit.disabled = true;
+        elements.btnSubmit.textContent = 'Creating...';
+
+        try {
+            await api.post('/companies', payload);
+            closeModal();
+            await loadCompanies();
+        } catch (error) {
+            console.error('Failed to create company:', error);
+            alert(error.message || 'Failed to create company. Please try again.');
+        } finally {
+            elements.btnSubmit.disabled = false;
+            elements.btnSubmit.textContent = 'Create Company';
+        }
     }
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
 
-function capitalizeFirst(str) {
-    if (window.Utils && Utils.capitalizeFirst) {
-        return Utils.capitalizeFirst(str);
+    // Handle logout
+    async function handleLogout() {
+        try {
+            await api.post('/auth/logout');
+            window.location.href = '/login.html';
+        } catch (error) {
+            console.error('Logout failed:', error);
+            window.location.href = '/login.html';
+        }
     }
-    if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
 
-function formatCurrency(amount, currency = 'USD') {
-    if (window.Utils && Utils.formatCurrency) {
-        return Utils.formatCurrency(amount, currency);
+    // Handle table click (event delegation)
+    function handleTableClick(e) {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+
+        const action = button.dataset.action;
+        const companyId = button.dataset.id;
+
+        if (action === 'view') {
+            openDetailsModal(companyId);
+            return;
+        }
+
+        // Find company for status actions
+        const company = companies.find(c => c.id === companyId);
+        if (company) {
+            openConfirmModal(action, company);
+        }
     }
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(amount);
-}
 
-function formatStatus(status) {
-    if (window.Utils && Utils.formatCompanyStatus) {
-        return Utils.formatCompanyStatus(status);
+    // Handle details footer click (event delegation)
+    function handleDetailsFooterClick(e) {
+        const button = e.target.closest('[data-action]');
+        if (!button || !currentCompany) return;
+
+        const action = button.dataset.action;
+        openConfirmModal(action, currentCompany);
     }
-    const statusLabels = {
-        'pending': 'Pending',
-        'active': 'Active',
-        'suspended': 'Suspended',
-        'deactivated': 'Voided'
-    };
-    return statusLabels[status] || capitalizeFirst(status);
-}
 
-function formatDate(dateStr) {
-    if (window.Utils && Utils.formatDate) {
-        return Utils.formatDate(dateStr);
+    // Setup event listeners
+    function setupEventListeners() {
+        // Tab switching
+        elements.modalTabs?.addEventListener('click', handleTabClick);
+
+        // Filter change
+        elements.filterStatus.addEventListener('change', handleFilterChange);
+
+        // Close Period Modal
+        elements.btnClosePeriod?.addEventListener('click', openClosePeriodModal);
+        elements.btnClosePeriodModal?.addEventListener('click', closeClosePeriodModal);
+        elements.btnCancelClosePeriod?.addEventListener('click', closeClosePeriodModal);
+        elements.closePeriodForm?.addEventListener('submit', handleClosePeriodSubmit);
+
+        // New company buttons
+        elements.btnNewCompany.addEventListener('click', openModal);
+        elements.btnCreateFirst?.addEventListener('click', openModal);
+
+        // Modal controls
+        elements.btnCloseModal.addEventListener('click', closeModal);
+        elements.btnCancelModal.addEventListener('click', closeModal);
+        elements.companyModal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+
+        // Form submit
+        elements.companyForm.addEventListener('submit', handleSubmit);
+
+        // Form submit
+        elements.companyForm.addEventListener('submit', handleSubmit);
+
+        // Filter change
+        // elements.filterStatus.addEventListener('change', handleFilterChange); // Moved up
+
+        // Refresh
+        elements.btnRefresh.addEventListener('click', loadCompanies);
+
+        // Logout
+        elements.btnLogout.addEventListener('click', handleLogout);
+
+        // Table action buttons (event delegation)
+        elements.companiesBody.addEventListener('click', handleTableClick);
+
+        // Details modal
+        elements.btnCloseDetails.addEventListener('click', closeDetailsModal);
+        elements.btnCloseDetailsFooter.addEventListener('click', closeDetailsModal);
+        elements.detailsModal.querySelector('.modal-backdrop').addEventListener('click', closeDetailsModal);
+        elements.detailsFooter.addEventListener('click', handleDetailsFooterClick);
+
+        // Confirm modal
+        elements.btnCloseConfirm.addEventListener('click', closeConfirmModal);
+        elements.btnCancelConfirm.addEventListener('click', closeConfirmModal);
+        elements.confirmModal.querySelector('.modal-backdrop').addEventListener('click', closeConfirmModal);
+        elements.btnConfirmAction.addEventListener('click', executeAction);
+
+        // Close modals on Escape key
+        document.addEventListener('keydown', handleGlobalKeydown);
     }
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-    });
-}
 
-function formatDateTime(dateStr) {
-    if (window.Utils && Utils.formatDateTime) {
-        return Utils.formatDateTime(dateStr);
+    // Handle tab click
+    function handleTabClick(e) {
+        if (e.target.classList.contains('tab-btn')) {
+            switchTab(e.target.dataset.tab);
+        }
     }
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
-}
-}) ();
+    // Handle filter change
+    function handleFilterChange(e) {
+        currentFilter = e.target.value;
+        renderCompanies();
+    }
+
+    // Handle global keydown (Close modals on Escape)
+    function handleGlobalKeydown(e) {
+        if (e.key === 'Escape') {
+            if (elements.confirmModal.classList.contains('active')) {
+                closeConfirmModal();
+            } else if (elements.detailsModal.classList.contains('active')) {
+                closeDetailsModal();
+            } else if (elements.closePeriodModal.classList.contains('active')) {
+                closeClosePeriodModal();
+            } else if (elements.companyModal.classList.contains('active')) {
+                closeModal();
+            }
+        }
+    }
+
+    // Utility functions - delegate to shared Utils when available
+    function escapeHtml(str) {
+        if (window.Utils && Utils.escapeHtml) {
+            return Utils.escapeHtml(str);
+        }
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function capitalizeFirst(str) {
+        if (window.Utils && Utils.capitalizeFirst) {
+            return Utils.capitalizeFirst(str);
+        }
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    function formatCurrency(amount, currency = 'USD') {
+        if (window.Utils && Utils.formatCurrency) {
+            return Utils.formatCurrency(amount, currency);
+        }
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(amount);
+    }
+
+    function formatStatus(status) {
+        if (window.Utils && Utils.formatCompanyStatus) {
+            return Utils.formatCompanyStatus(status);
+        }
+        const statusLabels = {
+            'pending': 'Pending',
+            'active': 'Active',
+            'suspended': 'Suspended',
+            'deactivated': 'Voided'
+        };
+        return statusLabels[status] || capitalizeFirst(status);
+    }
+
+    function formatDate(dateStr) {
+        if (window.Utils && Utils.formatDate) {
+            return Utils.formatDate(dateStr);
+        }
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+    }
+
+    function formatDateTime(dateStr) {
+        if (window.Utils && Utils.formatDateTime) {
+            return Utils.formatDateTime(dateStr);
+        }
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();

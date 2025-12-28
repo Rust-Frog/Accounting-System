@@ -220,6 +220,11 @@ final class ContainerBuilder
                 new \Domain\Ledger\Service\BalanceCalculationService()
             )
         );
+
+        // Report Export Service
+        $container->singleton(\Domain\Reporting\Service\ReportExportService::class, fn() =>
+            new \Domain\Reporting\Service\ReportExportService()
+        );
     }
 
     private static function registerAuditServices(Container $container): void

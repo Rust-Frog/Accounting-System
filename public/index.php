@@ -267,13 +267,15 @@ $router->get('/api/v1/companies/{companyId}/ledger/summary', [$ledgerController,
 
 // Trial Balance routes
 $trialBalanceController = new \Api\Controller\TrialBalanceController(
-    $container->get(\Application\Handler\Reporting\GenerateTrialBalanceHandler::class)
+    $container->get(\Application\Handler\Reporting\GenerateTrialBalanceHandler::class),
+    $container->get(\Domain\Reporting\Service\ReportExportService::class)
 );
 $router->get('/api/v1/companies/{companyId}/trial-balance', [$trialBalanceController, 'generate']);
 
 // Income Statement routes
 $incomeStatementController = new \Api\Controller\IncomeStatementController(
-    $container->get(\Application\Handler\Reporting\GenerateIncomeStatementHandler::class)
+    $container->get(\Application\Handler\Reporting\GenerateIncomeStatementHandler::class),
+    $container->get(\Domain\Reporting\Service\ReportExportService::class)
 );
 $router->get('/api/v1/companies/{companyId}/income-statement', [$incomeStatementController, 'generate']);
 
@@ -287,7 +289,8 @@ $router->get('/api/v1/companies/{companyId}/period-close', [$periodCloseControll
 
 // Balance Sheet routes
 $balanceSheetController = new \Api\Controller\BalanceSheetController(
-    $container->get(\Application\Handler\Reporting\GenerateBalanceSheetHandler::class)
+    $container->get(\Application\Handler\Reporting\GenerateBalanceSheetHandler::class),
+    $container->get(\Domain\Reporting\Service\ReportExportService::class)
 );
 $router->get('/api/v1/companies/{companyId}/balance-sheet', [$balanceSheetController, 'generate']);
 

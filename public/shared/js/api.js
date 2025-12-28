@@ -97,6 +97,52 @@ class ApiClient {
         window.location.href = '/login.html';
     }
 
+    /**
+     * Download a file from the API
+     * @param {string} endpoint 
+     * @param {string} filename 
+     */
+    async download(endpoint, filename) {
+        const token = this.getToken();
+        if (!token) {
+            this.redirectToLogin();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                this.redirectToLogin();
+                return;
+            }
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error?.message || 'Download failed');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download error:', error);
+            throw error;
+        }
+    }
+
     // ========== Dashboard APIs ==========
 
     async getMe() {
